@@ -1,4 +1,3 @@
-// app/components/MainScreen/FeedOfPosts.tsx
 "use client";
 
 import FeedCard from "../FeedCard";
