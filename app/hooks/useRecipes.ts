@@ -1,4 +1,5 @@
-// app/hooks/useRecipes.ts
+'use client';
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { recipeService, Recipe, GetRecipesParams } from '../services/recipeService';
 
@@ -23,7 +24,8 @@ export function useRecipes(options: UseRecipesOptions = {}) {
     try {
       setLoading(true);
       setError(null);
-      const data = await recipeService.getAll(fetchParams || params);
+      const currentParams = fetchParams || params;
+      const data = await recipeService.getAll(currentParams);
       if (isMounted.current) {
         setRecipes(data);
       }
@@ -56,13 +58,14 @@ export function useRecipes(options: UseRecipesOptions = {}) {
 
   // Загрузка при изменении параметров
   useEffect(() => {
-    if (autoFetch && !isFirstRender.current) {
-      fetchRecipes();
-    } else if (autoFetch && isFirstRender.current) {
+    if (!autoFetch) return;
+    
+    if (isFirstRender.current) {
       isFirstRender.current = false;
-      fetchRecipes();
     }
-  }, [autoFetch, fetchRecipes, params]);
+    
+    fetchRecipes();
+  }, [autoFetch, fetchRecipes]);
 
   return {
     recipes,

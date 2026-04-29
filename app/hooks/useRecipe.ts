@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from "react";
 import { recipeService, Recipe } from "../services/recipeService";
 

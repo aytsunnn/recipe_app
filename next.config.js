@@ -1,12 +1,5 @@
 const nextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
-      },
-    ];
-  },
+  // Убираем rewrites, так как используем прямые запросы через apiClient
 };
 
 module.exports = nextConfig;

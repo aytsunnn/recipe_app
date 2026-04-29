@@ -12,19 +12,37 @@ class ApiClient {
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
+    const url = `${this.baseUrl}${endpoint}`;
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+        mode: 'cors', // Явно указываем CORS режим
+      });
 
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API Error (${response.status}): ${errorText || response.statusText}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return response.json();
+      }
+      
+      // Если ответ не JSON, возвращаем пустой объект
+      return {} as T;
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`API request failed: ${url}`, error.message);
+        throw error;
+      }
+      throw new Error('Unknown API error');
     }
-
-    return response.json();
   }
 
   get<T>(endpoint: string, options?: RequestInit): Promise<T> {
