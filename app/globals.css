@@ -1,26 +1,25 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+  /* Кастомные цвета */
+  --color-umami-green: #7B906F;
+  --color-umami-dark-gray: #333333;
+  --color-umami-gray: #666666;
+  --color-umami-light-gray: #999999;
+  --color-umami-orange: #EE9B51;
+  --color-umami-light-yellow: #FCFBF3;
+  
+  /* Шрифты */
+  --font-nunito: var(--font-nunito), sans-serif;
+  --font-inter: var(--font-inter), sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer components{
+  .custom-button{
+    @apply rounded-full px-5 py-1.5 text-sm text-white cursor-pointer;
+  }
 }
