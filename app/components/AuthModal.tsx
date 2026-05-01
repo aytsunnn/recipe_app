@@ -107,12 +107,13 @@ export default function AuthModal({
       };
 
       const response = await authService.login(loginData);
-      authService.saveToken(response.token);
+      authService.saveToken(response.access_token);
 
       // Успешная авторизация
       onClose();
       window.location.reload(); // Перезагрузка для обновления состояния
     } catch (error) {
+      console.error('Login error:', error);
       if (error instanceof Error) {
         setFieldErrors({ general: error.message });
       } else {

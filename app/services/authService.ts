@@ -14,14 +14,23 @@ export interface RegisterData {
 }
 
 export interface AuthResponse {
-  token: string;
-  user: {
+  message: string;
+  access_token: string;
+  user?: {
     id: string;
     email: string;
     username: string;
     name: string;
     avatar_url: string | null;
   };
+}
+
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  name: string;
+  avatar_url: string | null;
 }
 
 class AuthService {
@@ -65,6 +74,20 @@ class AuthService {
   // Проверка авторизации
   isAuthenticated(): boolean {
     return !!this.getToken();
+  }
+
+  // Получение данных текущего пользователя
+  async getCurrentUser(): Promise<User | null> {
+    if (!this.isAuthenticated()) {
+      return null;
+    }
+    try {
+      return await apiClient.get<User>('/users/me');
+    } catch (error) {
+      console.error('Failed to get current user:', error);
+      this.removeToken();
+      return null;
+    }
   }
 }
 

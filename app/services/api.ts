@@ -30,12 +30,20 @@ class ApiClient {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`API Error (${response.status}): ${errorText || response.statusText}`);
+        
+        // Пытаемся распарсить JSON ошибку
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.message || `API Error (${response.status}): ${response.statusText}`);
+        } catch (parseError) {
+          throw new Error(`API Error (${response.status}): ${errorText || response.statusText}`);
+        }
       }
 
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-        return response.json();
+        const data = await response.json();
+        return data;
       }
       
       // Если ответ не JSON, возвращаем пустой объект

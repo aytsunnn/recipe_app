@@ -158,7 +158,7 @@ export default function RegisterModal({
       };
 
       const response = await authService.register(registerData);
-      authService.saveToken(response.token);
+      authService.saveToken(response.access_token);
 
       // Успешная регистрация
       onClose();
