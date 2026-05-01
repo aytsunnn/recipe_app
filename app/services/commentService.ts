@@ -21,14 +21,33 @@ export interface CreateCommentData {
 }
 
 class CommentService {
+  // Заменяет localhost URL на публичный адрес
+  private fixImageUrl(url: string | null): string | null {
+    if (!url) return null;
+    return url.replace('http://127.0.0.1:9000', 'http://188.233.238.70:9000');
+  }
+
+  // Исправляет URL аватара в комментарии
+  private fixCommentImages(comment: Comment): Comment {
+    return {
+      ...comment,
+      User: {
+        ...comment.User,
+        avatar_url: this.fixImageUrl(comment.User.avatar_url),
+      },
+    };
+  }
+
   // Получить комментарии рецепта
   async getByRecipe(recipeId: string): Promise<Comment[]> {
-    return apiClient.get<Comment[]>(`/recipes/${recipeId}/comments`);
+    const comments = await apiClient.get<Comment[]>(`/recipes/${recipeId}/comments`);
+    return comments.map(comment => this.fixCommentImages(comment));
   }
 
   // Создать комментарий
   async create(recipeId: string, data: CreateCommentData): Promise<Comment> {
-    return apiClient.post<Comment>(`/recipes/${recipeId}/comments`, data);
+    const comment = await apiClient.post<Comment>(`/recipes/${recipeId}/comments`, data);
+    return this.fixCommentImages(comment);
   }
 
   // Удалить комментарий
@@ -38,7 +57,8 @@ class CommentService {
 
   // Обновить комментарий
   async update(recipeId: string, commentId: string, data: CreateCommentData): Promise<Comment> {
-    return apiClient.put<Comment>(`/recipes/${recipeId}/comments/${commentId}`, data);
+    const comment = await apiClient.put<Comment>(`/recipes/${recipeId}/comments/${commentId}`, data);
+    return this.fixCommentImages(comment);
   }
 }
 

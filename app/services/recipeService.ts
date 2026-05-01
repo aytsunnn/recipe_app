@@ -49,6 +49,24 @@ export interface GetRecipesParams {
 }
 
 class RecipeService {
+  // Заменяет localhost URL на публичный адрес
+  private fixImageUrl(url: string | null): string | null {
+    if (!url) return null;
+    return url.replace('http://127.0.0.1:9000', 'http://188.233.238.70:9000');
+  }
+
+  // Исправляет URL изображений в рецепте
+  private fixRecipeImages(recipe: Recipe): Recipe {
+    return {
+      ...recipe,
+      image_url: this.fixImageUrl(recipe.image_url),
+      User: {
+        ...recipe.User,
+        avatar_url: this.fixImageUrl(recipe.User.avatar_url),
+      },
+    };
+  }
+
   async getAll(params?: GetRecipesParams): Promise<Recipe[]> {
     const queryParams = new URLSearchParams();
     if (params) {
@@ -62,11 +80,13 @@ class RecipeService {
     const queryString = queryParams.toString();
     const endpoint = `/recipes${queryString ? `?${queryString}` : ''}`;
     
-    return apiClient.get<Recipe[]>(endpoint);
+    const recipes = await apiClient.get<Recipe[]>(endpoint);
+    return recipes.map(recipe => this.fixRecipeImages(recipe));
   }
 
   async getById(id: string): Promise<Recipe> {
-    return apiClient.get<Recipe>(`/recipes/${id}`);
+    const recipe = await apiClient.get<Recipe>(`/recipes/${id}`);
+    return this.fixRecipeImages(recipe);
   }
 
   async create(data: Partial<Recipe>): Promise<Recipe> {

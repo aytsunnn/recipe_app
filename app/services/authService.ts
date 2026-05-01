@@ -34,6 +34,12 @@ export interface User {
 }
 
 class AuthService {
+  // Заменяет localhost URL на публичный адрес
+  private fixImageUrl(url: string | null): string | null {
+    if (!url) return null;
+    return url.replace('http://127.0.0.1:9000', 'http://188.233.238.70:9000');
+  }
+
   // Вход
   async login(data: LoginData): Promise<AuthResponse> {
     return apiClient.post<AuthResponse>('/auth/login', data);
@@ -82,7 +88,12 @@ class AuthService {
       return null;
     }
     try {
-      return await apiClient.get<User>('/users/me');
+      const user = await apiClient.get<User>('/users/me');
+      // Исправляем URL аватара
+      return {
+        ...user,
+        avatar_url: this.fixImageUrl(user.avatar_url),
+      };
     } catch (error) {
       console.error('Failed to get current user:', error);
       this.removeToken();
