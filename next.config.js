@@ -30,6 +30,7 @@ const nextConfig = {
         pathname: '/vkusno/**', // Разрешаем доступ к бакету vkusno
       },
     ],
+    formats: ['image/avif', 'image/webp'],
   },
 };
 

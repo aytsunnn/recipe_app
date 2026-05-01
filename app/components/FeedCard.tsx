@@ -184,11 +184,12 @@ export default function FeedCard({
 
       <div className="relative">
         <Image
-          width={32}
-          height={32}
+          width={600}
+          height={400}
           src={recipe.image_url || "/placeholder.jpg"}
           className="w-full h-full object-cover rounded-lg"
           alt="recipe"
+          quality={95}
         />
         <div className="absolute top-2.5 right-2.5">
           <button className="bg-white w-9 h-9 rounded-full flex items-center justify-center">
