@@ -23,6 +23,12 @@ const nextConfig = {
         port: '',
         pathname: '/**', // Разрешаем все пути на этом домене
       },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '9000',
+        pathname: '/vkusno/**', // Разрешаем доступ к бакету vkusno
+      },
     ],
   },
 };

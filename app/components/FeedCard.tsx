@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { likeService } from "../services/likeService";
+import { commentService, Comment } from "../services/commentService";
 
 interface Recipe {
   id: string;
@@ -42,14 +43,18 @@ interface FeedCardProps {
   recipe: Recipe;
   isFollowing?: boolean;
   currentUserId?: string;
+  showComments?: boolean;
 }
 
 export default function FeedCard({
   recipe,
   isFollowing = false,
   currentUserId,
+  showComments = false,
 }: FeedCardProps) {
   const [following, setFollowing] = useState(isFollowing);
+  const [lastComment, setLastComment] = useState<Comment | null>(null);
+  const [loadingComment, setLoadingComment] = useState(false);
 
   // Проверяем, является ли текущий пользователь автором поста
   const isOwnPost = currentUserId && currentUserId === recipe.user_id;
@@ -67,6 +72,27 @@ export default function FeedCard({
     recipe._count?.Likes ?? recipe.Likes?.length ?? 0
   );
   const commentsCount = recipe._count?.Comments ?? recipe.Comments?.length ?? 0;
+
+  // Загружаем последний комментарий, если нужно показывать комментарии
+  useEffect(() => {
+    if (showComments && commentsCount > 0) {
+      setLoadingComment(true);
+      commentService
+        .getByRecipe(recipe.id)
+        .then((comments) => {
+          if (comments.length > 0) {
+            // Берем последний комментарий
+            setLastComment(comments[comments.length - 1]);
+          }
+        })
+        .catch((error) => {
+          console.error("Ошибка при загрузке комментариев:", error);
+        })
+        .finally(() => {
+          setLoadingComment(false);
+        });
+    }
+  }, [showComments, recipe.id, commentsCount]);
 
   const handleFollow = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -165,9 +191,7 @@ export default function FeedCard({
           alt="recipe"
         />
         <div className="absolute top-2.5 right-2.5">
-          <button
-            className="bg-white w-9 h-9 rounded-full flex items-center justify-center"
-          >
+          <button className="bg-white w-9 h-9 rounded-full flex items-center justify-center">
             <Image
               width={20}
               height={20}
@@ -232,6 +256,47 @@ export default function FeedCard({
           <p className="font-inter text-sm text-umami-gray">{commentsCount}</p>
         </div>
       </div>
+
+      {/* Блок последнего комментария */}
+      {showComments && commentsCount > 0 && (
+        <div className="border-t border-umami-light-gray/50 pt-2.5">
+          {loadingComment ? (
+            <p className="font-inter text-xs text-umami-gray">
+              Загрузка комментария...
+            </p>
+          ) : lastComment ? (
+            <div className="flex gap-2">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+                {lastComment.User.avatar_url ? (
+                  <Image
+                    width={32}
+                    height={32}
+                    src={lastComment.User.avatar_url}
+                    className="w-full h-full object-cover"
+                    alt="avatar"
+                  />
+                ) : (
+                  <Image
+                    width={32}
+                    height={32}
+                    src="/avatar.jpg"
+                    className="object-cover"
+                    alt="avatar"
+                  />
+                )}
+              </div>
+              <div className="flex flex-col flex-1">
+                <p className="font-inter text-xs font-medium text-umami-dark-gray">
+                  {lastComment.User.name}
+                </p>
+                <p className="font-inter text-sm text-umami-gray">
+                  {lastComment.content}
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
     </Link>
   );
 }

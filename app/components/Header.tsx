@@ -110,8 +110,8 @@ export default function Header() {
                 className="w-5.25 h-5.25"
               />
             </Link>
-            <button 
-              onClick={handleLogout}
+            <Link 
+              href="/profile"
               className="bg-umami-orange custom-button h-10.25 flex items-center justify-center font-medium font-nunito gap-5 pr-0"
             >
               <p>{user.username}</p>
@@ -122,7 +122,7 @@ export default function Header() {
                 alt="avatar"
                 className="w-10.25 h-10.25 right-0 top-0 border border-white rounded-full"
               />
-            </button>
+            </Link>
           </div>
         )}
       </header>

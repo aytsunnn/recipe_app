@@ -30,8 +30,12 @@ export default function FeedOfPosts() {
 
   return (
     <div className="w-full flex flex-col gap-4">
-      {recipes.map((recipe) => (
-        <FeedCard key={recipe.id} recipe={recipe} />
+      {recipes.map((recipe, index) => (
+        <FeedCard 
+          key={recipe.id} 
+          recipe={recipe} 
+          showComments={index === 0}
+        />
       ))}
     </div>
   );
