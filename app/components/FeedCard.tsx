@@ -155,8 +155,8 @@ export default function FeedCard({ recipe, isFollowing = false, currentUserId }:
 
       <div className="relative">
         <Image
-          width={648}
-          height={360}
+          width={32}
+          height={32}
           src={recipe.image_url || "/placeholder.jpg"}
           className="w-full h-full object-cover rounded-lg"
           alt="recipe"
@@ -218,7 +218,7 @@ export default function FeedCard({ recipe, isFollowing = false, currentUserId }:
           <p className="font-inter text-sm text-umami-gray">{likesCount}</p>
         </div>
         <div className="flex gap-1 items-center">
-          <Link href="">
+          <Link href="/">
             <Image
               width={24}
               height={24}
