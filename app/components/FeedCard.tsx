@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface Recipe {
   id: string;
@@ -29,13 +29,37 @@ interface Recipe {
     id: string;
     name: string;
   } | null;
+  Likes: Array<{ id: string; user_id: string }>;
+  Comments?: Array<{ id: string }>;
+  _count?: {
+    Likes: number;
+    Comments: number;
+  };
 }
 
 interface FeedCardProps {
   recipe: Recipe;
+  isFollowing?: boolean;
+  currentUserId?: string;
 }
 
-export default function FeedCard({ recipe }: FeedCardProps) {
+export default function FeedCard({ recipe, isFollowing = false, currentUserId }: FeedCardProps) {
+  const [following, setFollowing] = useState(isFollowing);
+  
+  // Проверяем, является ли текущий пользователь автором поста
+  const isOwnPost = currentUserId && currentUserId === recipe.user_id;
+  
+  // Подсчет лайков и комментариев
+  const likesCount = recipe._count?.Likes ?? recipe.Likes?.length ?? 0;
+  const commentsCount = recipe._count?.Comments ?? recipe.Comments?.length ?? 0;
+  
+  const handleFollow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // TODO: Здесь будет логика подписки через API
+    setFollowing(!following);
+  };
+
   return (
     <Link
       href="/"
@@ -62,16 +86,23 @@ export default function FeedCard({ recipe }: FeedCardProps) {
           )}
         </div>
         <div className="w-full flex flex-col justify-between">
-          <div className="flex flex-col">
-            <p className="font-inter text-sm font-medium text-umami-dark-gray">
-              {recipe.User.name}
-            </p>
-            <p className="font-inter text-xs text-umami-light-gray">
-              @{recipe.User.username}
-            </p>
-          </div>
-          <div>
-            {/* тут нужно проверять если нет подписки на автора этого поста, то показывать кнопку Подписаться */}
+          <div className="flex flex-row justify-between items-center">
+            <div className="flex flex-col">
+              <p className="font-inter text-sm font-medium text-umami-dark-gray">
+                {recipe.User.name}
+              </p>
+              <p className="font-inter text-xs text-umami-light-gray">
+                @{recipe.User.username}
+              </p>
+            </div>
+            {!isOwnPost && !following && (
+              <button
+                onClick={handleFollow}
+                className="custom-button bg-umami-green font-inter font-medium text-xs h-7"
+              >
+                Подписаться
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -127,7 +158,32 @@ export default function FeedCard({ recipe }: FeedCardProps) {
           {recipe.description}
         </p>
       </div>
-      <div className="flex flex-col"></div>
+      <div className="flex flex-row gap-2">
+        <div className="flex gap-1 items-center">
+          <Link href="">
+            <Image
+              width={24}
+              height={24}
+              src="/Heart.svg"
+              className="w-6 h-6"
+              alt="like"
+            />
+          </Link>
+          <p className="font-inter text-sm text-umami-gray">{likesCount}</p>
+        </div>
+        <div className="flex gap-1 items-center">
+          <Link href="">
+            <Image
+              width={24}
+              height={24}
+              src="/ChatCircle.svg"
+              className="w-6 h-6"
+              alt="comments"
+            />
+          </Link>
+          <p className="font-inter text-sm text-umami-gray">{commentsCount}</p>
+        </div>
+      </div>
     </Link>
   );
 }

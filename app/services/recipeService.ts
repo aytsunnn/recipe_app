@@ -27,8 +27,13 @@ export interface Recipe {
     id: string;
     name: string;
   } | null;
-  Likes: unknown[];
+  Likes: Array<{ id: string; user_id: string }>;
+  Comments?: Array<{ id: string }>;
   Categories: unknown[];
+  _count?: {
+    Likes: number;
+    Comments: number;
+  };
 }
 
 export interface GetRecipesParams {
