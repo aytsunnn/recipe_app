@@ -44,36 +44,40 @@ interface FeedCardProps {
   currentUserId?: string;
 }
 
-export default function FeedCard({ recipe, isFollowing = false, currentUserId }: FeedCardProps) {
+export default function FeedCard({
+  recipe,
+  isFollowing = false,
+  currentUserId,
+}: FeedCardProps) {
   const [following, setFollowing] = useState(isFollowing);
-  
+
   // Проверяем, является ли текущий пользователь автором поста
   const isOwnPost = currentUserId && currentUserId === recipe.user_id;
-  
+
   // Проверяем, авторизован ли пользователь
   const isAuthenticated = !!currentUserId;
-  
+
   // Проверяем, лайкнул ли текущий пользователь этот рецепт
-  const isLikedByUser = currentUserId 
-    ? recipe.Likes?.some(like => like.user_id === currentUserId) 
+  const isLikedByUser = currentUserId
+    ? recipe.Likes?.some((like) => like.user_id === currentUserId)
     : false;
-  
+
   const [isLiked, setIsLiked] = useState(isLikedByUser);
   const [likesCount, setLikesCount] = useState(
     recipe._count?.Likes ?? recipe.Likes?.length ?? 0
   );
   const commentsCount = recipe._count?.Comments ?? recipe.Comments?.length ?? 0;
-  
+
   const handleFollow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!isAuthenticated) {
       // TODO: Показать модалку авторизации
-      alert('Необходимо авторизоваться');
+      alert("Необходимо авторизоваться");
       return;
     }
-    
+
     // TODO: Здесь будет логика подписки через API
     setFollowing(!following);
   };
@@ -81,28 +85,27 @@ export default function FeedCard({ recipe, isFollowing = false, currentUserId }:
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!isAuthenticated) {
       // TODO: Показать модалку авторизации
-      alert('Необходимо авторизоваться');
+      alert("Необходимо авторизоваться");
       return;
     }
-    
+
     try {
       if (isLiked) {
         // Убираем лайк
         await likeService.delete(recipe.id);
         setIsLiked(false);
-        setLikesCount(prev => Math.max(0, prev - 1));
+        setLikesCount((prev) => Math.max(0, prev - 1));
       } else {
         // Ставим лайк
         await likeService.create(recipe.id);
         setIsLiked(true);
-        setLikesCount(prev => prev + 1);
+        setLikesCount((prev) => prev + 1);
       }
     } catch (error) {
-      console.error('Ошибка при обработке лайка:', error);
-      // TODO: Показать уведомление об ошибке
+      console.error("Ошибка при обработке лайка:", error);
     }
   };
 
@@ -162,8 +165,7 @@ export default function FeedCard({ recipe, isFollowing = false, currentUserId }:
           alt="recipe"
         />
         <div className="absolute top-2.5 right-2.5">
-          <Link
-            href=""
+          <button
             className="bg-white w-9 h-9 rounded-full flex items-center justify-center"
           >
             <Image
@@ -172,7 +174,7 @@ export default function FeedCard({ recipe, isFollowing = false, currentUserId }:
               src="/Favorites.svg"
               alt="favorites"
             />
-          </Link>
+          </button>
         </div>
         <div className="absolute bottom-2.5 right-2.5">
           <div className="bg-white p-2 rounded-full flex items-center justify-center gap-4">

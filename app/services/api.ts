@@ -14,11 +14,15 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     
+    // Получаем токен из localStorage
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    
     try {
       const response = await fetch(url, {
         ...options,
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
           ...options?.headers,
         },
         mode: 'cors', // Явно указываем CORS режим

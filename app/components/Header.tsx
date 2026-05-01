@@ -48,18 +48,46 @@ export default function Header() {
             </Link>
           </div>
         </div>
+        {/* для неавторизованных пользователей */}
         <div className="flex gap-2.5 items-center">
           <button
             onClick={() => setIsAuthModalOpen(true)}
-            className="bg-umami-green custom-button h-10.25 flex items-center justify-center font-medium font-nunito"
+            className="bg-umami-orange custom-button h-10.25 flex items-center justify-center font-medium font-nunito"
           >
             Войти
           </button>
           <button
             onClick={() => setIsRegisterModalOpen(true)}
-            className="bg-umami-orange custom-button h-10.25 flex items-center justify-center font-medium font-nunito"
+            className="bg-umami-green custom-button h-10.25 flex items-center justify-center font-medium font-nunito"
           >
             Создать аккаунт
+          </button>
+        </div>
+
+        {/* для авторизованных пользователей */}
+        <div className="flex gap-2.5 items-center">
+          <Link
+            href="/"
+            className="w-9 h-9 rounded-full border flex justify-center items-center border-umami-light-gray/50"
+          >
+            <Image
+              width={23}
+              height={23}
+              src="/Colocolchik.svg"
+              alt="notifications"
+              className="w-5.25 h-5.25"
+            />
+          </Link>
+          <button className="bg-umami-orange custom-button h-10.25 flex items-center justify-center font-medium font-nunito gap-5 pr-0">
+            <p>Имя пользователя</p>
+            <Image
+              width={36}
+              height={36}
+              src="/avatar.jpg"
+              // src={user.image_url || "/avatar.png"}
+              alt="avatar"
+              className="w-10.25 h-10.25 right-0 top-0 border border-white rounded-full"
+            />
           </button>
         </div>
       </header>

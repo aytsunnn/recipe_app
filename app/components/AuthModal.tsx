@@ -28,28 +28,50 @@ export default function AuthModal({
   }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        handleClose();
       }
     };
 
     if (isOpen) {
+      setIsAnimating(true);
       document.addEventListener("keydown", handleEscape);
       document.body.style.overflow = "hidden";
+    } else {
+      setIsAnimating(false);
     }
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = "unset";
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
+
+  const resetForm = () => {
+    setFormData({
+      email: "",
+      password: "",
+    });
+    setFieldErrors({});
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const handleSwitchToRegister = () => {
+    resetForm();
+    onSwitchToRegister();
+  };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
+      handleClose();
     }
   };
 
@@ -105,12 +127,16 @@ export default function AuthModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-umami-dark-gray/80"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-umami-dark-gray/80 transition-opacity duration-300 ${
+        isAnimating ? "opacity-100" : "opacity-0"
+      }`}
       onClick={handleBackdropClick}
     >
       <div
         ref={modalRef}
-        className="bg-white flex flex-row rounded-2xl w-178.5 h-134 shadow-2xl"
+        className={`bg-white flex flex-row rounded-2xl w-178.5 h-134 shadow-2xl transform transition-all duration-300 ${
+          isAnimating ? "scale-100 opacity-100" : "scale-95 opacity-0"
+        }`}
       >
         <div className="flex py-25 px-8 gap-8 w-60.5 flex-col bg-umami-orange h-full rounded-l-2xl">
           <div className="flex flex-col">
@@ -122,7 +148,7 @@ export default function AuthModal({
             </p>
           </div>
           <button
-            onClick={onSwitchToRegister}
+            onClick={handleSwitchToRegister}
             className="custom-button bg-white text-umami-orange font-nunito font-regular text-sm"
           >
             Зарегистрироваться
