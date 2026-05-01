@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { likeService } from "../services/likeService";
 
 interface Recipe {
   id: string;
@@ -49,15 +50,60 @@ export default function FeedCard({ recipe, isFollowing = false, currentUserId }:
   // Проверяем, является ли текущий пользователь автором поста
   const isOwnPost = currentUserId && currentUserId === recipe.user_id;
   
-  // Подсчет лайков и комментариев
-  const likesCount = recipe._count?.Likes ?? recipe.Likes?.length ?? 0;
+  // Проверяем, авторизован ли пользователь
+  const isAuthenticated = !!currentUserId;
+  
+  // Проверяем, лайкнул ли текущий пользователь этот рецепт
+  const isLikedByUser = currentUserId 
+    ? recipe.Likes?.some(like => like.user_id === currentUserId) 
+    : false;
+  
+  const [isLiked, setIsLiked] = useState(isLikedByUser);
+  const [likesCount, setLikesCount] = useState(
+    recipe._count?.Likes ?? recipe.Likes?.length ?? 0
+  );
   const commentsCount = recipe._count?.Comments ?? recipe.Comments?.length ?? 0;
   
   const handleFollow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      // TODO: Показать модалку авторизации
+      alert('Необходимо авторизоваться');
+      return;
+    }
+    
     // TODO: Здесь будет логика подписки через API
     setFollowing(!following);
+  };
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      // TODO: Показать модалку авторизации
+      alert('Необходимо авторизоваться');
+      return;
+    }
+    
+    try {
+      if (isLiked) {
+        // Убираем лайк
+        await likeService.delete(recipe.id);
+        setIsLiked(false);
+        setLikesCount(prev => Math.max(0, prev - 1));
+      } else {
+        // Ставим лайк
+        await likeService.create(recipe.id);
+        setIsLiked(true);
+        setLikesCount(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Ошибка при обработке лайка:', error);
+      // TODO: Показать уведомление об ошибке
+    }
   };
 
   return (
@@ -95,7 +141,7 @@ export default function FeedCard({ recipe, isFollowing = false, currentUserId }:
                 @{recipe.User.username}
               </p>
             </div>
-            {!isOwnPost && !following && (
+            {isAuthenticated && !isOwnPost && !following && (
               <button
                 onClick={handleFollow}
                 className="custom-button bg-umami-green font-inter font-medium text-xs h-7"
@@ -160,15 +206,15 @@ export default function FeedCard({ recipe, isFollowing = false, currentUserId }:
       </div>
       <div className="flex flex-row gap-2">
         <div className="flex gap-1 items-center">
-          <Link href="">
+          <button onClick={handleLike} className="cursor-pointer">
             <Image
               width={24}
               height={24}
-              src="/Heart.svg"
+              src={isLiked ? "/RedHeart.svg" : "/Heart.svg"}
               className="w-6 h-6"
               alt="like"
             />
-          </Link>
+          </button>
           <p className="font-inter text-sm text-umami-gray">{likesCount}</p>
         </div>
         <div className="flex gap-1 items-center">
