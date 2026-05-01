@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { authService, LoginData } from "../services/authService";
 import { validateEmail } from "../utils/validation";
+import Image from "next/image";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -10,14 +11,23 @@ interface AuthModalProps {
   onSwitchToRegister: () => void;
 }
 
-export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthModalProps) {
+export default function AuthModal({
+  isOpen,
+  onClose,
+  onSwitchToRegister,
+}: AuthModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  const [errors, setErrors] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    password?: string;
+    general?: string;
+  }>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -45,22 +55,24 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors([]);
+    setFieldErrors({});
 
-    const validationErrors: string[] = [];
+    const errors: { email?: string; password?: string } = {};
 
     // Валидация email
-    if (!validateEmail(formData.email)) {
-      validationErrors.push("Некорректный email адрес");
+    if (!formData.email) {
+      errors.email = "Введите email";
+    } else if (!validateEmail(formData.email)) {
+      errors.email = "Некорректный email адрес";
     }
 
     // Валидация пароля
-    if (formData.password.length < 1) {
-      validationErrors.push("Введите пароль");
+    if (!formData.password) {
+      errors.password = "Введите пароль";
     }
 
-    if (validationErrors.length > 0) {
-      setErrors(validationErrors);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
@@ -74,15 +86,15 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
 
       const response = await authService.login(loginData);
       authService.saveToken(response.token);
-      
+
       // Успешная авторизация
       onClose();
       window.location.reload(); // Перезагрузка для обновления состояния
     } catch (error) {
       if (error instanceof Error) {
-        setErrors([error.message]);
+        setFieldErrors({ general: error.message });
       } else {
-        setErrors(["Неверный email или пароль"]);
+        setFieldErrors({ general: "Неверный email или пароль" });
       }
     } finally {
       setIsLoading(false);
@@ -122,33 +134,79 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
               АВТОРИЗАЦИЯ
             </p>
 
-            {errors.length > 0 && (
+            {fieldErrors.general && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-left">
-                {errors.map((error, index) => (
-                  <p key={index} className="text-red-600 text-xs font-inter">
-                    • {error}
-                  </p>
-                ))}
+                <p className="text-red-600 text-xs font-inter">
+                  • {fieldErrors.general}
+                </p>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="border w-full border-umami-orange rounded-full px-2.5 py-1.25 font-nunito font-regular text-sm text-[#ff6600] focus:outline-none"
-                placeholder="Email"
-                required
-              />
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="border w-full border-umami-orange rounded-full px-2.5 py-1.25 font-nunito font-regular text-sm text-[#ff6600] focus:outline-none"
-                placeholder="Пароль"
-                required
-              />
+              <div className="flex flex-col">
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className={`border w-full ${
+                    fieldErrors.email ? "border-red-500" : "border-umami-orange"
+                  } rounded-full px-2.5 py-1.25 font-nunito font-regular text-sm text-umami-orange placeholder:text-umami-orange focus:outline-none`}
+                  placeholder="Email"
+                />
+                {fieldErrors.email && (
+                  <div className="flex items-center gap-1 mt-1 ml-2.5">
+                    <Image
+                      width={14}
+                      height={14}
+                      src="/WarningCircle.svg"
+                      alt="warning"
+                    />
+                    <span className="text-red-600 text-xs font-inter">
+                      {fieldErrors.email}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col">
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    className={`border w-full ${
+                      fieldErrors.password
+                        ? "border-red-500"
+                        : "border-umami-orange"
+                    } rounded-full px-2.5 py-1.25 pr-10 font-nunito font-regular text-sm text-umami-orange placeholder:text-umami-orange focus:outline-none`}
+                    placeholder="Пароль"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-umami-orange hover:text-umami-dark-gray"
+                  >
+                    {showPassword ? "👁️" : "👁️‍🗨️"}
+                  </button>
+                </div>
+                {fieldErrors.password && (
+                  <div className="flex items-center gap-1 mt-1 ml-2.5">
+                    <Image
+                      width={14}
+                      height={14}
+                      src="/WarningCircle.svg"
+                      alt="warning"
+                    />
+                    <span className="text-red-600 text-xs font-inter">
+                      {fieldErrors.password}
+                    </span>
+                  </div>
+                )}
+              </div>
               <div className="flex justify-center">
                 <button
                   type="submit"

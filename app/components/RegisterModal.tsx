@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { authService, RegisterData } from "../services/authService";
-import { validatePassword, validateEmail, validateUsername } from "../utils/validation";
+import {
+  validatePassword,
+  validateEmail,
+  validateUsername,
+} from "../utils/validation";
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -10,7 +14,11 @@ interface RegisterModalProps {
   onSwitchToLogin: () => void;
 }
 
-export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModalProps) {
+export default function RegisterModal({
+  isOpen,
+  onClose,
+  onSwitchToLogin,
+}: RegisterModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     email: "",
@@ -19,8 +27,17 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
     username: "",
     name: "",
   });
-  const [errors, setErrors] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    username?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+    general?: string;
+  }>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -48,34 +65,59 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors([]);
+    setFieldErrors({});
 
-    const validationErrors: string[] = [];
+    const errors: {
+      email?: string;
+      password?: string;
+      username?: string;
+      name?: string;
+      confirmPassword?: string;
+    } = {};
 
-    if (!validateEmail(formData.email)) {
-      validationErrors.push("Некорректный email адрес");
+    // Валидация имени
+    if (!formData.name) {
+      errors.name = "Введите имя";
+    } else if (formData.name.length < 2) {
+      errors.name = "Имя должно содержать не менее 2 символов";
     }
 
-    const usernameError = validateUsername(formData.username);
-    if (usernameError) {
-      validationErrors.push(usernameError);
+    // Валидация username
+    if (!formData.username) {
+      errors.username = "Введите имя пользователя";
+    } else {
+      const usernameError = validateUsername(formData.username);
+      if (usernameError) {
+        errors.username = usernameError;
+      }
     }
 
-    if (formData.name.trim().length < 2) {
-      validationErrors.push("Имя должно содержать не менее 2 символов");
+    // Валидация email
+    if (!formData.email) {
+      errors.email = "Введите email";
+    } else if (!validateEmail(formData.email)) {
+      errors.email = "Некорректный email адрес";
     }
 
-    const passwordValidation = validatePassword(formData.password);
-    if (!passwordValidation.isValid) {
-      validationErrors.push(...passwordValidation.errors);
+    // Валидация пароля
+    if (!formData.password) {
+      errors.password = "Введите пароль";
+    } else {
+      const passwordValidation = validatePassword(formData.password);
+      if (!passwordValidation.isValid) {
+        errors.password = passwordValidation.errors[0];
+      }
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      validationErrors.push("Пароли не совпадают");
+    // Проверка совпадения паролей
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = "Повторите пароль";
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = "Пароли не совпадают";
     }
 
-    if (validationErrors.length > 0) {
-      setErrors(validationErrors);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
@@ -91,15 +133,15 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
 
       const response = await authService.register(registerData);
       authService.saveToken(response.token);
-      
+
       // Успешная регистрация
       onClose();
       window.location.reload(); // Перезагрузка для обновления состояния
     } catch (error) {
       if (error instanceof Error) {
-        setErrors([error.message]);
+        setFieldErrors({ general: error.message });
       } else {
-        setErrors(["Произошла ошибка при регистрации"]);
+        setFieldErrors({ general: "Произошла ошибка при регистрации" });
       }
     } finally {
       setIsLoading(false);
@@ -123,13 +165,11 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
               РЕГИСТРАЦИЯ
             </p>
 
-            {errors.length > 0 && (
+            {fieldErrors.general && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-left">
-                {errors.map((error, index) => (
-                  <p key={index} className="text-red-600 text-xs font-inter">
-                    • {error}
-                  </p>
-                ))}
+                <p className="text-red-600 text-xs font-inter">
+                  • {fieldErrors.general}
+                </p>
               </div>
             )}
 
@@ -137,42 +177,47 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 className="border w-full border-umami-green rounded-full px-2.5 py-1.25 font-nunito font-regular text-sm text-umami-green placeholder:text-umami-green focus:outline-none"
                 placeholder="Имя"
-                required
               />
               <input
                 type="text"
                 value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
                 className="border w-full border-umami-green rounded-full px-2.5 py-1.25 font-nunito font-regular text-sm text-umami-green placeholder:text-umami-green focus:outline-none"
                 placeholder="Имя пользователя"
-                required
               />
               <input
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 className="border w-full border-umami-green rounded-full px-2.5 py-1.25 font-nunito font-regular text-sm text-umami-green placeholder:text-umami-green focus:outline-none"
                 placeholder="Email"
-                required
               />
               <input
                 type="password"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
                 className="border w-full border-umami-green rounded-full px-2.5 py-1.25 font-nunito font-regular text-sm text-umami-green placeholder:text-umami-green focus:outline-none"
                 placeholder="Пароль"
-                required
               />
               <input
                 type="password"
                 value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, confirmPassword: e.target.value })
+                }
                 className="border w-full border-umami-green rounded-full px-2.5 py-1.25 font-nunito font-regular text-sm text-umami-green placeholder:text-umami-green focus:outline-none"
                 placeholder="Повторите пароль"
-                required
               />
 
               <div className="flex justify-center">
