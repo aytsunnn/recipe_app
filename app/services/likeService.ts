@@ -11,12 +11,12 @@ export interface Like {
 class LikeService {
   // Поставить лайк
   async create(recipeId: string): Promise<Like> {
-    return apiClient.post<Like>(`/recipes/${recipeId}/likes`);
+    return apiClient.post<Like>(`/recipes/${recipeId}/like`);
   }
 
   // Убрать лайк
   async delete(recipeId: string): Promise<void> {
-    return apiClient.delete(`/recipes/${recipeId}/likes`);
+    return apiClient.delete(`/recipes/${recipeId}/like`);
   }
 
   // Получить лайки рецепта

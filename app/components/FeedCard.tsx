@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { likeService } from "../services/likeService";
 import { commentService, Comment } from "../services/commentService";
+import { followService } from "../services/followService";
 
 interface Recipe {
   id: string;
@@ -53,6 +54,7 @@ export default function FeedCard({
   showComments = false,
 }: FeedCardProps) {
   const [following, setFollowing] = useState(isFollowing);
+  const [justFollowed, setJustFollowed] = useState(false); // Отслеживаем подписку в текущей сессии
   const [lastComment, setLastComment] = useState<Comment | null>(null);
   const [loadingComment, setLoadingComment] = useState(false);
 
@@ -72,6 +74,19 @@ export default function FeedCard({
     recipe._count?.Likes ?? recipe.Likes?.length ?? 0
   );
   const commentsCount = recipe._count?.Comments ?? recipe.Comments?.length ?? 0;
+
+  // Синхронизируем состояние following с пропсом isFollowing
+  useEffect(() => {
+    setFollowing(isFollowing);
+  }, [isFollowing]);
+
+  // Обновляем состояние лайка при изменении currentUserId или данных рецепта
+  useEffect(() => {
+    const liked = currentUserId
+      ? recipe.Likes?.some((like) => like.user_id === currentUserId)
+      : false;
+    setIsLiked(liked);
+  }, [currentUserId, recipe.Likes]);
 
   // Загружаем последний комментарий, если нужно показывать комментарии
   useEffect(() => {
@@ -94,18 +109,39 @@ export default function FeedCard({
     }
   }, [showComments, recipe.id, commentsCount]);
 
-  const handleFollow = (e: React.MouseEvent) => {
+  const handleFollow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (!isAuthenticated) {
-      // TODO: Показать модалку авторизации
       alert("Необходимо авторизоваться");
       return;
     }
 
-    // TODO: Здесь будет логика подписки через API
-    setFollowing(!following);
+    const previousFollowing = following;
+    const previousJustFollowed = justFollowed;
+
+    try {
+      if (justFollowed) {
+        // Отписываемся (кнопка "Подписки")
+        setFollowing(false);
+        setJustFollowed(false);
+        await followService.unfollow(recipe.user_id);
+        console.log(`Успешно отписались от пользователя ${recipe.user_id}`);
+      } else {
+        // Подписываемся (кнопка "Подписаться")
+        setFollowing(true);
+        setJustFollowed(true);
+        await followService.follow(recipe.user_id);
+        console.log(`Успешно подписались на пользователя ${recipe.user_id}`);
+      }
+    } catch (error) {
+      console.error("Ошибка при обработке подписки:", error);
+      // Откатываем изменения при ошибке
+      setFollowing(previousFollowing);
+      setJustFollowed(previousJustFollowed);
+      alert("Не удалось обработать подписку. Попробуйте еще раз.");
+    }
   };
 
   const handleLike = async (e: React.MouseEvent) => {
@@ -118,28 +154,35 @@ export default function FeedCard({
       return;
     }
 
+    // Оптимистичное обновление UI
+    const previousIsLiked = isLiked;
+    const previousLikesCount = likesCount;
+
     try {
       if (isLiked) {
-        // Убираем лайк
-        await likeService.delete(recipe.id);
+        // Сразу обновляем UI
         setIsLiked(false);
         setLikesCount((prev) => Math.max(0, prev - 1));
+        // Убираем лайк на сервере
+        await likeService.delete(recipe.id);
       } else {
-        // Ставим лайк
-        await likeService.create(recipe.id);
+        // Сразу обновляем UI
         setIsLiked(true);
         setLikesCount((prev) => prev + 1);
+        // Ставим лайк на сервере
+        await likeService.create(recipe.id);
       }
     } catch (error) {
       console.error("Ошибка при обработке лайка:", error);
+      // Откатываем изменения при ошибке
+      setIsLiked(previousIsLiked);
+      setLikesCount(previousLikesCount);
+      alert("Не удалось обработать лайк. Попробуйте еще раз.");
     }
   };
 
   return (
-    <Link
-      href="/"
-      className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5"
-    >
+    <div className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5">
       <div className="flex items-center gap-2.5">
         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
           {recipe.User.avatar_url ? (
@@ -170,13 +213,28 @@ export default function FeedCard({
                 @{recipe.User.username}
               </p>
             </div>
-            {isAuthenticated && !isOwnPost && !following && (
-              <button
-                onClick={handleFollow}
-                className="custom-button bg-umami-green font-inter font-medium text-xs h-7"
-              >
-                Подписаться
-              </button>
+            {isAuthenticated && !isOwnPost && (
+              <>
+                {/* Показываем "Подписаться" если не подписан и не подписался только что */}
+                {!following && !justFollowed && (
+                  <button
+                    onClick={handleFollow}
+                    className="custom-button bg-umami-green font-inter font-medium text-xs h-7"
+                  >
+                    Подписаться
+                  </button>
+                )}
+                {/* Показываем "Подписки" если только что подписался в ленте */}
+                {justFollowed && (
+                  <button
+                    onClick={handleFollow}
+                    className="custom-button bg-umami-gray font-inter font-medium text-xs h-7"
+                  >
+                    Подписки
+                  </button>
+                )}
+                {/* Если был подписан изначально (following && !justFollowed) - ничего не показываем */}
+              </>
             )}
           </div>
         </div>
@@ -298,6 +356,6 @@ export default function FeedCard({
           ) : null}
         </div>
       )}
-    </Link>
+    </div>
   );
 }
