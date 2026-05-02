@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   metaService,
   Kitchen,
@@ -26,15 +26,16 @@ export interface FilterValues {
 
 export default function FiltersPanel({ onApplyFilters }: FiltersPanelProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   
   // Инициализируем фильтры из URL параметров
   const [filters, setFilters] = useState<FilterValues>(() => {
     const initialFilters: FilterValues = {};
-    const kitchenId = searchParams.get("kitchen_id");
-    const categoryId = searchParams.get("category_id");
-    const celebrationId = searchParams.get("celebration_id");
-    const cookingId = searchParams.get("cooking_id");
-    const difficulty = searchParams.get("difficulty");
+    const kitchenId = searchParams?.get("kitchen_id");
+    const categoryId = searchParams?.get("category_id");
+    const celebrationId = searchParams?.get("celebration_id");
+    const cookingId = searchParams?.get("cooking_id");
+    const difficulty = searchParams?.get("difficulty");
     
     if (kitchenId) initialFilters.kitchen_id = parseInt(kitchenId);
     if (categoryId) initialFilters.category_id = parseInt(categoryId);
@@ -44,6 +45,24 @@ export default function FiltersPanel({ onApplyFilters }: FiltersPanelProps) {
     
     return initialFilters;
   });
+
+  // Синхронизируем состояние с URL при изменении URL
+  useEffect(() => {
+    const newFilters: FilterValues = {};
+    const kitchenId = searchParams?.get("kitchen_id");
+    const categoryId = searchParams?.get("category_id");
+    const celebrationId = searchParams?.get("celebration_id");
+    const cookingId = searchParams?.get("cooking_id");
+    const difficulty = searchParams?.get("difficulty");
+    
+    if (kitchenId) newFilters.kitchen_id = parseInt(kitchenId);
+    if (categoryId) newFilters.category_id = parseInt(categoryId);
+    if (celebrationId) newFilters.celebration_id = parseInt(celebrationId);
+    if (cookingId) newFilters.cooking_id = parseInt(cookingId);
+    if (difficulty) newFilters.difficulty = difficulty;
+    
+    setFilters(newFilters);
+  }, [searchParams]);
   
   const [kitchens, setKitchens] = useState<Kitchen[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -76,12 +95,27 @@ export default function FiltersPanel({ onApplyFilters }: FiltersPanelProps) {
     loadFilterData();
   }, []);
 
-  const handleApply = () => {
-    onApplyFilters(filters);
+  const updateFilter = (key: keyof FilterValues, value: string | number | undefined) => {
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    if (value !== undefined && value !== "") {
+      params.set(key, String(value));
+    } else {
+      params.delete(key);
+    }
+    router.push(`/?${params.toString()}`, { scroll: false });
   };
 
   const handleReset = () => {
     setFilters({});
+    
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    params.delete('difficulty');
+    params.delete('kitchen_id');
+    params.delete('category_id');
+    params.delete('celebration_id');
+    params.delete('cooking_id');
+    
+    router.push(`/?${params.toString()}`, { scroll: false });
     onApplyFilters({});
   };
 
@@ -103,12 +137,7 @@ export default function FiltersPanel({ onApplyFilters }: FiltersPanelProps) {
               </label>
               <select
                 value={filters.difficulty || ""}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    difficulty: e.target.value || undefined,
-                  })
-                }
+                onChange={(e) => updateFilter('difficulty', e.target.value || undefined)}
                 className="w-full border border-umami-light-gray rounded-lg px-3 py-2 font-nunito text-sm focus:outline-none focus:border-umami-green"
               >
                 <option value="">Любая</option>
@@ -123,14 +152,7 @@ export default function FiltersPanel({ onApplyFilters }: FiltersPanelProps) {
               </label>
               <select
                 value={filters.kitchen_id || ""}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    kitchen_id: e.target.value
-                      ? parseInt(e.target.value)
-                      : undefined,
-                  })
-                }
+                onChange={(e) => updateFilter('kitchen_id', e.target.value ? parseInt(e.target.value) : undefined)}
                 className="w-full border border-umami-light-gray rounded-lg px-3 py-2 font-nunito text-sm focus:outline-none focus:border-umami-green"
               >
                 <option value="">Все кухни</option>
@@ -147,14 +169,7 @@ export default function FiltersPanel({ onApplyFilters }: FiltersPanelProps) {
               </label>
               <select
                 value={filters.category_id || ""}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    category_id: e.target.value
-                      ? parseInt(e.target.value)
-                      : undefined,
-                  })
-                }
+                onChange={(e) => updateFilter('category_id', e.target.value ? parseInt(e.target.value) : undefined)}
                 className="w-full border border-umami-light-gray rounded-lg px-3 py-2 font-nunito text-sm focus:outline-none focus:border-umami-green"
               >
                 <option value="">Все категории</option>
@@ -171,14 +186,7 @@ export default function FiltersPanel({ onApplyFilters }: FiltersPanelProps) {
               </label>
               <select
                 value={filters.celebration_id || ""}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    celebration_id: e.target.value
-                      ? parseInt(e.target.value)
-                      : undefined,
-                  })
-                }
+                onChange={(e) => updateFilter('celebration_id', e.target.value ? parseInt(e.target.value) : undefined)}
                 className="w-full border border-umami-light-gray rounded-lg px-3 py-2 font-nunito text-sm focus:outline-none focus:border-umami-green"
               >
                 <option value="">Все праздники</option>
@@ -195,14 +203,7 @@ export default function FiltersPanel({ onApplyFilters }: FiltersPanelProps) {
               </label>
               <select
                 value={filters.cooking_id || ""}
-                onChange={(e) =>
-                  setFilters({
-                    ...filters,
-                    cooking_id: e.target.value
-                      ? parseInt(e.target.value)
-                      : undefined,
-                  })
-                }
+                onChange={(e) => updateFilter('cooking_id', e.target.value ? parseInt(e.target.value) : undefined)}
                 className="w-full border border-umami-light-gray rounded-lg px-3 py-2 font-nunito text-sm focus:outline-none focus:border-umami-green"
               >
                 <option value="">Все способы</option>
@@ -216,16 +217,10 @@ export default function FiltersPanel({ onApplyFilters }: FiltersPanelProps) {
           </div>
           <div className="flex gap-3 mt-4">
             <button
-              onClick={handleApply}
-              className="flex-1 bg-umami-green hover:bg-[#6A805E] text-white font-nunito font-medium px-4 py-2 rounded-full transition-colors"
-            >
-              Применить
-            </button>
-            <button
               onClick={handleReset}
               className="flex-1 bg-umami-gray hover:bg-gray-500 text-white font-nunito font-medium px-4 py-2 rounded-full transition-colors"
             >
-              Сбросить
+              Сбросить фильтры
             </button>
           </div>
         </>

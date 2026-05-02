@@ -52,7 +52,11 @@ class RecipeService {
   // Заменяет localhost URL на публичный адрес
   private fixImageUrl(url: string | null): string | null {
     if (!url) return null;
-    return url.replace('http://127.0.0.1:9000', 'http://188.233.238.70:9000');
+    const fixed = url.replace('http://127.0.0.1:9000', 'http://188.233.238.70:9000');
+    if (fixed.startsWith('http://') || fixed.startsWith('https://') || fixed.startsWith('/')) {
+      return fixed;
+    }
+    return null;
   }
 
   // Исправляет URL изображений в рецепте

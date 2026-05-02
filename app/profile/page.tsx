@@ -35,6 +35,14 @@ export default function ProfilePage() {
   });
   const router = useRouter();
 
+  const getSafeImageUrl = (url: string | null) => {
+    if (!url || url === "null" || url === "undefined") return "/avatar.jpg";
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
+      return url;
+    }
+    return `/${url}`;
+  };
+
   useEffect(() => {
     const loadUser = async () => {
       if (!authService.isAuthenticated()) {
@@ -138,23 +146,13 @@ export default function ProfilePage() {
           <div className="bg-white rounded-lg border border-umami-light-gray/50 p-8">
             <div className="flex items-center gap-6 mb-6">
               <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                {user.avatar_url ? (
                   <Image
                     width={96}
                     height={96}
-                    src={user.avatar_url}
+                    src={getSafeImageUrl(user.avatar_url)}
                     className="w-full h-full object-cover"
                     alt="avatar"
                   />
-                ) : (
-                  <Image
-                    width={96}
-                    height={96}
-                    src="/avatar.jpg"
-                    className="object-cover"
-                    alt="avatar"
-                  />
-                )}
               </div>
               <div className="flex-1">
                 <h1 className="font-nunito font-black text-2xl text-umami-dark-gray">

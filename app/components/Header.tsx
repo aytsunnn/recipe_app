@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthModal from "./AuthModal";
 import RegisterModal from "./RegisterModal";
 import { authService } from "../services/authService";
@@ -16,12 +17,25 @@ interface User {
 }
 
 export default function Header() {
+  return (
+    <Suspense fallback={<div className="h-20 w-full animate-pulse bg-gray-100" />}>
+      <HeaderContent />
+    </Suspense>
+  );
+}
+
+function HeaderContent() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams?.get("search") || "");
+
+  useEffect(() => {
+    setSearchQuery(searchParams?.get("search") || "");
+  }, [searchParams]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -53,12 +67,13 @@ export default function Header() {
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    const params = new URLSearchParams(searchParams?.toString() || "");
     if (searchQuery.trim()) {
-      // Перенаправляем на главную страницу с параметром поиска и открываем фильтры
-      window.location.href = `/?search=${encodeURIComponent(
-        searchQuery.trim()
-      )}&filters=true`;
+      params.set('search', searchQuery.trim());
+    } else {
+      params.delete('search');
     }
+    router.push(`/?${params.toString()}`, { scroll: false });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -68,25 +83,27 @@ export default function Header() {
   };
 
   const handleToggleFilters = () => {
-    // Создаем URL с параметрами
-    const params = new URLSearchParams();
-    
-    // Сохраняем текущий поисковый запрос, если он есть
-    if (searchQuery.trim()) {
-      params.set('search', searchQuery.trim());
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    if (params.get('filters') === 'true') {
+      params.delete('filters');
+    } else {
+      params.set('filters', 'true');
     }
-    
-    // Всегда включаем фильтры при клике на кнопку settings
-    params.set('filters', 'true');
-    
-    // Переходим на главную страницу с фильтрами
-    window.location.href = `/?${params.toString()}`;
+    router.push(`/?${params.toString()}`, { scroll: false });
   };
 
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault();
     setSearchQuery("");
-    window.location.href = "/";
+    router.push("/", { scroll: false });
+  };
+
+  const getSafeAvatarUrl = (url: string | null) => {
+    if (!url || url === "null" || url === "undefined") return "/avatar.jpg";
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
+      return url;
+    }
+    return `/${url}`;
   };
 
   return (
@@ -173,7 +190,7 @@ export default function Header() {
               <Image
                 width={36}
                 height={36}
-                src={user.avatar_url || "/avatar.jpg"}
+                src={getSafeAvatarUrl(user.avatar_url)}
                 alt="avatar"
                 className="w-10.25 h-10.25 right-0 top-0 border border-white rounded-full"
               />

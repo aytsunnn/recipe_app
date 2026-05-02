@@ -10,37 +10,52 @@ import FiltersPanel, { FilterValues } from "./FiltersPanel";
 
 export default function FeedOfPosts() {
   const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("search") || "";
-  const showFilters = searchParams.get("filters") === "true";
+  const searchQuery = searchParams?.get("search") || "";
+  const showFilters = searchParams?.get("filters") === "true";
   
-  // Инициализируем фильтры из URL параметров
-  const [filters, setFilters] = useState<FilterValues>(() => {
-    const initialFilters: FilterValues = {};
-    const kitchenId = searchParams.get("kitchen_id");
-    const categoryId = searchParams.get("category_id");
-    const celebrationId = searchParams.get("celebration_id");
-    const cookingId = searchParams.get("cooking_id");
-    const difficulty = searchParams.get("difficulty");
-    
-    if (kitchenId) initialFilters.kitchen_id = parseInt(kitchenId);
-    if (categoryId) initialFilters.category_id = parseInt(categoryId);
-    if (celebrationId) initialFilters.celebration_id = parseInt(celebrationId);
-    if (cookingId) initialFilters.cooking_id = parseInt(cookingId);
-    if (difficulty) initialFilters.difficulty = difficulty;
-    
-    return initialFilters;
-  });
+  const currentFilters: FilterValues = {};
+  const kitchenId = searchParams?.get("kitchen_id");
+  const categoryId = searchParams?.get("category_id");
+  const celebrationId = searchParams?.get("celebration_id");
+  const cookingId = searchParams?.get("cooking_id");
+  const difficulty = searchParams?.get("difficulty");
   
-  // Используем рекомендации если нет поиска и фильтров
-  const useRecommendations = !searchQuery && Object.keys(filters).length === 0;
+  if (kitchenId) currentFilters.kitchen_id = parseInt(kitchenId);
+  if (categoryId) currentFilters.category_id = parseInt(categoryId);
+  if (celebrationId) currentFilters.celebration_id = parseInt(celebrationId);
+  if (cookingId) currentFilters.cooking_id = parseInt(cookingId);
+  if (difficulty) currentFilters.difficulty = difficulty;
+  
+  const useRecommendations = !searchQuery && Object.keys(currentFilters).length === 0;
   
   const { recipes, loading, error, refetch, updateParams } = useRecipes({ 
     initialParams: { 
-      search: searchQuery,
-      ...filters
+      search: searchQuery || undefined,
+      ...currentFilters
     },
     useRecommendations
   });
+
+  // Обновляем параметры запроса при изменении URL
+  useEffect(() => {
+    updateParams({
+      search: searchQuery || undefined,
+      kitchen_id: currentFilters.kitchen_id || undefined,
+      category_id: currentFilters.category_id || undefined,
+      celebration_id: currentFilters.celebration_id || undefined,
+      cooking_id: currentFilters.cooking_id || undefined,
+      difficulty: currentFilters.difficulty || undefined,
+    });
+  }, [
+    searchParams,
+    updateParams,
+    searchQuery,
+    currentFilters.kitchen_id,
+    currentFilters.category_id,
+    currentFilters.celebration_id,
+    currentFilters.cooking_id,
+    currentFilters.difficulty
+  ]);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
@@ -69,13 +84,8 @@ export default function FeedOfPosts() {
   }, []);
 
   const handleApplyFilters = (newFilters: FilterValues) => {
-    setFilters(newFilters);
-    
-    // Просто обновляем параметры для загрузки рецептов, без изменения URL
-    updateParams({
-      search: searchQuery,
-      ...newFilters
-    });
+    // URL уже обновляется в FiltersPanel.tsx,
+    // useEffect выше отреагирует на изменение параметров и вызовет updateParams
   };
 
   if (loading) {

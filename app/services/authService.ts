@@ -37,7 +37,12 @@ class AuthService {
   // Заменяет localhost URL на публичный адрес
   private fixImageUrl(url: string | null): string | null {
     if (!url) return null;
-    return url.replace('http://127.0.0.1:9000', 'http://188.233.238.70:9000');
+    const fixed = url.replace('http://127.0.0.1:9000', 'http://188.233.238.70:9000');
+    // Validate the URL is actually usable
+    if (fixed.startsWith('http://') || fixed.startsWith('https://') || fixed.startsWith('/')) {
+      return fixed;
+    }
+    return null;
   }
 
   // Вход

@@ -193,27 +193,26 @@ export default function FeedCard({
     }
   };
 
+  const getSafeImageUrl = (url: string | null, fallback: string) => {
+    if (!url || url === "null" || url === "undefined") return fallback;
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
+      return url;
+    }
+    return `/${url}`;
+  };
+
   return (
     <div className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5">
       <div className="flex items-center gap-2.5">
         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-          {recipe.User.avatar_url ? (
             <Image
               width={40}
               height={40}
-              src={recipe.User.avatar_url}
+              src={getSafeImageUrl(recipe.User.avatar_url, "/avatar.jpg")}
               className="w-full h-full object-cover"
               alt="avatar"
             />
-          ) : (
-            <Image
-              width={40}
-              height={40}
-              src="/avatar.jpg"
-              className=" object-cover"
-              alt="avatar"
-            />
-          )}
+
         </div>
         <div className="w-full flex flex-col justify-between">
           <div className="flex flex-row justify-between items-center">
@@ -256,7 +255,7 @@ export default function FeedCard({
         <Image
           width={600}
           height={400}
-          src={recipe.image_url || "/placeholder.jpg"}
+          src={getSafeImageUrl(recipe.image_url, "/placeholder.jpg")}
           className="w-full h-full object-cover rounded-lg"
           alt="recipe"
           quality={95}
@@ -338,23 +337,13 @@ export default function FeedCard({
           ) : lastComment ? (
             <div className="flex gap-2">
               <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
-                {lastComment.User.avatar_url ? (
-                  <Image
-                    width={32}
-                    height={32}
-                    src={lastComment.User.avatar_url}
-                    className="w-full h-full object-cover"
-                    alt="avatar"
-                  />
-                ) : (
-                  <Image
-                    width={32}
-                    height={32}
-                    src="/avatar.jpg"
-                    className="object-cover"
-                    alt="avatar"
-                  />
-                )}
+                <Image
+                  width={32}
+                  height={32}
+                  src={getSafeImageUrl(lastComment.User.avatar_url, "/avatar.jpg")}
+                  className="w-full h-full object-cover"
+                  alt="avatar"
+                />
               </div>
               <div className="flex flex-col flex-1">
                 <p className="font-inter text-xs font-medium text-umami-dark-gray">
