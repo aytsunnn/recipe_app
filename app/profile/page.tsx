@@ -2,13 +2,37 @@
 
 import { useEffect, useState } from "react";
 import { authService, User } from "../services/authService";
+import { followService } from "../services/followService";
+import { userService } from "../services/userService";
+import { Recipe } from "../services/recipeService";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Header from "../components/Header";
+import FeedCard from "../components/FeedCard";
+
+interface UserStats {
+  followingCount: number;
+  followersCount: number;
+  recipesCount: number;
+  friendsCount: number;
+}
 
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
+  const [stats, setStats] = useState<UserStats>({
+    followingCount: 0,
+    followersCount: 0,
+    recipesCount: 0,
+    friendsCount: 0,
+  });
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    username: "",
+    email: "",
+  });
   const router = useRouter();
 
   useEffect(() => {
@@ -25,6 +49,31 @@ export default function ProfilePage() {
       }
 
       setUser(userData);
+
+      // Загружаем статистику
+      try {
+        const [following, followers, userRecipes] = await Promise.all([
+          followService.getFollowing(userData.id),
+          followService.getFollowers(userData.id),
+          userService.getRecipes(userData.id),
+        ]);
+
+        // Вычисляем друзей (взаимные подписки)
+        const followingIds = new Set(following.map((f: { id: string }) => f.id));
+        const friends = followers.filter((f: { id: string }) => followingIds.has(f.id));
+
+        setStats({
+          followingCount: following.length,
+          followersCount: followers.length,
+          recipesCount: userRecipes.length,
+          friendsCount: friends.length,
+        });
+
+        setRecipes(userRecipes);
+      } catch (error) {
+        console.error("Ошибка при загрузке данных профиля:", error);
+      }
+
       setIsLoading(false);
     };
 
@@ -34,6 +83,33 @@ export default function ProfilePage() {
   const handleLogout = () => {
     authService.removeToken();
     router.push("/");
+  };
+
+  const handleEditProfile = () => {
+    if (user) {
+      setEditFormData({
+        name: user.name,
+        username: user.username,
+        email: user.email || "",
+      });
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const updatedUser = await userService.updateProfile(editFormData);
+      // Обновляем пользователя с сохранением email
+      setUser({
+        ...updatedUser,
+        email: updatedUser.email || user?.email || "",
+      });
+      setIsEditModalOpen(false);
+      alert("Профиль успешно обновлен");
+    } catch (error) {
+      console.error("Ошибка при обновлении профиля:", error);
+      alert("Не удалось обновить профиль");
+    }
   };
 
   if (isLoading) {
@@ -93,19 +169,140 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Статистика */}
+            <div className="grid grid-cols-4 gap-4 mb-6 border-t border-b border-umami-light-gray/50 py-4">
+              <div className="text-center">
+                <p className="font-nunito font-bold text-2xl text-umami-dark-gray">
+                  {stats.recipesCount}
+                </p>
+                <p className="font-inter text-sm text-umami-gray">Постов</p>
+              </div>
+              <div className="text-center">
+                <p className="font-nunito font-bold text-2xl text-umami-dark-gray">
+                  {stats.followersCount}
+                </p>
+                <p className="font-inter text-sm text-umami-gray">Подписчиков</p>
+              </div>
+              <div className="text-center">
+                <p className="font-nunito font-bold text-2xl text-umami-dark-gray">
+                  {stats.followingCount}
+                </p>
+                <p className="font-inter text-sm text-umami-gray">Подписок</p>
+              </div>
+              <div className="text-center">
+                <p className="font-nunito font-bold text-2xl text-umami-dark-gray">
+                  {stats.friendsCount}
+                </p>
+                <p className="font-inter text-sm text-umami-gray">Друзей</p>
+              </div>
+            </div>
+
             <div className="border-t border-umami-light-gray/50 pt-6">
               <h2 className="font-nunito font-bold text-xl text-umami-dark-gray mb-4">
                 Настройки аккаунта
               </h2>
-              <button
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white font-nunito font-medium px-6 py-2 rounded-full transition-colors"
-              >
-                Выйти из аккаунта
-              </button>
+              <div className="flex gap-4">
+                <button
+                  onClick={handleEditProfile}
+                  className="bg-umami-green hover:bg-[#6A805E] text-white font-nunito font-medium px-6 py-2 rounded-full transition-colors"
+                >
+                  Редактировать профиль
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 hover:bg-red-600 text-white font-nunito font-medium px-6 py-2 rounded-full transition-colors"
+                >
+                  Выйти из аккаунта
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* Посты пользователя */}
+          {recipes.length > 0 && (
+            <div className="mt-8">
+              <h2 className="font-nunito font-bold text-2xl text-umami-dark-gray mb-4">
+                Мои рецепты
+              </h2>
+              <div className="flex flex-col gap-4">
+                {recipes.map((recipe) => (
+                  <FeedCard
+                    key={recipe.id}
+                    recipe={recipe}
+                    currentUserId={user.id}
+                    isFollowing={false}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Модальное окно редактирования профиля */}
+        {isEditModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-umami-dark-gray/80">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl">
+              <h2 className="font-nunito font-black text-2xl text-umami-dark-gray mb-6">
+                Редактировать профиль
+              </h2>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="font-inter text-sm text-umami-gray mb-1 block">
+                    Имя
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.name}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, name: e.target.value })
+                    }
+                    className="border w-full border-umami-light-gray rounded-full px-4 py-2 font-nunito text-sm text-umami-dark-gray focus:outline-none focus:border-umami-green"
+                  />
+                </div>
+                <div>
+                  <label className="font-inter text-sm text-umami-gray mb-1 block">
+                    Имя пользователя
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.username}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, username: e.target.value })
+                    }
+                    className="border w-full border-umami-light-gray rounded-full px-4 py-2 font-nunito text-sm text-umami-dark-gray focus:outline-none focus:border-umami-green"
+                  />
+                </div>
+                <div>
+                  <label className="font-inter text-sm text-umami-gray mb-1 block">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={editFormData.email}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, email: e.target.value })
+                    }
+                    className="border w-full border-umami-light-gray rounded-full px-4 py-2 font-nunito text-sm text-umami-dark-gray focus:outline-none focus:border-umami-green"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={handleSaveProfile}
+                  className="flex-1 bg-umami-green hover:bg-[#6A805E] text-white font-nunito font-medium px-6 py-2 rounded-full transition-colors"
+                >
+                  Сохранить
+                </button>
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="flex-1 bg-umami-gray hover:bg-gray-500 text-white font-nunito font-medium px-6 py-2 rounded-full transition-colors"
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

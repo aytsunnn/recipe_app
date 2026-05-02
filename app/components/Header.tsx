@@ -20,6 +20,8 @@ export default function Header() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -49,33 +51,80 @@ export default function Header() {
     window.location.reload();
   };
 
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (searchQuery.trim()) {
+      // Перенаправляем на главную страницу с параметром поиска и открываем фильтры
+      window.location.href = `/?search=${encodeURIComponent(
+        searchQuery.trim()
+      )}&filters=true`;
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleToggleFilters = () => {
+    const currentUrl = new URL(window.location.href);
+    if (showFilters) {
+      currentUrl.searchParams.delete('filters');
+    } else {
+      currentUrl.searchParams.set('filters', 'true');
+    }
+    window.location.href = currentUrl.toString();
+  };
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setSearchQuery("");
+    window.location.href = "/";
+  };
+
   return (
     <>
       <header className="flex justify-between items-center w-full">
-        <Link href="/" className="cursor-pointer">
+        <a onClick={handleLogoClick} className="cursor-pointer">
           <Image width={215} height={41} src="/logo.svg" alt="logo" />
-        </Link>
-        <div className="relative">
-          <input
-            className="w-125 h-10.25 pl-10 px-1.25 py-1.25 placeholder:text-umami-gray placeholder:font-nunito font-nunito text-sm text-umami-dark-gray placeholder:font-regular border border-umami-light-gray/50 rounded-3xl focus:outline-none focus:border-umami-green"
-            placeholder="Поиск"
-          />
-          <div className="absolute left-2.25 top-2.25">
-            <Image
-              width={23}
-              height={23}
-              src="/MagnifyingGlass.svg"
-              alt="search"
+        </a>
+        <div className="flex gap-2.5 items-center">
+          <div className="relative">
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="w-125 h-9.25 pl-10 pr-10 px-1.25 py-1.25 placeholder:text-umami-gray placeholder:font-nunito font-nunito text-base text-umami-dark-gray placeholder:font-regular border border-umami-light-gray/50 rounded-3xl focus:outline-none focus:border-umami-green"
+              placeholder="Поиск"
             />
-          </div>
-          <div className="absolute right-1.25 top-2">
-            <Link
-              href="/"
-              className="custom-button h-7.5 font-nunito font-medium bg-umami-green"
+            <div className="absolute left-2.5 top-1/2 -translate-y-1/2">
+              <Image
+                width={24}
+                height={24}
+                src="/MagnifyingGlass.svg"
+                alt="search"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleFilters}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2"
             >
-              Найти рецепт
-            </Link>
+              <Image
+                width={24}
+                height={24}
+                src="/SlidersHorizontal.svg"
+                alt="settings"
+              />
+            </button>
           </div>
+          <button
+            onClick={handleSearch}
+            className="custom-button h-9.25 font-nunito font-medium bg-umami-green text-sm"
+          >
+            Найти рецепт
+          </button>
         </div>
         {/* для неавторизованных пользователей */}
         {!user && !isLoading && (
@@ -110,7 +159,7 @@ export default function Header() {
                 className="w-5.25 h-5.25"
               />
             </Link>
-            <Link 
+            <Link
               href="/profile"
               className="bg-umami-orange custom-button h-10.25 flex items-center justify-center font-medium font-nunito gap-5 pr-0"
             >

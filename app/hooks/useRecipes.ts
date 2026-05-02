@@ -6,10 +6,11 @@ import { recipeService, Recipe, GetRecipesParams } from '../services/recipeServi
 interface UseRecipesOptions {
   initialParams?: GetRecipesParams;
   autoFetch?: boolean;
+  useRecommendations?: boolean;
 }
 
 export function useRecipes(options: UseRecipesOptions = {}) {
-  const { initialParams = {}, autoFetch = true } = options;
+  const { initialParams = {}, autoFetch = true, useRecommendations = false } = options;
   
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +26,12 @@ export function useRecipes(options: UseRecipesOptions = {}) {
       setLoading(true);
       setError(null);
       const currentParams = fetchParams || params;
-      const data = await recipeService.getAll(currentParams);
+      
+      // Используем рекомендации если флаг установлен и нет параметров
+      const data = useRecommendations && Object.keys(currentParams).length === 0
+        ? await recipeService.getRecommendations()
+        : await recipeService.getAll(currentParams);
+        
       if (isMounted.current) {
         setRecipes(data);
       }
@@ -38,7 +44,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
         setLoading(false);
       }
     }
-  }, [params]);
+  }, [params, useRecommendations]);
 
   const refetch = useCallback(() => {
     fetchRecipes();

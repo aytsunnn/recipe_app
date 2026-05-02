@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import LeftPart from "./MainScreen/NavigationLeftPart";
 import RightPart from "./MainScreen/NewsRightPart";
 import MainPart from "./MainScreen/FeedOfPosts";
@@ -11,7 +12,9 @@ export default function Main() {
         <LeftPart />
       </div>
       <div className="flex w-169.5">
-        <MainPart />
+        <Suspense fallback={<div className="text-umami-gray">Загрузка...</div>}>
+          <MainPart />
+        </Suspense>
       </div>
       <div className="flex w-63.75">
         <RightPart />

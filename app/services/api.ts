@@ -17,6 +17,8 @@ class ApiClient {
     // Получаем токен из localStorage
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     
+    console.log(`[API] Запрос: ${options?.method || 'GET'} ${url}`);
+    
     try {
       const response = await fetch(url, {
         ...options,
@@ -28,8 +30,11 @@ class ApiClient {
         mode: 'cors', // Явно указываем CORS режим
       });
 
+      console.log(`[API] Ответ: ${response.status} ${response.statusText} для ${url}`);
+
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`[API] Ошибка: ${errorText}`);
         
         // Пытаемся распарсить JSON ошибку
         try {
@@ -43,10 +48,12 @@ class ApiClient {
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
+        console.log(`[API] Данные получены:`, data);
         return data;
       }
       
       // Если ответ не JSON, возвращаем пустой объект
+      console.warn(`[API] Ответ не JSON для ${url}`);
       return {} as T;
     } catch (error) {
       if (error instanceof Error) {

@@ -41,26 +41,10 @@ export default function RegisterModal({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        handleClose();
-      }
-    };
-
-    if (isOpen) {
-      setIsAnimating(true);
-      document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden";
-    } else {
-      setIsAnimating(false);
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   const resetForm = () => {
     setFormData({
@@ -73,10 +57,29 @@ export default function RegisterModal({
     setFieldErrors({});
   };
 
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose();
+      }
+    };
+
+    let animationTimeout: NodeJS.Timeout;
+    
+    if (isOpen) {
+      animationTimeout = setTimeout(() => setIsAnimating(true), 0);
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
+    } else {
+      setIsAnimating(false);
+    }
+
+    return () => {
+      if (animationTimeout) clearTimeout(animationTimeout);
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
   const handleSwitchToLogin = () => {
     resetForm();

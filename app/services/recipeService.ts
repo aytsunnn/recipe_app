@@ -100,6 +100,11 @@ class RecipeService {
   async delete(id: string): Promise<void> {
     return apiClient.delete(`/recipes/${id}`);
   }
+
+  async getRecommendations(): Promise<Recipe[]> {
+    const recipes = await apiClient.get<Recipe[]>('/recipes/recommendations');
+    return recipes.map(recipe => this.fixRecipeImages(recipe));
+  }
 }
 
 export const recipeService = new RecipeService();

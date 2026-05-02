@@ -77,35 +77,53 @@ export default function FeedCard({
 
   // Синхронизируем состояние following с пропсом isFollowing
   useEffect(() => {
-    setFollowing(isFollowing);
-  }, [isFollowing]);
+    if (following !== isFollowing) {
+      setFollowing(isFollowing);
+    }
+  }, [isFollowing, following]);
 
   // Обновляем состояние лайка при изменении currentUserId или данных рецепта
   useEffect(() => {
     const liked = currentUserId
       ? recipe.Likes?.some((like) => like.user_id === currentUserId)
       : false;
-    setIsLiked(liked);
-  }, [currentUserId, recipe.Likes]);
+    if (isLiked !== liked) {
+      setIsLiked(liked);
+    }
+  }, [currentUserId, recipe.Likes, isLiked]);
 
   // Загружаем последний комментарий, если нужно показывать комментарии
   useEffect(() => {
     if (showComments && commentsCount > 0) {
-      setLoadingComment(true);
-      commentService
-        .getByRecipe(recipe.id)
-        .then((comments) => {
-          if (comments.length > 0) {
+      let cancelled = false;
+      
+      const loadComment = async () => {
+        if (!cancelled) {
+          setLoadingComment(true);
+        }
+        
+        try {
+          const comments = await commentService.getByRecipe(recipe.id);
+          if (!cancelled && comments.length > 0) {
             // Берем последний комментарий
             setLastComment(comments[comments.length - 1]);
           }
-        })
-        .catch((error) => {
-          console.error("Ошибка при загрузке комментариев:", error);
-        })
-        .finally(() => {
-          setLoadingComment(false);
-        });
+        } catch (error) {
+          if (!cancelled) {
+            console.error("Ошибка при загрузке комментариев:", error);
+          }
+        } finally {
+          if (!cancelled) {
+            setLoadingComment(false);
+          }
+        }
+      };
+      
+      loadComment();
+      
+      return () => {
+        cancelled = true;
+      };
     }
   }, [showComments, recipe.id, commentsCount]);
 
