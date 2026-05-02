@@ -9,6 +9,9 @@ interface UseRecipesOptions {
   useRecommendations?: boolean;
 }
 
+const hasActiveParams = (params: GetRecipesParams) =>
+  Object.values(params).some((value) => value !== undefined && value !== null && value !== '');
+
 export function useRecipes(options: UseRecipesOptions = {}) {
   const { initialParams = {}, autoFetch = true, useRecommendations = false } = options;
   
@@ -27,8 +30,8 @@ export function useRecipes(options: UseRecipesOptions = {}) {
       setError(null);
       const currentParams = fetchParams || params;
       
-      // Используем рекомендации если флаг установлен и нет параметров
-      const data = useRecommendations && Object.keys(currentParams).length === 0
+      // Используем рекомендации на главной, если нет активного поиска и фильтров.
+      const data = useRecommendations && !hasActiveParams(currentParams)
         ? await recipeService.getRecommendations()
         : await recipeService.getAll(currentParams);
         

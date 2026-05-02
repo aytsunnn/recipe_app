@@ -106,8 +106,13 @@ class RecipeService {
   }
 
   async getRecommendations(): Promise<Recipe[]> {
-    const recipes = await apiClient.get<Recipe[]>('/recipes/recommendations');
-    return recipes.map(recipe => this.fixRecipeImages(recipe));
+    try {
+      const recipes = await apiClient.get<Recipe[]>('/recipes/recommendations');
+      return recipes.map(recipe => this.fixRecipeImages(recipe));
+    } catch (error) {
+      console.error('Ошибка загрузки рекомендаций, показываем общую ленту:', error);
+      return this.getAll();
+    }
   }
 }
 

@@ -8,27 +8,27 @@ export interface Favorite {
   createdAt: string;
 }
 
+type FavoriteEntry = Favorite | { id: string; recipe_id?: string };
+
 class FavoriteService {
-  // Добавить в избранное
   async addToFavorites(recipeId: string): Promise<Favorite> {
-    return apiClient.post<Favorite>(`/favorites`, { recipe_id: recipeId });
+    return apiClient.post<Favorite>(`/recipes/${recipeId}/favorite`, {
+      is_downloaded: false,
+    });
   }
 
-  // Удалить из избранного
   async removeFromFavorites(recipeId: string): Promise<void> {
-    return apiClient.delete(`/favorites/${recipeId}`);
+    return apiClient.delete(`/recipes/${recipeId}/favorite`);
   }
 
-  // Получить избранные рецепты пользователя
-  async getUserFavorites(userId: string): Promise<Favorite[]> {
-    return apiClient.get<Favorite[]>(`/users/${userId}/favorites`);
+  async getUserFavorites(): Promise<FavoriteEntry[]> {
+    return apiClient.get<FavoriteEntry[]>('/favorites');
   }
 
-  // Проверить, добавлен ли рецепт в избранное
   async checkIsFavorite(recipeId: string): Promise<boolean> {
     try {
-      const favorites = await apiClient.get<Favorite[]>('/favorites');
-      return favorites.some(fav => fav.recipe_id === recipeId);
+      const favorites = await this.getUserFavorites();
+      return favorites.some((fav) => (fav.recipe_id ?? fav.id) === recipeId);
     } catch (error) {
       console.error('Ошибка проверки избранного:', error);
       return false;
