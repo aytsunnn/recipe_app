@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { likeService } from "../services/likeService";
 import { commentService, Comment } from "../services/commentService";
 import { followService } from "../services/followService";
+import { favoriteService } from "../services/favoriteService";
 
 interface Recipe {
   id: string;
@@ -75,6 +76,8 @@ export default function FeedCard({
   );
   const [lastComment, setLastComment] = useState<Comment | null>(null);
   const [loadingComment, setLoadingComment] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [loadingFavorite, setLoadingFavorite] = useState(false);
 
   // Синхронизируем состояние following с пропсом isFollowing
   useEffect(() => {
@@ -88,6 +91,35 @@ export default function FeedCard({
       : false;
     setIsLiked(liked);
   }, [currentUserId, recipe.Likes]);
+
+  // Проверяем, добавлен ли рецепт в избранное
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkFavorite = async () => {
+      if (!isAuthenticated) {
+        setIsFavorite(false);
+        return;
+      }
+
+      try {
+        const isFav = await favoriteService.checkIsFavorite(recipe.id);
+        if (!cancelled) {
+          setIsFavorite(isFav);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Ошибка при проверке избранного:", error);
+        }
+      }
+    };
+
+    checkFavorite();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [recipe.id, isAuthenticated]);
 
   // Загружаем последний комментарий
   useEffect(() => {
@@ -197,6 +229,38 @@ export default function FeedCard({
     }
   };
 
+  const handleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      alert("Необходимо авторизоваться");
+      return;
+    }
+
+    if (loadingFavorite) return;
+
+    const previousIsFavorite = isFavorite;
+
+    try {
+      setLoadingFavorite(true);
+      
+      if (isFavorite) {
+        setIsFavorite(false);
+        await favoriteService.removeFromFavorites(recipe.id);
+      } else {
+        setIsFavorite(true);
+        await favoriteService.addToFavorites(recipe.id);
+      }
+    } catch (error) {
+      console.error("Ошибка при обработке избранного:", error);
+      setIsFavorite(previousIsFavorite);
+      alert("Не удалось обработать избранное. Попробуйте еще раз.");
+    } finally {
+      setLoadingFavorite(false);
+    }
+  };
+
   const getSafeImageUrl = (url: string | null, fallback: string) => {
     if (!url || url === "null" || url === "undefined") return fallback;
     if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
@@ -265,11 +329,19 @@ export default function FeedCard({
           quality={95}
         />
         <div className="absolute top-2.5 right-2.5">
-          <button className="bg-white w-9 h-9 rounded-full flex items-center justify-center">
+          <button 
+            onClick={handleFavorite}
+            disabled={loadingFavorite}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+              isFavorite 
+                ? 'bg-umami-orange' 
+                : 'bg-white'
+            }`}
+          >
             <Image
               width={20}
               height={20}
-              src="/Favorites.svg"
+              src={isFavorite ? "/FavoritesCurrent.svg" : "/Favorites.svg"}
               alt="favorites"
             />
           </button>

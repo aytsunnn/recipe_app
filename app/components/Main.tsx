@@ -9,7 +9,9 @@ export default function Main() {
   return (
     <div className="w-full gap-5 flex flex-row">
       <div className="flex w-55.75">
-        <LeftPart />
+        <Suspense fallback={<div className="text-umami-gray">Загрузка...</div>}>
+          <LeftPart />
+        </Suspense>
       </div>
       <div className="flex w-169.5">
         <Suspense fallback={<div className="text-umami-gray">Загрузка...</div>}>

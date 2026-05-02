@@ -15,13 +15,17 @@ export default function FeedOfPosts() {
   
   const currentFilters: FilterValues = {};
   const kitchenId = searchParams?.get("kitchen_id");
-  const categoryId = searchParams?.get("category_id");
+  const categoryIds = searchParams?.get("category_id");
   const celebrationId = searchParams?.get("celebration_id");
   const cookingId = searchParams?.get("cooking_id");
   const difficulty = searchParams?.get("difficulty");
   
   if (kitchenId) currentFilters.kitchen_id = parseInt(kitchenId);
-  if (categoryId) currentFilters.category_id = parseInt(categoryId);
+  // Для множественного выбора категорий берем первую (API поддерживает только одну)
+  if (categoryIds) {
+    const firstCategoryId = categoryIds.split(',')[0];
+    currentFilters.category_id = parseInt(firstCategoryId);
+  }
   if (celebrationId) currentFilters.celebration_id = parseInt(celebrationId);
   if (cookingId) currentFilters.cooking_id = parseInt(cookingId);
   if (difficulty) currentFilters.difficulty = difficulty;
