@@ -68,13 +68,19 @@ export default function Header() {
   };
 
   const handleToggleFilters = () => {
-    const currentUrl = new URL(window.location.href);
-    if (showFilters) {
-      currentUrl.searchParams.delete('filters');
-    } else {
-      currentUrl.searchParams.set('filters', 'true');
+    // Создаем URL с параметрами
+    const params = new URLSearchParams();
+    
+    // Сохраняем текущий поисковый запрос, если он есть
+    if (searchQuery.trim()) {
+      params.set('search', searchQuery.trim());
     }
-    window.location.href = currentUrl.toString();
+    
+    // Всегда включаем фильтры при клике на кнопку settings
+    params.set('filters', 'true');
+    
+    // Переходим на главную страницу с фильтрами
+    window.location.href = `/?${params.toString()}`;
   };
 
   const handleLogoClick = (e: React.MouseEvent) => {

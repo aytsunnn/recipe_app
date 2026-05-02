@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   metaService,
   Kitchen,
@@ -24,7 +25,26 @@ export interface FilterValues {
 }
 
 export default function FiltersPanel({ onApplyFilters }: FiltersPanelProps) {
-  const [filters, setFilters] = useState<FilterValues>({});
+  const searchParams = useSearchParams();
+  
+  // Инициализируем фильтры из URL параметров
+  const [filters, setFilters] = useState<FilterValues>(() => {
+    const initialFilters: FilterValues = {};
+    const kitchenId = searchParams.get("kitchen_id");
+    const categoryId = searchParams.get("category_id");
+    const celebrationId = searchParams.get("celebration_id");
+    const cookingId = searchParams.get("cooking_id");
+    const difficulty = searchParams.get("difficulty");
+    
+    if (kitchenId) initialFilters.kitchen_id = parseInt(kitchenId);
+    if (categoryId) initialFilters.category_id = parseInt(categoryId);
+    if (celebrationId) initialFilters.celebration_id = parseInt(celebrationId);
+    if (cookingId) initialFilters.cooking_id = parseInt(cookingId);
+    if (difficulty) initialFilters.difficulty = difficulty;
+    
+    return initialFilters;
+  });
+  
   const [kitchens, setKitchens] = useState<Kitchen[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [celebrations, setCelebrations] = useState<Celebration[]>([]);

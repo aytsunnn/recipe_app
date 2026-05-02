@@ -53,11 +53,6 @@ export default function FeedCard({
   currentUserId,
   showComments = false,
 }: FeedCardProps) {
-  const [following, setFollowing] = useState(isFollowing);
-  const [justFollowed, setJustFollowed] = useState(false); // Отслеживаем подписку в текущей сессии
-  const [lastComment, setLastComment] = useState<Comment | null>(null);
-  const [loadingComment, setLoadingComment] = useState(false);
-
   // Проверяем, является ли текущий пользователь автором поста
   const isOwnPost = currentUserId && currentUserId === recipe.user_id;
 
@@ -70,27 +65,27 @@ export default function FeedCard({
     : false;
 
   const [isLiked, setIsLiked] = useState(isLikedByUser);
+  const [following, setFollowing] = useState(isFollowing);
+  const [justFollowed, setJustFollowed] = useState(false);
   const [likesCount, setLikesCount] = useState(
     recipe._count?.Likes ?? recipe.Likes?.length ?? 0
   );
+  const [lastComment, setLastComment] = useState<Comment | null>(null);
+  const [loadingComment, setLoadingComment] = useState(false);
   const commentsCount = recipe._count?.Comments ?? recipe.Comments?.length ?? 0;
 
   // Синхронизируем состояние following с пропсом isFollowing
   useEffect(() => {
-    if (following !== isFollowing) {
-      setFollowing(isFollowing);
-    }
-  }, [isFollowing, following]);
+    setFollowing(isFollowing);
+  }, [isFollowing]);
 
   // Обновляем состояние лайка при изменении currentUserId или данных рецепта
   useEffect(() => {
     const liked = currentUserId
       ? recipe.Likes?.some((like) => like.user_id === currentUserId)
       : false;
-    if (isLiked !== liked) {
-      setIsLiked(liked);
-    }
-  }, [currentUserId, recipe.Likes, isLiked]);
+    setIsLiked(liked);
+  }, [currentUserId, recipe.Likes]);
 
   // Загружаем последний комментарий, если нужно показывать комментарии
   useEffect(() => {
@@ -98,11 +93,10 @@ export default function FeedCard({
       let cancelled = false;
       
       const loadComment = async () => {
-        if (!cancelled) {
-          setLoadingComment(true);
-        }
-        
         try {
+          if (!cancelled) {
+            setLoadingComment(true);
+          }
           const comments = await commentService.getByRecipe(recipe.id);
           if (!cancelled && comments.length > 0) {
             // Берем последний комментарий

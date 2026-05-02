@@ -64,14 +64,14 @@ export default function RegisterModal({
       }
     };
 
-    let animationTimeout: NodeJS.Timeout;
+    let animationTimeout: NodeJS.Timeout | undefined;
     
     if (isOpen) {
       animationTimeout = setTimeout(() => setIsAnimating(true), 0);
       document.addEventListener("keydown", handleEscape);
       document.body.style.overflow = "hidden";
     } else {
-      setIsAnimating(false);
+      animationTimeout = setTimeout(() => setIsAnimating(false), 0);
     }
 
     return () => {

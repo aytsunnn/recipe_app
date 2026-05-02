@@ -12,7 +12,24 @@ export default function FeedOfPosts() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
   const showFilters = searchParams.get("filters") === "true";
-  const [filters, setFilters] = useState<FilterValues>({});
+  
+  // Инициализируем фильтры из URL параметров
+  const [filters, setFilters] = useState<FilterValues>(() => {
+    const initialFilters: FilterValues = {};
+    const kitchenId = searchParams.get("kitchen_id");
+    const categoryId = searchParams.get("category_id");
+    const celebrationId = searchParams.get("celebration_id");
+    const cookingId = searchParams.get("cooking_id");
+    const difficulty = searchParams.get("difficulty");
+    
+    if (kitchenId) initialFilters.kitchen_id = parseInt(kitchenId);
+    if (categoryId) initialFilters.category_id = parseInt(categoryId);
+    if (celebrationId) initialFilters.celebration_id = parseInt(celebrationId);
+    if (cookingId) initialFilters.cooking_id = parseInt(cookingId);
+    if (difficulty) initialFilters.difficulty = difficulty;
+    
+    return initialFilters;
+  });
   
   // Используем рекомендации если нет поиска и фильтров
   const useRecommendations = !searchQuery && Object.keys(filters).length === 0;
@@ -53,6 +70,8 @@ export default function FeedOfPosts() {
 
   const handleApplyFilters = (newFilters: FilterValues) => {
     setFilters(newFilters);
+    
+    // Просто обновляем параметры для загрузки рецептов, без изменения URL
     updateParams({
       search: searchQuery,
       ...newFilters
