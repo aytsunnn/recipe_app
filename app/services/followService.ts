@@ -1,11 +1,11 @@
 // app/services/followService.ts
 import { apiClient } from './api';
 
-export interface Follow {
+export interface FollowUser {
   id: string;
-  follower_id: string;
-  following_id: string;
-  createdAt: string;
+  username: string;
+  name: string;
+  avatar_url: string | null;
 }
 
 class FollowService {
@@ -36,13 +36,13 @@ class FollowService {
   }
 
   // Получить подписчиков пользователя
-  async getFollowers(userId: string): Promise<Follow[]> {
-    return apiClient.get<Follow[]>(`/users/${userId}/followers`);
+  async getFollowers(userId: string): Promise<FollowUser[]> {
+    return apiClient.get<FollowUser[]>(`/users/${userId}/followers`);
   }
 
   // Получить подписки пользователя
-  async getFollowing(userId: string): Promise<Follow[]> {
-    return apiClient.get<Follow[]>(`/users/${userId}/following`);
+  async getFollowing(userId: string): Promise<FollowUser[]> {
+    return apiClient.get<FollowUser[]>(`/users/${userId}/following`);
   }
 }
 

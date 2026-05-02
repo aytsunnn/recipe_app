@@ -42,11 +42,19 @@ function HeaderContent() {
       if (authService.isAuthenticated()) {
         const userData = await authService.getCurrentUser();
         setUser(userData);
+      } else {
+        setUser(null);
       }
       setIsLoading(false);
     };
 
     loadUser();
+
+    // Слушаем изменения авторизации
+    window.addEventListener('auth-change', loadUser);
+    return () => {
+      window.removeEventListener('auth-change', loadUser);
+    };
   }, []);
 
   const handleSwitchToRegister = () => {
@@ -61,8 +69,8 @@ function HeaderContent() {
 
   const handleLogout = () => {
     authService.removeToken();
-    setUser(null);
-    window.location.reload();
+    authService.dispatchAuthChange();
+    router.push("/");
   };
 
   const handleSearch = (e?: React.FormEvent) => {

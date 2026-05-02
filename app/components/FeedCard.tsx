@@ -70,9 +70,11 @@ export default function FeedCard({
   const [likesCount, setLikesCount] = useState(
     recipe._count?.Likes ?? recipe.Likes?.length ?? 0
   );
+  const [localCommentsCount, setLocalCommentsCount] = useState(
+    recipe._count?.Comments ?? recipe.Comments?.length ?? 0
+  );
   const [lastComment, setLastComment] = useState<Comment | null>(null);
   const [loadingComment, setLoadingComment] = useState(false);
-  const commentsCount = recipe._count?.Comments ?? recipe.Comments?.length ?? 0;
 
   // Синхронизируем состояние following с пропсом isFollowing
   useEffect(() => {
@@ -87,39 +89,41 @@ export default function FeedCard({
     setIsLiked(liked);
   }, [currentUserId, recipe.Likes]);
 
-  // Загружаем последний комментарий, если нужно показывать комментарии
+  // Загружаем последний комментарий
   useEffect(() => {
-    if (showComments && commentsCount > 0) {
-      let cancelled = false;
-      
-      const loadComment = async () => {
-        try {
-          if (!cancelled) {
-            setLoadingComment(true);
-          }
-          const comments = await commentService.getByRecipe(recipe.id);
-          if (!cancelled && comments.length > 0) {
-            // Берем последний комментарий
-            setLastComment(comments[comments.length - 1]);
-          }
-        } catch (error) {
-          if (!cancelled) {
-            console.error("Ошибка при загрузке комментариев:", error);
-          }
-        } finally {
-          if (!cancelled) {
-            setLoadingComment(false);
+    let cancelled = false;
+
+    const loadComment = async () => {
+      try {
+        if (!cancelled) {
+          setLoadingComment(true);
+        }
+        const comments = await commentService.getByRecipe(recipe.id);
+        if (!cancelled) {
+          setLocalCommentsCount(comments.length);
+          if (comments.length > 0) {
+            // Берем самый новый комментарий
+            setLastComment(comments[0]);
           }
         }
-      };
-      
-      loadComment();
-      
-      return () => {
-        cancelled = true;
-      };
-    }
-  }, [showComments, recipe.id, commentsCount]);
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Ошибка при загрузке комментариев:", error);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingComment(true); // Сохраняем true чтобы не мигало, или false если загрузка окончена
+          setLoadingComment(false);
+        }
+      }
+    };
+
+    loadComment();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [recipe.id]);
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -205,13 +209,13 @@ export default function FeedCard({
     <div className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5">
       <div className="flex items-center gap-2.5">
         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-            <Image
-              width={40}
-              height={40}
-              src={getSafeImageUrl(recipe.User.avatar_url, "/avatar.jpg")}
-              className="w-full h-full object-cover"
-              alt="avatar"
-            />
+          <Image
+            width={40}
+            height={40}
+            src={getSafeImageUrl(recipe.User.avatar_url, "/avatar.jpg")}
+            className="w-full h-full object-cover"
+            alt="avatar"
+          />
 
         </div>
         <div className="w-full flex flex-col justify-between">
@@ -323,12 +327,12 @@ export default function FeedCard({
               alt="comments"
             />
           </Link>
-          <p className="font-inter text-sm text-umami-gray">{commentsCount}</p>
+          <p className="font-inter text-sm text-umami-gray">{localCommentsCount}</p>
         </div>
       </div>
 
       {/* Блок последнего комментария */}
-      {showComments && commentsCount > 0 && (
+      {localCommentsCount > 0 && (
         <div className="border-t border-umami-light-gray/50 pt-2.5">
           {loadingComment ? (
             <p className="font-inter text-xs text-umami-gray">
@@ -340,14 +344,14 @@ export default function FeedCard({
                 <Image
                   width={32}
                   height={32}
-                  src={getSafeImageUrl(lastComment.User.avatar_url, "/avatar.jpg")}
+                  src={getSafeImageUrl(lastComment.Author.avatar_url, "/avatar.jpg")}
                   className="w-full h-full object-cover"
                   alt="avatar"
                 />
               </div>
               <div className="flex flex-col flex-1">
                 <p className="font-inter text-xs font-medium text-umami-dark-gray">
-                  {lastComment.User.name}
+                  {lastComment.Author.username}
                 </p>
                 <p className="font-inter text-sm text-umami-gray">
                   {lastComment.content}

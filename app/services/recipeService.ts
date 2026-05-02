@@ -80,10 +80,10 @@ class RecipeService {
         }
       });
     }
-    
+
     const queryString = queryParams.toString();
     const endpoint = `/recipes${queryString ? `?${queryString}` : ''}`;
-    
+
     const recipes = await apiClient.get<Recipe[]>(endpoint);
     return recipes.map(recipe => this.fixRecipeImages(recipe));
   }

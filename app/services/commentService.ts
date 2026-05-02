@@ -8,10 +8,9 @@ export interface Comment {
   content: string;
   createdAt: string;
   updatedAt: string;
-  User: {
+  Author: {
     id: string;
     username: string;
-    name: string;
     avatar_url: string | null;
   };
 }
@@ -31,9 +30,9 @@ class CommentService {
   private fixCommentImages(comment: Comment): Comment {
     return {
       ...comment,
-      User: {
-        ...comment.User,
-        avatar_url: this.fixImageUrl(comment.User.avatar_url),
+      Author: {
+        ...comment.Author,
+        avatar_url: this.fixImageUrl(comment.Author.avatar_url),
       },
     };
   }

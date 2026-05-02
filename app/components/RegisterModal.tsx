@@ -164,8 +164,8 @@ export default function RegisterModal({
       authService.saveToken(response.access_token);
 
       // Успешная регистрация
+      authService.dispatchAuthChange();
       onClose();
-      window.location.reload(); // Перезагрузка для обновления состояния
     } catch (error) {
       if (error instanceof Error) {
         setFieldErrors({ general: error.message });
