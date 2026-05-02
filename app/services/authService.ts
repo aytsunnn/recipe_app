@@ -105,6 +105,13 @@ class AuthService {
       return null;
     }
   }
+
+  // Уведомление об изменении состояния авторизации
+  dispatchAuthChange(): void {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('auth-change'));
+    }
+  }
 }
 
 export const authService = new AuthService();

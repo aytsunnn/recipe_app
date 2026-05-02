@@ -110,8 +110,8 @@ export default function AuthModal({
       authService.saveToken(response.access_token);
 
       // Успешная авторизация
+      authService.dispatchAuthChange();
       onClose();
-      window.location.reload(); // Перезагрузка для обновления состояния
     } catch (error) {
       console.error('Login error:', error);
       if (error instanceof Error) {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Nunito } from "next/font/google";
 import "./globals.css";
+import Header from "./components/Header";
 
 // Настройка шрифта Nunito
 const nunito = Nunito({
@@ -31,7 +32,12 @@ export default function RootLayout({
   return (
     <html lang="ru" className={`${nunito.variable} ${inter.variable}`}>
       <body className="font-sans">
-        {children}
+        <main className="h-min-screen w-full justify-center flex">
+          <div className="w-299 pt-12.5 gap-12.5 flex flex-col">
+            <Header />
+            {children}
+          </div>
+        </main>
       </body>
     </html>
   );
