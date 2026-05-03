@@ -21,6 +21,13 @@ export interface Cooking {
   name: string;
 }
 
+export interface Ingredient {
+  id: string;
+  name: string;
+  unit_of_measurement: string;
+  description?: string;
+}
+
 class MetaService {
   async getKitchens(): Promise<Kitchen[]> {
     try {
@@ -70,13 +77,25 @@ class MetaService {
     }
   }
 
+  async getIngredients(search?: string): Promise<Ingredient[]> {
+    try {
+      const query = search ? `?search=${encodeURIComponent(search)}` : "";
+      const data = await apiClient.get<Ingredient[]>(`/meta/ingredients${query}`);
+      return data;
+    } catch (error) {
+      console.error("[MetaService] Ошибка загрузки ингредиентов:", error);
+      return [];
+    }
+  }
+
   async getAll() {
     console.log('[MetaService] Загрузка всех метаданных...');
-    const [kitchens, categories, celebrations, cookings] = await Promise.all([
+    const [kitchens, categories, celebrations, cookings, ingredients] = await Promise.all([
       this.getKitchens(),
       this.getCategories(),
       this.getCelebrations(),
       this.getCookings(),
+      this.getIngredients(),
     ]);
     
     return {
@@ -84,6 +103,7 @@ class MetaService {
       categories,
       celebrations,
       cookings,
+      ingredients,
     };
   }
 }

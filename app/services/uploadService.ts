@@ -10,10 +10,24 @@ interface UploadResponse {
 }
 
 class UploadService {
+  private readonly storageBaseUrl =
+    process.env.NEXT_PUBLIC_STORAGE_URL || "http://188.233.238.70:9001";
+
   private toPublicUrl(value: string): string {
-    if (value.startsWith("http://") || value.startsWith("https://")) return value;
-    if (value.startsWith("/")) return value;
-    return `/${value}`;
+    const normalized = value.trim();
+    if (!normalized) return normalized;
+
+    if (normalized.startsWith("http://127.0.0.1:9000")) {
+      return normalized.replace("http://127.0.0.1:9000", this.storageBaseUrl);
+    }
+
+    if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
+      return normalized;
+    }
+
+    const base = this.storageBaseUrl.replace(/\/+$/, "");
+    const path = normalized.replace(/^\/+/, "");
+    return `${base}/${path}`;
   }
 
   async uploadImage(file: File, folder: "recipes" | "steps" | "avatars"): Promise<string> {

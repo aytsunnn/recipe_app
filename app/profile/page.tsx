@@ -10,7 +10,7 @@ import { followService, FollowUser } from "../services/followService";
 import { Recipe, recipeService } from "../services/recipeService";
 import { uploadService } from "../services/uploadService";
 import { userService } from "../services/userService";
-import { metaService, Category, Celebration, Cooking, Kitchen } from "../services/metaService";
+import { metaService, Category, Celebration, Cooking, Ingredient, Kitchen } from "../services/metaService";
 
 interface UserStats {
   followingCount: number;
@@ -19,8 +19,10 @@ interface UserStats {
 }
 
 interface IngredientRow {
-  id: number;
+  ingredient_id: number | null;
+  ingredient_name: string;
   quantity: number;
+  unit_of_measurement: string;
   note: string;
 }
 
@@ -53,6 +55,25 @@ interface RecipeFormData {
   steps: StepRow[];
 }
 
+const DIFFICULTY_TO_API: Record<string, "1" | "2" | "3" | "4" | "5"> = {
+  "Легко": "1",
+  "Средне": "3",
+  "Сложно": "5",
+  easy: "1",
+  medium: "3",
+  hard: "5",
+  "1": "1",
+  "2": "2",
+  "3": "3",
+  "4": "4",
+  "5": "5",
+};
+
+const normalizeDifficulty = (value: string | null | undefined): "1" | "2" | "3" | "4" | "5" => {
+  if (!value) return "1";
+  return DIFFICULTY_TO_API[value] || "1";
+};
+
 const navItems = [
   { href: "/profile", label: "Личный кабинет", icon: "/User.svg", active: true },
   { href: "/favorites", label: "Избранное", icon: "/Favorites.svg" },
@@ -65,7 +86,7 @@ const navItems = [
 const emptyRecipeForm: RecipeFormData = {
   title: "",
   description: "",
-  difficulty: "Легко",
+  difficulty: "1",
   portion: 1,
   cooking_time: 30,
   calorific: 0,
@@ -80,8 +101,8 @@ const emptyRecipeForm: RecipeFormData = {
   celebration_id: null,
   cooking_id: null,
   categories: [],
-  ingredients: [{ id: 0, quantity: 1, note: "" }],
-  steps: [{ description: "", image_url: "", image_file: null, image_preview: "" }],
+      ingredients: [{ ingredient_id: null, ingredient_name: "", quantity: 1, unit_of_measurement: "", note: "" }],
+      steps: [{ description: "", image_url: "", image_file: null, image_preview: "" }],
 };
 
 export default function ProfilePage() {
@@ -111,6 +132,7 @@ export default function ProfilePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [celebrations, setCelebrations] = useState<Celebration[]>([]);
   const [cookings, setCookings] = useState<Cooking[]>([]);
+  const [ingredientsCatalog, setIngredientsCatalog] = useState<Ingredient[]>([]);
 
   const visibleFriends = useMemo(() => friends.slice(0, 6), [friends]);
 
@@ -129,6 +151,7 @@ export default function ProfilePage() {
       setCategories(data.categories);
       setCelebrations(data.celebrations);
       setCookings(data.cookings);
+      setIngredientsCatalog(data.ingredients);
     } catch (error) {
       console.error("Ошибка загрузки метаданных рецепта:", error);
     }
@@ -145,11 +168,14 @@ export default function ProfilePage() {
     const mutualFriends = followers.filter((follower) => followingIds.has(follower.id));
 
     setFriends(mutualFriends);
-    setRecipes(userRecipes);
+    const ownRecipes = userRecipes.filter(
+      (recipe) => String(recipe.user_id) === String(currentUser.id)
+    );
+    setRecipes(ownRecipes);
     setStats({
       followingCount: following.length,
       followersCount: followers.length,
-      recipesCount: userRecipes.length,
+      recipesCount: ownRecipes.length,
     });
   };
 
@@ -223,7 +249,7 @@ export default function ProfilePage() {
     setRecipeForm({
       title: recipe.title || "",
       description: recipe.description || "",
-      difficulty: recipe.difficulty || "Легко",
+      difficulty: normalizeDifficulty(recipe.difficulty),
       portion: recipe.portion || 1,
       cooking_time: recipe.cooking_time || 30,
       calorific: recipe.calorific || 0,
@@ -238,7 +264,7 @@ export default function ProfilePage() {
       celebration_id: recipe.celebration_id ? Number(recipe.celebration_id) : null,
       cooking_id: recipe.cooking_id ? Number(recipe.cooking_id) : null,
       categories: [],
-      ingredients: [{ id: 0, quantity: 1, note: "" }],
+  ingredients: [{ ingredient_id: null, ingredient_name: "", quantity: 1, unit_of_measurement: "", note: "" }],
       steps: [{ description: "", image_url: "", image_file: null, image_preview: "" }],
     });
     setIsRecipeEditorOpen(true);
@@ -278,6 +304,19 @@ export default function ProfilePage() {
     setStep(index, { image_file: file, image_preview: previewUrl });
   };
 
+  const handleIngredientSelect = (index: number, ingredientIdValue: string) => {
+    const ingredientId = ingredientIdValue ? Number(ingredientIdValue) : null;
+    const selected = ingredientId
+      ? ingredientsCatalog.find((ingredient) => Number(ingredient.id) === ingredientId)
+      : null;
+
+    setIngredient(index, {
+      ingredient_id: ingredientId,
+      ingredient_name: selected?.name || "",
+      unit_of_measurement: selected?.unit_of_measurement || "",
+    });
+  };
+
   const handleSaveRecipe = async () => {
     if (!user) return;
     if (!recipeForm.title.trim() || !recipeForm.description.trim()) {
@@ -310,10 +349,20 @@ export default function ProfilePage() {
         (item): item is { description: string; image_url?: string } => Boolean(item)
       );
 
-      const payload = {
+      const normalizedIngredients = recipeForm.ingredients
+        .filter((item) => Number(item.ingredient_id) > 0 && Number(item.quantity) > 0)
+        .map((item) => ({
+          id: Number(item.ingredient_id),
+          quantity: Number(item.quantity),
+          ...(item.note.trim() ? { note: item.note.trim() } : {}),
+        }));
+
+      const normalizedDifficulty = normalizeDifficulty(recipeForm.difficulty);
+
+      const payload: Record<string, unknown> = {
         title: recipeForm.title.trim(),
         description: recipeForm.description.trim(),
-        difficulty: recipeForm.difficulty,
+        difficulty: normalizedDifficulty,
         ...(recipeImageUrl ? { image_url: recipeImageUrl } : {}),
         portion: Number(recipeForm.portion) || 1,
         cooking_time: Number(recipeForm.cooking_time) || 1,
@@ -322,12 +371,18 @@ export default function ProfilePage() {
         fats: Number(recipeForm.fats) || 0,
         carbohydrates: Number(recipeForm.carbohydrates) || 0,
         is_private: recipeForm.is_private,
-        kitchen_id: recipeForm.kitchen_id,
-        celebration_id: recipeForm.celebration_id,
-        cooking_id: recipeForm.cooking_id,
-        categories: recipeForm.categories,
-        ingredients: recipeForm.ingredients.filter((item) => item.id > 0),
-        steps: normalizedSteps,
+        ...(Number.isFinite(Number(recipeForm.kitchen_id)) && recipeForm.kitchen_id
+          ? { kitchen_id: Number(recipeForm.kitchen_id) }
+          : {}),
+        ...(Number.isFinite(Number(recipeForm.celebration_id)) && recipeForm.celebration_id
+          ? { celebration_id: Number(recipeForm.celebration_id) }
+          : {}),
+        ...(Number.isFinite(Number(recipeForm.cooking_id)) && recipeForm.cooking_id
+          ? { cooking_id: Number(recipeForm.cooking_id) }
+          : {}),
+        ...(recipeForm.categories.length > 0 ? { categories: recipeForm.categories } : {}),
+        ...(normalizedIngredients.length > 0 ? { ingredients: normalizedIngredients } : {}),
+        ...(normalizedSteps.length > 0 ? { steps: normalizedSteps } : {}),
       };
 
       if (editingRecipeId) {
@@ -342,7 +397,7 @@ export default function ProfilePage() {
       setRecipeForm(emptyRecipeForm);
     } catch (error) {
       console.error("Ошибка при сохранении рецепта:", error);
-      alert("Не удалось сохранить рецепт");
+      alert(error instanceof Error ? `Не удалось сохранить рецепт: ${error.message}` : "Не удалось сохранить рецепт");
     } finally {
       setRecipeActionLoading(false);
     }
@@ -581,9 +636,9 @@ export default function ProfilePage() {
                     onChange={(e) => setRecipeForm({ ...recipeForm, difficulty: e.target.value })}
                     className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
                   >
-                    <option value="Легко">Легко</option>
-                    <option value="Средне">Средне</option>
-                    <option value="Сложно">Сложно</option>
+                    <option value="1">Легко</option>
+                    <option value="3">Средне</option>
+                    <option value="5">Сложно</option>
                   </select>
                 </label>
 
@@ -766,7 +821,10 @@ export default function ProfilePage() {
                       onClick={() =>
                         setRecipeForm((prev) => ({
                           ...prev,
-                          ingredients: [...prev.ingredients, { id: 0, quantity: 1, note: "" }],
+                          ingredients: [
+                            ...prev.ingredients,
+                            { ingredient_id: null, ingredient_name: "", quantity: 1, unit_of_measurement: "", note: "" },
+                          ],
                         }))
                       }
                       className="rounded-full bg-gray-100 px-3 py-1 text-xs font-nunito"
@@ -776,15 +834,19 @@ export default function ProfilePage() {
                   </div>
                   <div className="space-y-2">
                     {recipeForm.ingredients.map((item, index) => (
-                      <div key={index} className="grid grid-cols-3 gap-2">
-                        <input
-                          type="number"
-                          min={1}
-                          value={item.id}
-                          onChange={(e) => setIngredient(index, { id: Number(e.target.value) || 0 })}
-                          placeholder="ID"
+                      <div key={index} className="grid grid-cols-4 gap-2">
+                        <select
+                          value={item.ingredient_id ?? ""}
+                          onChange={(e) => handleIngredientSelect(index, e.target.value)}
                           className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                        />
+                        >
+                          <option value="">Ингредиент</option>
+                          {ingredientsCatalog.map((ingredient) => (
+                            <option key={ingredient.id} value={ingredient.id}>
+                              {ingredient.name}
+                            </option>
+                          ))}
+                        </select>
                         <input
                           type="number"
                           min={0}
@@ -794,6 +856,13 @@ export default function ProfilePage() {
                           }
                           placeholder="Кол-во"
                           className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={item.unit_of_measurement}
+                          readOnly
+                          placeholder="Ед. изм."
+                          className="rounded-full border border-umami-light-gray bg-gray-50 px-4 py-2 text-sm text-umami-gray"
                         />
                         <input
                           type="text"
