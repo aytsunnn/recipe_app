@@ -115,15 +115,8 @@ export default function FeedOfPosts() {
 
   return (
     <div className="w-full flex flex-col gap-4">
-      {showFilters && <FiltersPanel onApplyFilters={handleApplyFilters} />}
-
-      {searchQuery && (
-        <div className="bg-white rounded-lg border border-umami-light-gray/50 p-4">
-          <p className="font-nunito font-bold text-lg text-umami-dark-gray">
-            Результаты поиска: &quot;{searchQuery}&quot;
-          </p>
-          <p className="font-inter text-sm text-umami-gray">Найдено рецептов: {recipes.length}</p>
-        </div>
+      {showFilters && (
+        <FiltersPanel onApplyFilters={handleApplyFilters} resultsCount={recipes.length} />
       )}
 
       {recipes.length === 0 && !loading && (

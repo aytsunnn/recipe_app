@@ -7,13 +7,23 @@ import { useEffect, useMemo, useState } from "react";
 import FeedCard from "../components/FeedCard";
 import { authService, User } from "../services/authService";
 import { followService, FollowUser } from "../services/followService";
-import { Recipe } from "../services/recipeService";
+import { Recipe, recipeService } from "../services/recipeService";
 import { userService } from "../services/userService";
 
 interface UserStats {
   followingCount: number;
   followersCount: number;
   recipesCount: number;
+}
+
+interface RecipeFormData {
+  title: string;
+  description: string;
+  difficulty: string;
+  portion: number;
+  cooking_time: number;
+  calorific: number;
+  is_private: boolean;
 }
 
 const navItems = [
@@ -24,6 +34,16 @@ const navItems = [
   { href: "/recipes/random", label: "Случайный рецепт", icon: "/DiceFive.svg" },
   { href: "/profile#settings", label: "Настройки", icon: "/Settings.svg" },
 ];
+
+const emptyRecipeForm: RecipeFormData = {
+  title: "",
+  description: "",
+  difficulty: "Легко",
+  portion: 1,
+  cooking_time: 30,
+  calorific: 0,
+  is_private: false,
+};
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -43,6 +63,11 @@ export default function ProfilePage() {
     email: "",
   });
 
+  const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false);
+  const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
+  const [recipeForm, setRecipeForm] = useState<RecipeFormData>(emptyRecipeForm);
+  const [recipeActionLoading, setRecipeActionLoading] = useState(false);
+
   const visibleFriends = useMemo(() => friends.slice(0, 6), [friends]);
 
   const getSafeImageUrl = (url: string | null) => {
@@ -53,10 +78,29 @@ export default function ProfilePage() {
     return `/${url}`;
   };
 
+  const loadProfile = async (currentUser: User) => {
+    const [following, followers, userRecipes] = await Promise.all([
+      followService.getFollowing(currentUser.id),
+      followService.getFollowers(currentUser.id),
+      userService.getRecipes(currentUser.id),
+    ]);
+
+    const followingIds = new Set(following.map((follow) => follow.id));
+    const mutualFriends = followers.filter((follower) => followingIds.has(follower.id));
+
+    setFriends(mutualFriends);
+    setRecipes(userRecipes);
+    setStats({
+      followingCount: following.length,
+      followersCount: followers.length,
+      recipesCount: userRecipes.length,
+    });
+  };
+
   useEffect(() => {
     let cancelled = false;
 
-    const loadProfile = async () => {
+    const init = async () => {
       if (!authService.isAuthenticated()) {
         router.push("/");
         return;
@@ -68,31 +112,13 @@ export default function ProfilePage() {
         return;
       }
 
+      if (cancelled) return;
+      setUser(userData);
+
       try {
-        const [following, followers, userRecipes] = await Promise.all([
-          followService.getFollowing(userData.id),
-          followService.getFollowers(userData.id),
-          userService.getRecipes(userData.id),
-        ]);
-
-        if (cancelled) return;
-
-        const followingIds = new Set(following.map((follow) => follow.id));
-        const mutualFriends = followers.filter((follower) => followingIds.has(follower.id));
-
-        setUser(userData);
-        setFriends(mutualFriends);
-        setRecipes(userRecipes);
-        setStats({
-          followingCount: following.length,
-          followersCount: followers.length,
-          recipesCount: userRecipes.length,
-        });
+        await loadProfile(userData);
       } catch (error) {
         console.error("Ошибка при загрузке профиля:", error);
-        if (!cancelled) {
-          setUser(userData);
-        }
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -100,7 +126,7 @@ export default function ProfilePage() {
       }
     };
 
-    loadProfile();
+    init();
 
     return () => {
       cancelled = true;
@@ -130,6 +156,80 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Ошибка при обновлении профиля:", error);
       alert("Не удалось обновить профиль");
+    }
+  };
+
+  const openCreateRecipeModal = () => {
+    setEditingRecipeId(null);
+    setRecipeForm(emptyRecipeForm);
+    setIsRecipeModalOpen(true);
+  };
+
+  const openEditRecipeModal = (recipe: Recipe) => {
+    setEditingRecipeId(recipe.id);
+    setRecipeForm({
+      title: recipe.title || "",
+      description: recipe.description || "",
+      difficulty: recipe.difficulty || "Легко",
+      portion: recipe.portion || 1,
+      cooking_time: recipe.cooking_time || 30,
+      calorific: recipe.calorific || 0,
+      is_private: Boolean(recipe.is_private),
+    });
+    setIsRecipeModalOpen(true);
+  };
+
+  const handleSaveRecipe = async () => {
+    if (!user) return;
+    if (!recipeForm.title.trim() || !recipeForm.description.trim()) {
+      alert("Заполните название и описание рецепта");
+      return;
+    }
+
+    try {
+      setRecipeActionLoading(true);
+      const payload = {
+        title: recipeForm.title.trim(),
+        description: recipeForm.description.trim(),
+        difficulty: recipeForm.difficulty,
+        portion: Number(recipeForm.portion) || 1,
+        cooking_time: Number(recipeForm.cooking_time) || 1,
+        calorific: Number(recipeForm.calorific) || 0,
+        is_private: recipeForm.is_private,
+      };
+
+      if (editingRecipeId) {
+        await recipeService.update(editingRecipeId, payload);
+      } else {
+        await recipeService.create(payload);
+      }
+
+      await loadProfile(user);
+      setIsRecipeModalOpen(false);
+      setRecipeForm(emptyRecipeForm);
+      setEditingRecipeId(null);
+    } catch (error) {
+      console.error("Ошибка при сохранении рецепта:", error);
+      alert("Не удалось сохранить рецепт");
+    } finally {
+      setRecipeActionLoading(false);
+    }
+  };
+
+  const handleDeleteRecipe = async (recipeId: string) => {
+    if (!user) return;
+    const confirmed = window.confirm("Удалить этот рецепт?");
+    if (!confirmed) return;
+
+    try {
+      setRecipeActionLoading(true);
+      await recipeService.delete(recipeId);
+      await loadProfile(user);
+    } catch (error) {
+      console.error("Ошибка при удалении рецепта:", error);
+      alert("Не удалось удалить рецепт");
+    } finally {
+      setRecipeActionLoading(false);
     }
   };
 
@@ -200,13 +300,22 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleEditProfile}
-                  className="w-fit rounded-full bg-umami-green px-2.5 py-[5px] font-nunito text-xs text-white transition-colors hover:bg-[#6a805e]"
-                >
-                  Редактировать профиль
-                </button>
+                <div className="flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleEditProfile}
+                    className="w-fit rounded-full bg-umami-green px-3 py-[5px] font-nunito text-xs text-white transition-colors hover:bg-[#6a805e]"
+                  >
+                    Редактировать профиль
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openCreateRecipeModal}
+                    className="w-fit rounded-full bg-umami-orange px-3 py-[5px] font-nunito text-xs text-white transition-colors hover:bg-[#dd8c45]"
+                  >
+                    + Добавить рецепт
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -215,20 +324,36 @@ export default function ProfilePage() {
             <div className="flex min-w-0 flex-col gap-2.5">
               {recipes.length > 0 ? (
                 recipes.map((recipe) => (
-                  <FeedCard
-                    key={recipe.id}
-                    recipe={recipe}
-                    currentUserId={user.id}
-                    isFollowing={false}
-                  />
+                  <div key={recipe.id} className="relative">
+                    <div className="absolute right-3 top-3 z-10 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openEditRecipeModal(recipe)}
+                        className="rounded-full bg-white/95 px-3 py-1 font-nunito text-xs font-bold text-umami-dark-gray shadow"
+                      >
+                        Редактировать
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteRecipe(recipe.id)}
+                        className="rounded-full bg-red-500 px-3 py-1 font-nunito text-xs font-bold text-white shadow"
+                      >
+                        Удалить
+                      </button>
+                    </div>
+                    {recipe.is_private && (
+                      <span className="absolute left-3 top-3 z-10 rounded-full bg-[#333]/90 px-3 py-1 font-nunito text-xs font-bold text-white">
+                        Приватный
+                      </span>
+                    )}
+                    <FeedCard recipe={recipe} currentUserId={user.id} isFollowing={false} />
+                  </div>
                 ))
               ) : (
                 <div className="rounded-[15px] border border-[#eaeaea] bg-white p-8 text-center">
-                  <p className="font-nunito text-lg font-bold text-umami-gray">
-                    Пока нет рецептов
-                  </p>
+                  <p className="font-nunito text-lg font-bold text-umami-gray">Пока нет рецептов</p>
                   <p className="mt-1 font-inter text-sm text-umami-light-gray">
-                    Ваши рецепты появятся здесь
+                    Нажмите &quot;Добавить рецепт&quot;, чтобы создать первый.
                   </p>
                 </div>
               )}
@@ -253,16 +378,12 @@ export default function ProfilePage() {
                           className="h-full w-full object-cover"
                         />
                       </div>
-                      <p className="truncate font-inter text-sm text-umami-dark-gray">
-                        {friend.name}
-                      </p>
+                      <p className="truncate font-inter text-sm text-umami-dark-gray">{friend.name}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="py-4 text-center font-inter text-sm text-umami-gray">
-                  Пока нет друзей
-                </p>
+                <p className="py-4 text-center font-inter text-sm text-umami-gray">Пока нет друзей</p>
               )}
             </aside>
           </div>
@@ -320,6 +441,140 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
                 className="flex-1 rounded-full bg-umami-gray px-6 py-2 font-nunito font-medium text-white transition-colors hover:bg-gray-500"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isRecipeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-umami-dark-gray/80 p-4">
+          <div className="w-full max-w-xl rounded-[20px] bg-white p-8 shadow-2xl">
+            <h2 className="mb-6 font-nunito text-2xl font-bold text-umami-dark-gray">
+              {editingRecipeId ? "Редактировать рецепт" : "Добавить рецепт"}
+            </h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <label className="col-span-2 block">
+                <span className="mb-1 block font-inter text-sm text-umami-gray">Название</span>
+                <input
+                  type="text"
+                  value={recipeForm.title}
+                  onChange={(e) => setRecipeForm({ ...recipeForm, title: e.target.value })}
+                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray focus:border-umami-green focus:outline-none"
+                />
+              </label>
+
+              <label className="col-span-2 block">
+                <span className="mb-1 block font-inter text-sm text-umami-gray">Описание</span>
+                <textarea
+                  value={recipeForm.description}
+                  onChange={(e) => setRecipeForm({ ...recipeForm, description: e.target.value })}
+                  className="h-24 w-full rounded-2xl border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray focus:border-umami-green focus:outline-none"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block font-inter text-sm text-umami-gray">Сложность</span>
+                <select
+                  value={recipeForm.difficulty}
+                  onChange={(e) => setRecipeForm({ ...recipeForm, difficulty: e.target.value })}
+                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray focus:border-umami-green focus:outline-none"
+                >
+                  <option value="Легко">Легко</option>
+                  <option value="Средне">Средне</option>
+                  <option value="Сложно">Сложно</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block font-inter text-sm text-umami-gray">Порции</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={recipeForm.portion}
+                  onChange={(e) =>
+                    setRecipeForm({ ...recipeForm, portion: Number(e.target.value) || 1 })
+                  }
+                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray focus:border-umami-green focus:outline-none"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block font-inter text-sm text-umami-gray">
+                  Время приготовления (мин)
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  value={recipeForm.cooking_time}
+                  onChange={(e) =>
+                    setRecipeForm({ ...recipeForm, cooking_time: Number(e.target.value) || 1 })
+                  }
+                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray focus:border-umami-green focus:outline-none"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1 block font-inter text-sm text-umami-gray">Калории</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={recipeForm.calorific}
+                  onChange={(e) =>
+                    setRecipeForm({ ...recipeForm, calorific: Number(e.target.value) || 0 })
+                  }
+                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray focus:border-umami-green focus:outline-none"
+                />
+              </label>
+
+              <div className="col-span-2 mt-1 flex items-center gap-3">
+                <span className="font-inter text-sm text-umami-gray">Видимость рецепта:</span>
+                <button
+                  type="button"
+                  onClick={() => setRecipeForm({ ...recipeForm, is_private: false })}
+                  className={`rounded-full px-4 py-1.5 font-nunito text-sm ${
+                    !recipeForm.is_private
+                      ? "bg-umami-green text-white"
+                      : "bg-gray-100 text-umami-gray"
+                  }`}
+                >
+                  Публичный
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRecipeForm({ ...recipeForm, is_private: true })}
+                  className={`rounded-full px-4 py-1.5 font-nunito text-sm ${
+                    recipeForm.is_private
+                      ? "bg-umami-orange text-white"
+                      : "bg-gray-100 text-umami-gray"
+                  }`}
+                >
+                  Приватный
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-4">
+              <button
+                type="button"
+                disabled={recipeActionLoading}
+                onClick={handleSaveRecipe}
+                className="flex-1 rounded-full bg-umami-green px-6 py-2 font-nunito font-medium text-white transition-colors hover:bg-[#6a805e] disabled:opacity-60"
+              >
+                {recipeActionLoading ? "Сохраняем..." : "Сохранить рецепт"}
+              </button>
+              <button
+                type="button"
+                disabled={recipeActionLoading}
+                onClick={() => {
+                  setIsRecipeModalOpen(false);
+                  setEditingRecipeId(null);
+                  setRecipeForm(emptyRecipeForm);
+                }}
+                className="flex-1 rounded-full bg-umami-gray px-6 py-2 font-nunito font-medium text-white transition-colors hover:bg-gray-500 disabled:opacity-60"
               >
                 Отмена
               </button>
