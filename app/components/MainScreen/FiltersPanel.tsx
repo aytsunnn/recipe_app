@@ -164,14 +164,14 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
   }
 
   return (
-    <div className="mb-5">
-      <div className="flex flex-wrap gap-3">
+    <div className="mb-4">
+      <div className="flex flex-wrap gap-2">
         {selectedTotal > 0 && (
           <button
             onClick={resetAll}
-            className="flex h-12 items-center gap-3 rounded-full border border-umami-dark-gray px-4 font-nunito text-[32px] text-umami-dark-gray"
+            className="flex h-9 items-center gap-2 rounded-full border border-umami-dark-gray px-3 font-nunito text-umami-dark-gray"
           >
-            <span className="text-[18px] font-bold">Сбросить фильтры</span>
+            <span className="text-sm font-bold">Сбросить фильтры</span>
             <span className="text-xl leading-none">×</span>
           </button>
         )}
@@ -184,33 +184,33 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
             <button
               key={key}
               onClick={() => setOpenFilter((prev) => (prev === key ? null : key))}
-              className={`flex h-12 items-center gap-3 rounded-full border px-4 font-nunito text-[32px] transition-colors ${
+              className={`flex h-9 items-center gap-2 rounded-full border px-3 font-nunito transition-colors ${
                 isOpen
                   ? "border-umami-orange bg-[#fff8ef] text-umami-dark-gray"
                   : "border-umami-dark-gray text-umami-dark-gray"
               }`}
             >
-              <span className="text-[18px] font-bold">{fieldLabels[key]}</span>
+              <span className="text-sm font-bold">{fieldLabels[key]}</span>
               {selectedCount > 0 && (
-                <span className="text-[18px] font-bold text-umami-orange">{selectedCount}</span>
+                <span className="text-sm font-bold text-umami-orange">{selectedCount}</span>
               )}
-              <span className="text-sm">{isOpen ? "⌃" : "⌄"}</span>
+              <span className="text-xs">{isOpen ? "⌃" : "⌄"}</span>
             </button>
           );
         })}
       </div>
 
       {openFilter && (
-        <div className="mt-5 flex flex-wrap gap-3">
+        <div className="mt-3 flex flex-wrap gap-2">
           <button
             onClick={() => setSelected(openFilter, activeOptions.map((item) => item.value))}
-            className="h-12 rounded-full border border-umami-green px-5 font-nunito text-[18px] font-bold text-umami-green"
+            className="h-9 rounded-full border border-umami-green px-4 font-nunito text-sm font-bold text-umami-green"
           >
             Выбрать все
           </button>
           <button
             onClick={() => setSelected(openFilter, [])}
-            className="h-12 rounded-full border border-umami-dark-gray/60 px-5 font-nunito text-[18px] font-bold text-umami-gray"
+            className="h-9 rounded-full border border-umami-dark-gray/60 px-4 font-nunito text-sm font-bold text-umami-gray"
           >
             Сбросить все
           </button>
@@ -230,7 +230,7 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
                   }
                   setSelected(openFilter, [...activeSelected, option.value]);
                 }}
-                className={`h-12 rounded-full border px-5 font-nunito text-[18px] font-bold transition-colors ${
+                className={`h-9 rounded-full border px-4 font-nunito text-sm font-bold transition-colors ${
                   isSelected
                     ? "border-umami-orange bg-[#fff8ef] text-umami-orange"
                     : "border-umami-dark-gray text-umami-dark-gray"
@@ -243,7 +243,7 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
         </div>
       )}
 
-      <p className="mt-3 text-center font-nunito text-[36px] font-bold text-umami-dark-gray">
+      <p className="mt-2 text-center font-nunito text-xl font-bold text-umami-dark-gray">
         Найдено <span className="text-umami-green">{resultsCount}</span> рецепта
       </p>
     </div>

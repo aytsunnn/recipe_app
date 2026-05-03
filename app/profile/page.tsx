@@ -602,7 +602,128 @@ export default function ProfilePage() {
           {!isRecipeEditorOpen && (
             <div className="grid grid-cols-[678px_255px] gap-5">
               <div className="flex min-w-0 flex-col gap-2.5">
-                {recipes.length > 0 ? (
+                {isEditModalOpen ? (
+                  <div className="rounded-[20px] border border-[#eaeaea] bg-white p-6">
+                    <h2 className="mb-4 font-nunito text-2xl font-bold text-umami-dark-gray">
+                      Редактировать профиль
+                    </h2>
+                    {editProfileMessage && (
+                      <p className="mb-4 rounded-xl bg-[#f6f6f6] px-3 py-2 font-nunito text-sm text-umami-dark-gray">
+                        {editProfileMessage}
+                      </p>
+                    )}
+                    <div className="flex flex-col gap-4">
+                      <label className="block">
+                        <span className="mb-1 block font-inter text-sm text-umami-gray">Имя</span>
+                        <input
+                          type="text"
+                          value={editFormData.name}
+                          onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                          className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block font-inter text-sm text-umami-gray">
+                          Имя пользователя
+                        </span>
+                        <input
+                          type="text"
+                          value={editFormData.username}
+                          onChange={(e) =>
+                            setEditFormData({ ...editFormData, username: e.target.value })
+                          }
+                          className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block font-inter text-sm text-umami-gray">Email</span>
+                        <input
+                          type="email"
+                          value={editFormData.email}
+                          onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                          className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block font-inter text-sm text-umami-gray">Новый пароль</span>
+                        <input
+                          type="password"
+                          value={editFormData.newPassword}
+                          onChange={(e) =>
+                            setEditFormData({ ...editFormData, newPassword: e.target.value })
+                          }
+                          placeholder="Оставьте пустым, если не меняете"
+                          className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block font-inter text-sm text-umami-gray">
+                          Подтвердите новый пароль
+                        </span>
+                        <input
+                          type="password"
+                          value={editFormData.confirmNewPassword}
+                          onChange={(e) =>
+                            setEditFormData({ ...editFormData, confirmNewPassword: e.target.value })
+                          }
+                          placeholder="Повторите новый пароль"
+                          className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
+                        />
+                      </label>
+                      {isEditVerificationStep && (
+                        <>
+                          <label className="block">
+                            <span className="mb-1 block font-inter text-sm text-umami-gray">
+                              Код подтверждения
+                            </span>
+                            <input
+                              type="text"
+                              value={editFormData.verifyCode}
+                              onChange={(e) =>
+                                setEditFormData({ ...editFormData, verifyCode: e.target.value })
+                              }
+                              placeholder="Введите код из письма"
+                              className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={handleResendEditVerificationCode}
+                            disabled={isEditProfileLoading}
+                            className="w-fit font-nunito text-xs text-umami-green underline disabled:opacity-60"
+                          >
+                            Отправить код повторно
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    <div className="mt-6 flex gap-4">
+                      <button
+                        type="button"
+                        disabled={isEditProfileLoading}
+                        onClick={handleSaveProfile}
+                        className="flex-1 rounded-full bg-umami-green px-6 py-2 font-nunito font-medium text-white disabled:opacity-60"
+                      >
+                        {isEditProfileLoading
+                          ? "Сохраняем..."
+                          : isEditVerificationStep
+                            ? "Подтвердить и сохранить"
+                            : "Сохранить"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditModalOpen(false);
+                          setIsEditVerificationStep(false);
+                          setEditProfileMessage(null);
+                        }}
+                        className="flex-1 rounded-full bg-umami-gray px-6 py-2 font-nunito font-medium text-white"
+                      >
+                        Отмена
+                      </button>
+                    </div>
+                  </div>
+                ) : recipes.length > 0 ? (
                   recipes.map((recipe) => (
                     <div key={recipe.id} className="relative">
                       <div className="absolute right-3 top-3 z-10 flex gap-2">
@@ -1090,130 +1211,6 @@ export default function ProfilePage() {
         </section>
       </div>
 
-      {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-umami-dark-gray/80 p-4">
-          <div className="w-full max-w-md rounded-[20px] bg-white p-8 shadow-2xl">
-            <h2 className="mb-6 font-nunito text-2xl font-bold text-umami-dark-gray">
-              Редактировать профиль
-            </h2>
-            {editProfileMessage && (
-              <p className="mb-4 rounded-xl bg-[#f6f6f6] px-3 py-2 font-nunito text-sm text-umami-dark-gray">
-                {editProfileMessage}
-              </p>
-            )}
-            <div className="flex flex-col gap-4">
-              <label className="block">
-                <span className="mb-1 block font-inter text-sm text-umami-gray">Имя</span>
-                <input
-                  type="text"
-                  value={editFormData.name}
-                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block font-inter text-sm text-umami-gray">
-                  Имя пользователя
-                </span>
-                <input
-                  type="text"
-                  value={editFormData.username}
-                  onChange={(e) =>
-                    setEditFormData({ ...editFormData, username: e.target.value })
-                  }
-                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block font-inter text-sm text-umami-gray">Email</span>
-                <input
-                  type="email"
-                  value={editFormData.email}
-                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block font-inter text-sm text-umami-gray">Новый пароль</span>
-                <input
-                  type="password"
-                  value={editFormData.newPassword}
-                  onChange={(e) =>
-                    setEditFormData({ ...editFormData, newPassword: e.target.value })
-                  }
-                  placeholder="Оставьте пустым, если не меняете"
-                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 block font-inter text-sm text-umami-gray">
-                  Подтвердите новый пароль
-                </span>
-                <input
-                  type="password"
-                  value={editFormData.confirmNewPassword}
-                  onChange={(e) =>
-                    setEditFormData({ ...editFormData, confirmNewPassword: e.target.value })
-                  }
-                  placeholder="Повторите новый пароль"
-                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
-                />
-              </label>
-              {isEditVerificationStep && (
-                <>
-                  <label className="block">
-                    <span className="mb-1 block font-inter text-sm text-umami-gray">
-                      Код подтверждения
-                    </span>
-                    <input
-                      type="text"
-                      value={editFormData.verifyCode}
-                      onChange={(e) =>
-                        setEditFormData({ ...editFormData, verifyCode: e.target.value })
-                      }
-                      placeholder="Введите код из письма"
-                      className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleResendEditVerificationCode}
-                    disabled={isEditProfileLoading}
-                    className="w-fit font-nunito text-xs text-umami-green underline disabled:opacity-60"
-                  >
-                    Отправить код повторно
-                  </button>
-                </>
-              )}
-            </div>
-            <div className="mt-6 flex gap-4">
-              <button
-                type="button"
-                disabled={isEditProfileLoading}
-                onClick={handleSaveProfile}
-                className="flex-1 rounded-full bg-umami-green px-6 py-2 font-nunito font-medium text-white disabled:opacity-60"
-              >
-                {isEditProfileLoading
-                  ? "Сохраняем..."
-                  : isEditVerificationStep
-                    ? "Подтвердить и сохранить"
-                    : "Сохранить"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditModalOpen(false);
-                  setIsEditVerificationStep(false);
-                  setEditProfileMessage(null);
-                }}
-                className="flex-1 rounded-full bg-umami-gray px-6 py-2 font-nunito font-medium text-white"
-              >
-                Отмена
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

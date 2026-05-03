@@ -96,6 +96,34 @@ export default function FeedCard({
     setIsLiked(liked);
   }, [currentUserId, recipe.Likes]);
 
+  useEffect(() => {
+    setLikesCount(recipe._count?.Likes ?? recipe.Likes?.length ?? 0);
+  }, [recipe._count?.Likes, recipe.Likes]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncLikesFromServer = async () => {
+      if (!currentUserId) return;
+      try {
+        const likes = await likeService.getByRecipe(recipe.id);
+        if (cancelled) return;
+        setLikesCount(likes.length);
+        setIsLiked(likes.some((like) => like.user_id === currentUserId));
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Ошибка синхронизации лайков:", error);
+        }
+      }
+    };
+
+    syncLikesFromServer();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [recipe.id, currentUserId]);
+
   // Проверяем, добавлен ли рецепт в избранное
   useEffect(() => {
     let cancelled = false;
@@ -277,9 +305,15 @@ export default function FeedCard({
     router.push(`/recipes/${recipe.id}`);
   };
 
+  const handleOpenAuthorProfile = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/users/${recipe.user_id}`);
+  };
+
   return (
     <div
-      className="rounded-lg w-full flex cursor-pointer flex-col gap-2.5 border border-umami-light-gray/50 bg-white p-4"
+      className="w-full cursor-pointer rounded-lg border border-umami-light-gray/50 bg-white p-3"
       onClick={handleOpenRecipe}
       role="button"
       tabIndex={0}
@@ -290,24 +324,24 @@ export default function FeedCard({
         }
       }}
     >
-      {showAuthorHeader && <div className="flex items-center gap-2.5">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+      {showAuthorHeader && <div className="mb-2 flex cursor-pointer items-center gap-2" onClick={handleOpenAuthorProfile}>
+        <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gray-200">
           <Image
-            width={40}
-            height={40}
+            width={32}
+            height={32}
             src={getSafeImageUrl(recipe.User.avatar_url, "/avatar.jpg")}
             className="w-full h-full object-cover"
             alt="avatar"
           />
 
         </div>
-        <div className="w-full flex flex-col justify-between">
-          <div className="flex flex-row justify-between items-center">
+        <div className="flex w-full flex-col justify-between">
+          <div className="flex flex-row items-center justify-between">
             <div className="flex flex-col">
-              <p className="font-inter text-sm font-medium text-umami-dark-gray">
+              <p className="font-inter text-xs font-medium text-umami-dark-gray">
                 {recipe.User.name}
               </p>
-              <p className="font-inter text-xs text-umami-light-gray">
+              <p className="font-inter text-[11px] text-umami-light-gray">
                 @{recipe.User.username}
               </p>
             </div>
@@ -338,12 +372,12 @@ export default function FeedCard({
         </div>
       </div>}
 
-      <div className="relative">
+      <div className="relative mb-2 overflow-hidden rounded-lg">
         <Image
           width={600}
           height={400}
           src={getSafeImageUrl(recipe.image_url, "/placeholder.jpg")}
-          className="w-full h-full object-cover rounded-lg"
+          className="h-52 w-full object-cover"
           alt="recipe"
           quality={95}
         />
@@ -387,17 +421,17 @@ export default function FeedCard({
           </div>
         </div>
       </div>
-      <div className="flex flex-col">
-        <p className="w-full font-inter font-medium text-lg text-umami-dark-gray">
+      <div className="mb-2 flex flex-col">
+        <p className="w-full font-inter text-base font-medium text-umami-dark-gray">
           {recipe.title}
         </p>
-        <p className="font-inter font-regular text-sm text-umami-gray">
+        <p className="font-inter text-xs text-umami-gray">
           {recipe.description}
         </p>
       </div>
-      <div className="flex flex-row gap-2">
+      <div className="flex flex-row gap-3">
         <div className="flex gap-1 items-center">
-          <button onClick={handleLike} className="cursor-pointer">
+          <button type="button" onClick={handleLike} className="cursor-pointer">
             <Image
               width={24}
               height={24}
