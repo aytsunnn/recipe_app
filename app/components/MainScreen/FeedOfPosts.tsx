@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -22,7 +22,6 @@ export default function FeedOfPosts() {
   const firstCookingId = firstFromCsv(searchParams?.get("cooking_id") || null);
   const firstDifficulty = firstFromCsv(searchParams?.get("difficulty") || null);
 
-  // Backend still expects scalar params; for multiselect we send the first selected option.
   const kitchenId = firstKitchenId ? parseInt(firstKitchenId) : undefined;
   const categoryId = firstCategoryId ? parseInt(firstCategoryId) : undefined;
   const celebrationId = firstCelebrationId ? parseInt(firstCelebrationId) : undefined;
@@ -66,6 +65,7 @@ export default function FeedOfPosts() {
 
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [visibleCount, setVisibleCount] = useState(8);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -90,6 +90,30 @@ export default function FeedOfPosts() {
   const handleApplyFilters = (newFilters: FilterValues) => {
     void newFilters;
   };
+
+  useEffect(() => {
+    setVisibleCount(8);
+  }, [searchQuery, kitchenId, categoryId, celebrationId, cookingId, difficulty]);
+
+  useEffect(() => {
+    const sentinel = document.getElementById("feed-infinite-sentinel");
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (!first?.isIntersecting) return;
+        setVisibleCount((prev) => Math.min(prev + 8, recipes.length));
+      },
+      { rootMargin: "300px 0px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [recipes.length]);
+
+  const visibleRecipes = recipes.slice(0, visibleCount);
+  const hasMore = visibleCount < recipes.length;
 
   if (loading) {
     return (
@@ -127,7 +151,7 @@ export default function FeedOfPosts() {
         </div>
       )}
 
-      {recipes.map((recipe, index) => {
+      {visibleRecipes.map((recipe, index) => {
         const isFollowing = followingIds.has(recipe.user_id);
         return (
           <FeedCard
@@ -139,6 +163,9 @@ export default function FeedOfPosts() {
           />
         );
       })}
+
+      <div id="feed-infinite-sentinel" className="h-1 w-full" />
+      {hasMore && <p className="py-2 text-center text-sm text-umami-gray">Загружаем еще...</p>}
     </div>
   );
 }

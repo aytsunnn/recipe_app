@@ -141,7 +141,6 @@ export default function ProfilePage() {
   const [ingredientsCatalog, setIngredientsCatalog] = useState<Ingredient[]>([]);
 
   const visibleFriends = useMemo(() => friends.slice(0, 6), [friends]);
-
   const getSafeImageUrl = (url: string | null) => {
     if (!url || url === "null" || url === "undefined") return "/avatar.jpg";
     if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/") || url.startsWith("blob:")) {
@@ -724,7 +723,8 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 ) : recipes.length > 0 ? (
-                  recipes.map((recipe) => (
+                  <>
+                    {recipes.map((recipe) => (
                     <div key={recipe.id} className="relative">
                       <div className="absolute right-3 top-3 z-10 flex gap-2">
                         <button
@@ -754,7 +754,7 @@ export default function ProfilePage() {
                         showAuthorHeader={false}
                       />
                     </div>
-                  ))
+                    ))}                  </>
                 ) : (
                   <div className="rounded-[15px] border border-[#eaeaea] bg-white p-8 text-center">
                     <p className="font-nunito text-lg font-bold text-umami-gray">Пока нет рецептов</p>
@@ -1214,4 +1214,5 @@ export default function ProfilePage() {
     </>
   );
 }
+
 

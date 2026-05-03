@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -72,9 +72,7 @@ export default function FavoritesPage() {
         <div className="w-full flex flex-col gap-4">
           <div className="bg-white rounded-lg border border-umami-light-gray/50 p-4">
             <h1 className="font-nunito font-bold text-2xl text-umami-dark-gray">Избранное</h1>
-            <p className="font-inter text-sm text-umami-gray mt-1">
-              Сохраненные рецепты: {recipes.length}
-            </p>
+            <p className="font-inter text-sm text-umami-gray mt-1">Сохраненные рецепты: {recipes.length}</p>
           </div>
 
           {isLoading && (
@@ -91,9 +89,7 @@ export default function FavoritesPage() {
 
           {!isLoading && !error && recipes.length === 0 && (
             <div className="bg-white rounded-lg border border-umami-light-gray/50 p-8 text-center">
-              <p className="font-nunito font-bold text-lg text-umami-gray">
-                В избранном пока пусто
-              </p>
+              <p className="font-nunito font-bold text-lg text-umami-gray">В избранном пока пусто</p>
             </div>
           )}
 

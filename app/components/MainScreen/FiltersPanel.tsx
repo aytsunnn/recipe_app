@@ -147,7 +147,10 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
     params.delete("celebration_id");
     params.delete("cooking_id");
     params.delete("filters");
-    router.push(`/?${params.toString()}`, { scroll: false });
+    params.delete("search");
+    params.delete("page");
+    const query = params.toString();
+    router.push(query ? `/?${query}` : "/", { scroll: false });
     onApplyFilters({});
     setOpenFilter(null);
   };
