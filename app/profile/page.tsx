@@ -626,7 +626,12 @@ export default function ProfilePage() {
                           Приватный
                         </span>
                       )}
-                      <FeedCard recipe={recipe} currentUserId={user.id} isFollowing={false} />
+                      <FeedCard
+                        recipe={recipe}
+                        currentUserId={user.id}
+                        isFollowing={false}
+                        showAuthorHeader={false}
+                      />
                     </div>
                   ))
                 ) : (

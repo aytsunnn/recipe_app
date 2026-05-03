@@ -47,6 +47,7 @@ interface FeedCardProps {
   isFollowing?: boolean;
   currentUserId?: string;
   showComments?: boolean;
+  showAuthorHeader?: boolean;
 }
 
 export default function FeedCard({
@@ -54,6 +55,7 @@ export default function FeedCard({
   isFollowing = false,
   currentUserId,
   showComments = false,
+  showAuthorHeader = true,
 }: FeedCardProps) {
   const router = useRouter();
   // Проверяем, является ли текущий пользователь автором поста
@@ -288,7 +290,7 @@ export default function FeedCard({
         }
       }}
     >
-      <div className="flex items-center gap-2.5">
+      {showAuthorHeader && <div className="flex items-center gap-2.5">
         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
           <Image
             width={40}
@@ -334,7 +336,7 @@ export default function FeedCard({
             )}
           </div>
         </div>
-      </div>
+      </div>}
 
       <div className="relative">
         <Image

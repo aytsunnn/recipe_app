@@ -21,7 +21,7 @@ class UserService {
   }
 
   async getRecipes(userId: string): Promise<Recipe[]> {
-    return apiClient.get<Recipe[]>(`/recipes?user_id=${userId}`);
+    return apiClient.get<Recipe[]>(`/users/${userId}/recipes`);
   }
 
   async getById(userId: string): Promise<User> {

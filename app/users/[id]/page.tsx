@@ -140,7 +140,13 @@ export default function PublicUserPage() {
             ) : (
               <div className="flex flex-col gap-3">
                 {recipes.map((recipe) => (
-                  <FeedCard key={recipe.id} recipe={recipe} currentUserId={currentUserId} isFollowing={isFollowing} />
+                  <FeedCard
+                    key={recipe.id}
+                    recipe={recipe}
+                    currentUserId={currentUserId}
+                    isFollowing={isFollowing}
+                    showAuthorHeader={false}
+                  />
                 ))}
               </div>
             )}
