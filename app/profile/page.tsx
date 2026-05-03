@@ -121,7 +121,13 @@ export default function ProfilePage() {
     name: "",
     username: "",
     email: "",
+    newPassword: "",
+    confirmNewPassword: "",
+    verifyCode: "",
   });
+  const [isEditProfileLoading, setIsEditProfileLoading] = useState(false);
+  const [isEditVerificationStep, setIsEditVerificationStep] = useState(false);
+  const [editProfileMessage, setEditProfileMessage] = useState<string | null>(null);
 
   const [isRecipeEditorOpen, setIsRecipeEditorOpen] = useState(false);
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
@@ -219,22 +225,114 @@ export default function ProfilePage() {
       name: user.name,
       username: user.username,
       email: user.email || "",
+      newPassword: "",
+      confirmNewPassword: "",
+      verifyCode: "",
     });
+    setIsEditVerificationStep(false);
+    setEditProfileMessage(null);
     setIsEditModalOpen(true);
   };
 
   const handleSaveProfile = async () => {
+    if (!user) return;
+
+    const normalizedEmail = editFormData.email.trim().toLowerCase();
+    const isEmailChanged = normalizedEmail !== (user.email || "").trim().toLowerCase();
+    const hasPasswordChange = editFormData.newPassword.trim().length > 0;
+    const needsVerification = isEmailChanged || hasPasswordChange;
+
+    if (!editFormData.name.trim() || !editFormData.username.trim() || !normalizedEmail) {
+      alert("Заполните имя, имя пользователя и email");
+      return;
+    }
+
+    if (hasPasswordChange && editFormData.newPassword !== editFormData.confirmNewPassword) {
+      alert("Новый пароль и подтверждение не совпадают");
+      return;
+    }
+
+    if (hasPasswordChange && editFormData.newPassword.length < 8) {
+      alert("Новый пароль должен содержать минимум 8 символов");
+      return;
+    }
+
+    if (needsVerification && !isEditVerificationStep) {
+      try {
+        setIsEditProfileLoading(true);
+        await authService.requestEmailCode(normalizedEmail);
+        setIsEditVerificationStep(true);
+        setEditProfileMessage("Код подтверждения отправлен на email");
+      } catch (error) {
+        console.error("Ошибка отправки кода подтверждения:", error);
+        setEditProfileMessage("Не удалось отправить код подтверждения");
+      } finally {
+        setIsEditProfileLoading(false);
+      }
+      return;
+    }
+
+    if (needsVerification && !editFormData.verifyCode.trim()) {
+      alert("Введите код подтверждения");
+      return;
+    }
+
     try {
-      const updatedUser = await userService.updateProfile(editFormData);
+      setIsEditProfileLoading(true);
+
+      if (needsVerification) {
+        await authService.verifyEmail({
+          email: normalizedEmail,
+          code: editFormData.verifyCode.trim(),
+        });
+      }
+
+      const updatedUser = await userService.updateProfile({
+        name: editFormData.name.trim(),
+        username: editFormData.username.trim(),
+        email: normalizedEmail,
+      });
+
+      if (hasPasswordChange) {
+        await authService.resetPassword({
+          email: normalizedEmail,
+          code: editFormData.verifyCode.trim(),
+          new_password: editFormData.newPassword,
+        });
+      }
+
       setUser({
         ...updatedUser,
         email: updatedUser.email || user?.email || "",
       });
       setIsEditModalOpen(false);
+      setIsEditVerificationStep(false);
+      setEditProfileMessage(null);
       authService.dispatchAuthChange();
     } catch (error) {
       console.error("Ошибка при обновлении профиля:", error);
-      alert("Не удалось обновить профиль");
+      alert(error instanceof Error ? `Не удалось обновить профиль: ${error.message}` : "Не удалось обновить профиль");
+    } finally {
+      setIsEditProfileLoading(false);
+    }
+  };
+
+  const handleResendEditVerificationCode = async () => {
+    const normalizedEmail = editFormData.email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      alert("Введите email");
+      return;
+    }
+
+    try {
+      setIsEditProfileLoading(true);
+      await authService.requestEmailCode(normalizedEmail);
+      setEditProfileMessage("Код отправлен повторно");
+    } catch (error) {
+      console.error("Ошибка повторной отправки кода:", error);
+      setEditProfileMessage("Не удалось отправить код повторно");
+    } finally {
+      setIsEditProfileLoading(false);
     }
   };
 
@@ -993,6 +1091,11 @@ export default function ProfilePage() {
             <h2 className="mb-6 font-nunito text-2xl font-bold text-umami-dark-gray">
               Редактировать профиль
             </h2>
+            {editProfileMessage && (
+              <p className="mb-4 rounded-xl bg-[#f6f6f6] px-3 py-2 font-nunito text-sm text-umami-dark-gray">
+                {editProfileMessage}
+              </p>
+            )}
             <div className="flex flex-col gap-4">
               <label className="block">
                 <span className="mb-1 block font-inter text-sm text-umami-gray">Имя</span>
@@ -1025,18 +1128,79 @@ export default function ProfilePage() {
                   className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
                 />
               </label>
+              <label className="block">
+                <span className="mb-1 block font-inter text-sm text-umami-gray">Новый пароль</span>
+                <input
+                  type="password"
+                  value={editFormData.newPassword}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, newPassword: e.target.value })
+                  }
+                  placeholder="Оставьте пустым, если не меняете"
+                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block font-inter text-sm text-umami-gray">
+                  Подтвердите новый пароль
+                </span>
+                <input
+                  type="password"
+                  value={editFormData.confirmNewPassword}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, confirmNewPassword: e.target.value })
+                  }
+                  placeholder="Повторите новый пароль"
+                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
+                />
+              </label>
+              {isEditVerificationStep && (
+                <>
+                  <label className="block">
+                    <span className="mb-1 block font-inter text-sm text-umami-gray">
+                      Код подтверждения
+                    </span>
+                    <input
+                      type="text"
+                      value={editFormData.verifyCode}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, verifyCode: e.target.value })
+                      }
+                      placeholder="Введите код из письма"
+                      className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleResendEditVerificationCode}
+                    disabled={isEditProfileLoading}
+                    className="w-fit font-nunito text-xs text-umami-green underline disabled:opacity-60"
+                  >
+                    Отправить код повторно
+                  </button>
+                </>
+              )}
             </div>
             <div className="mt-6 flex gap-4">
               <button
                 type="button"
+                disabled={isEditProfileLoading}
                 onClick={handleSaveProfile}
-                className="flex-1 rounded-full bg-umami-green px-6 py-2 font-nunito font-medium text-white"
+                className="flex-1 rounded-full bg-umami-green px-6 py-2 font-nunito font-medium text-white disabled:opacity-60"
               >
-                Сохранить
+                {isEditProfileLoading
+                  ? "Сохраняем..."
+                  : isEditVerificationStep
+                    ? "Подтвердить и сохранить"
+                    : "Сохранить"}
               </button>
               <button
                 type="button"
-                onClick={() => setIsEditModalOpen(false)}
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setIsEditVerificationStep(false);
+                  setEditProfileMessage(null);
+                }}
                 className="flex-1 rounded-full bg-umami-gray px-6 py-2 font-nunito font-medium text-white"
               >
                 Отмена

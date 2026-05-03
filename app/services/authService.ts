@@ -13,6 +13,17 @@ export interface RegisterData {
   name: string;
 }
 
+export interface VerifyEmailData {
+  email: string;
+  code: string;
+}
+
+export interface ResetPasswordData {
+  email: string;
+  code: string;
+  new_password: string;
+}
+
 export interface AuthResponse {
   message: string;
   access_token: string;
@@ -53,6 +64,21 @@ class AuthService {
   // Регистрация
   async register(data: RegisterData): Promise<AuthResponse> {
     return apiClient.post<AuthResponse>('/auth/register', data);
+  }
+
+  // Подтверждение email
+  async verifyEmail(data: VerifyEmailData): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>('/auth/verify-email', data);
+  }
+
+  // Повторная отправка кода подтверждения
+  async requestEmailCode(email: string): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>('/auth/password-recovery', { email });
+  }
+
+  // Обновление пароля по коду
+  async resetPassword(data: ResetPasswordData): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>('/auth/reset-password', data);
   }
 
   // Выход
