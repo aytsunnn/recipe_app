@@ -20,10 +20,14 @@ class ApiClient {
     console.log(`[API] Запрос: ${options?.method || 'GET'} ${url}`);
     
     try {
+      const hasBody = typeof options?.body !== 'undefined';
+      const isFormData =
+        typeof FormData !== 'undefined' && options?.body instanceof FormData;
+
       const response = await fetch(url, {
         ...options,
         headers: {
-          'Content-Type': 'application/json',
+          ...(!isFormData && hasBody ? { 'Content-Type': 'application/json' } : {}),
           ...(token && { 'Authorization': `Bearer ${token}` }),
           ...options?.headers,
         },
@@ -73,6 +77,14 @@ class ApiClient {
       ...options,
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  postForm<T>(endpoint: string, formData: FormData, options?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'POST',
+      body: formData,
     });
   }
 

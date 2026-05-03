@@ -6,6 +6,13 @@ export interface Comment {
   user_id: string;
   recipe_id: string;
   content: string;
+  rating?: number;
+  parent_comment_id?: string | null;
+  taste_sweet?: number;
+  taste_sour?: number;
+  taste_salty?: number;
+  taste_spicy?: number;
+  taste_umami?: number;
   createdAt: string;
   updatedAt: string;
   Author: {
@@ -17,6 +24,13 @@ export interface Comment {
 
 export interface CreateCommentData {
   content: string;
+  rating: number;
+  parent_comment_id?: string;
+  taste_sweet?: number;
+  taste_sour?: number;
+  taste_salty?: number;
+  taste_spicy?: number;
+  taste_umami?: number;
 }
 
 class CommentService {

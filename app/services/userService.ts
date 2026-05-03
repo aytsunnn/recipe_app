@@ -23,6 +23,10 @@ class UserService {
   async getRecipes(userId: string): Promise<Recipe[]> {
     return apiClient.get<Recipe[]>(`/users/${userId}/recipes`);
   }
+
+  async getById(userId: string): Promise<User> {
+    return apiClient.get<User>(`/users/${userId}`);
+  }
 }
 
 export const userService = new UserService();

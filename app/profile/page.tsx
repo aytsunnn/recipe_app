@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -8,6 +8,7 @@ import FeedCard from "../components/FeedCard";
 import { authService, User } from "../services/authService";
 import { followService, FollowUser } from "../services/followService";
 import { Recipe, recipeService } from "../services/recipeService";
+import { uploadService } from "../services/uploadService";
 import { userService } from "../services/userService";
 import { metaService, Category, Celebration, Cooking, Kitchen } from "../services/metaService";
 
@@ -26,6 +27,8 @@ interface IngredientRow {
 interface StepRow {
   description: string;
   image_url: string;
+  image_file: File | null;
+  image_preview: string;
 }
 
 interface RecipeFormData {
@@ -38,6 +41,9 @@ interface RecipeFormData {
   proteins: number;
   fats: number;
   carbohydrates: number;
+  image_url: string;
+  image_file: File | null;
+  image_preview: string;
   is_private: boolean;
   kitchen_id: number | null;
   celebration_id: number | null;
@@ -66,13 +72,16 @@ const emptyRecipeForm: RecipeFormData = {
   proteins: 0,
   fats: 0,
   carbohydrates: 0,
+  image_url: "",
+  image_file: null,
+  image_preview: "",
   is_private: false,
   kitchen_id: null,
   celebration_id: null,
   cooking_id: null,
   categories: [],
-  ingredients: [{ id: 1, quantity: 1, note: "" }],
-  steps: [{ description: "", image_url: "" }],
+  ingredients: [{ id: 0, quantity: 1, note: "" }],
+  steps: [{ description: "", image_url: "", image_file: null, image_preview: "" }],
 };
 
 export default function ProfilePage() {
@@ -107,7 +116,7 @@ export default function ProfilePage() {
 
   const getSafeImageUrl = (url: string | null) => {
     if (!url || url === "null" || url === "undefined") return "/avatar.jpg";
-    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/") || url.startsWith("blob:")) {
       return url;
     }
     return `/${url}`;
@@ -221,13 +230,16 @@ export default function ProfilePage() {
       proteins: 0,
       fats: 0,
       carbohydrates: 0,
+      image_url: recipe.image_url || "",
+      image_file: null,
+      image_preview: recipe.image_url || "",
       is_private: Boolean(recipe.is_private),
       kitchen_id: recipe.kitchen_id ? Number(recipe.kitchen_id) : null,
       celebration_id: recipe.celebration_id ? Number(recipe.celebration_id) : null,
       cooking_id: recipe.cooking_id ? Number(recipe.cooking_id) : null,
       categories: [],
-      ingredients: [{ id: 1, quantity: 1, note: "" }],
-      steps: [{ description: "", image_url: "" }],
+      ingredients: [{ id: 0, quantity: 1, note: "" }],
+      steps: [{ description: "", image_url: "", image_file: null, image_preview: "" }],
     });
     setIsRecipeEditorOpen(true);
   };
@@ -248,6 +260,24 @@ export default function ProfilePage() {
     }));
   };
 
+  const handleRecipeImageFileChange = (file: File | null) => {
+    if (!file) {
+      setRecipeForm((prev) => ({ ...prev, image_file: null, image_preview: "", image_url: "" }));
+      return;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    setRecipeForm((prev) => ({ ...prev, image_file: file, image_preview: previewUrl }));
+  };
+
+  const handleStepImageFileChange = (index: number, file: File | null) => {
+    if (!file) {
+      setStep(index, { image_file: null, image_preview: "", image_url: "" });
+      return;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    setStep(index, { image_file: file, image_preview: previewUrl });
+  };
+
   const handleSaveRecipe = async () => {
     if (!user) return;
     if (!recipeForm.title.trim() || !recipeForm.description.trim()) {
@@ -257,10 +287,34 @@ export default function ProfilePage() {
 
     try {
       setRecipeActionLoading(true);
+      let recipeImageUrl = recipeForm.image_url?.trim() || "";
+      if (recipeForm.image_file) {
+        recipeImageUrl = await uploadService.uploadImage(recipeForm.image_file, "recipes");
+      }
+
+      const stepsWithUploads = await Promise.all(
+        recipeForm.steps.map(async (step) => {
+          const description = step.description.trim();
+          if (!description) return null;
+          let stepImageUrl = step.image_url?.trim() || "";
+          if (step.image_file) {
+            stepImageUrl = await uploadService.uploadImage(step.image_file, "steps");
+          }
+          return {
+            description,
+            ...(stepImageUrl ? { image_url: stepImageUrl } : {}),
+          };
+        })
+      );
+      const normalizedSteps = stepsWithUploads.filter(
+        (item): item is { description: string; image_url?: string } => Boolean(item)
+      );
+
       const payload = {
         title: recipeForm.title.trim(),
         description: recipeForm.description.trim(),
         difficulty: recipeForm.difficulty,
+        ...(recipeImageUrl ? { image_url: recipeImageUrl } : {}),
         portion: Number(recipeForm.portion) || 1,
         cooking_time: Number(recipeForm.cooking_time) || 1,
         calorific: Number(recipeForm.calorific) || 0,
@@ -273,7 +327,7 @@ export default function ProfilePage() {
         cooking_id: recipeForm.cooking_id,
         categories: recipeForm.categories,
         ingredients: recipeForm.ingredients.filter((item) => item.id > 0),
-        steps: recipeForm.steps.filter((item) => item.description.trim().length > 0),
+        steps: normalizedSteps,
       };
 
       if (editingRecipeId) {
@@ -426,7 +480,7 @@ export default function ProfilePage() {
                   <div className="rounded-[15px] border border-[#eaeaea] bg-white p-8 text-center">
                     <p className="font-nunito text-lg font-bold text-umami-gray">Пока нет рецептов</p>
                     <p className="mt-1 font-inter text-sm text-umami-light-gray">
-                      Нажмите "Добавить рецепт", чтобы создать первый.
+                      Нажмите &quot;Добавить рецепт&quot;, чтобы создать первый.
                     </p>
                   </div>
                 )}
@@ -498,6 +552,26 @@ export default function ProfilePage() {
                     onChange={(e) => setRecipeForm({ ...recipeForm, description: e.target.value })}
                     className="h-24 w-full rounded-2xl border border-umami-light-gray px-4 py-2 font-nunito text-sm"
                   />
+                </label>
+
+                <label className="col-span-2 block">
+                  <span className="mb-1 block font-inter text-sm text-umami-gray">Фото рецепта</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleRecipeImageFileChange(e.target.files?.[0] || null)}
+                    className="w-full rounded-2xl border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                  />
+                  {recipeForm.image_preview && (
+                    <div className="relative mt-2 h-36 w-full overflow-hidden rounded-2xl border border-umami-light-gray">
+                      <Image
+                        src={getSafeImageUrl(recipeForm.image_preview)}
+                        alt="recipe preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
                 </label>
 
                 <label className="block">
@@ -692,7 +766,7 @@ export default function ProfilePage() {
                       onClick={() =>
                         setRecipeForm((prev) => ({
                           ...prev,
-                          ingredients: [...prev.ingredients, { id: 1, quantity: 1, note: "" }],
+                          ingredients: [...prev.ingredients, { id: 0, quantity: 1, note: "" }],
                         }))
                       }
                       className="rounded-full bg-gray-100 px-3 py-1 text-xs font-nunito"
@@ -707,13 +781,13 @@ export default function ProfilePage() {
                           type="number"
                           min={1}
                           value={item.id}
-                          onChange={(e) => setIngredient(index, { id: Number(e.target.value) || 1 })}
+                          onChange={(e) => setIngredient(index, { id: Number(e.target.value) || 0 })}
                           placeholder="ID"
                           className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
                         />
                         <input
                           type="number"
-                          min={1}
+                          min={0}
                           value={item.quantity}
                           onChange={(e) =>
                             setIngredient(index, { quantity: Number(e.target.value) || 1 })
@@ -741,7 +815,10 @@ export default function ProfilePage() {
                       onClick={() =>
                         setRecipeForm((prev) => ({
                           ...prev,
-                          steps: [...prev.steps, { description: "", image_url: "" }],
+                          steps: [
+                            ...prev.steps,
+                            { description: "", image_url: "", image_file: null, image_preview: "" },
+                          ],
                         }))
                       }
                       className="rounded-full bg-gray-100 px-3 py-1 text-xs font-nunito"
@@ -751,7 +828,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="space-y-2">
                     {recipeForm.steps.map((item, index) => (
-                      <div key={index} className="grid grid-cols-2 gap-2">
+                      <div key={index} className="grid grid-cols-1 gap-2 rounded-2xl border border-umami-light-gray p-3">
                         <input
                           type="text"
                           value={item.description}
@@ -760,12 +837,28 @@ export default function ProfilePage() {
                           className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
                         />
                         <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleStepImageFileChange(index, e.target.files?.[0] || null)}
+                          className="rounded-2xl border border-umami-light-gray px-4 py-2 text-sm"
+                        />
+                        <input
                           type="text"
                           value={item.image_url}
                           onChange={(e) => setStep(index, { image_url: e.target.value })}
-                          placeholder="URL картинки шага"
+                          placeholder="или ссылка на фото шага"
                           className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
                         />
+                        {item.image_preview && (
+                          <div className="relative h-32 w-full overflow-hidden rounded-2xl border border-umami-light-gray">
+                            <Image
+                              src={getSafeImageUrl(item.image_preview)}
+                              alt="step preview"
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -886,3 +979,4 @@ export default function ProfilePage() {
     </>
   );
 }
+

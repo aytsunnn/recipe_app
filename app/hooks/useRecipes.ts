@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { recipeService, Recipe, GetRecipesParams } from '../services/recipeService';
@@ -8,6 +8,8 @@ interface UseRecipesOptions {
   autoFetch?: boolean;
   useRecommendations?: boolean;
 }
+
+let recommendationsCache: Recipe[] | null = null;
 
 const hasActiveParams = (params: GetRecipesParams) =>
   Object.values(params).some((value) => value !== undefined && value !== null && value !== '');
@@ -20,7 +22,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const [params, setParams] = useState<GetRecipesParams>(initialParams);
   
-  // Используем ref для отслеживания первого рендера
+  // РСЃРїРѕР»СЊР·СѓРµРј ref РґР»СЏ РѕС‚СЃР»РµР¶РёРІР°РЅРёСЏ РїРµСЂРІРѕРіРѕ СЂРµРЅРґРµСЂР°
   const isMounted = useRef(true);
   const isFirstRender = useRef(true);
 
@@ -30,17 +32,26 @@ export function useRecipes(options: UseRecipesOptions = {}) {
       setError(null);
       const currentParams = fetchParams || params;
       
-      // Используем рекомендации на главной, если нет активного поиска и фильтров.
-      const data = useRecommendations && !hasActiveParams(currentParams)
-        ? await recipeService.getRecommendations()
-        : await recipeService.getAll(currentParams);
+      const shouldUseRecommendations = useRecommendations && !hasActiveParams(currentParams);
+      let data: Recipe[];
+
+      if (shouldUseRecommendations) {
+        if (recommendationsCache) {
+          data = recommendationsCache;
+        } else {
+          data = await recipeService.getRecommendations();
+          recommendationsCache = data;
+        }
+      } else {
+        data = await recipeService.getAll(currentParams);
+      }
         
       if (isMounted.current) {
         setRecipes(data);
       }
     } catch (err) {
       if (isMounted.current) {
-        setError(err instanceof Error ? err.message : 'Произошла ошибка');
+        setError(err instanceof Error ? err.message : 'РџСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°');
       }
     } finally {
       if (isMounted.current) {
@@ -57,7 +68,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
     setParams(prev => ({ ...prev, ...newParams }));
   }, []);
 
-  // Отдельный useEffect для начальной загрузки
+  // РћС‚РґРµР»СЊРЅС‹Р№ useEffect РґР»СЏ РЅР°С‡Р°Р»СЊРЅРѕР№ Р·Р°РіСЂСѓР·РєРё
   useEffect(() => {
     isMounted.current = true;
     return () => {
@@ -65,7 +76,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
     };
   }, []);
 
-  // Загрузка при изменении параметров
+  // Р—Р°РіСЂСѓР·РєР° РїСЂРё РёР·РјРµРЅРµРЅРёРё РїР°СЂР°РјРµС‚СЂРѕРІ
   useEffect(() => {
     if (!autoFetch) return;
     
@@ -85,3 +96,4 @@ export function useRecipes(options: UseRecipesOptions = {}) {
     params,
   };
 }
+
