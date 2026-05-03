@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import FeedCard from "../FeedCard";
 import FiltersPanel, { FilterValues } from "./FiltersPanel";
@@ -66,6 +66,7 @@ export default function FeedOfPosts() {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [visibleCount, setVisibleCount] = useState(8);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -93,12 +94,11 @@ export default function FeedOfPosts() {
 
   useEffect(() => {
     setVisibleCount(8);
-  }, [searchQuery, kitchenId, categoryId, celebrationId, cookingId, difficulty]);
+  }, [searchQuery, kitchenId, categoryId, celebrationId, cookingId, difficulty, recipes.length]);
 
   useEffect(() => {
-    const sentinel = document.getElementById("feed-infinite-sentinel");
+    const sentinel = sentinelRef.current;
     if (!sentinel) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         const first = entries[0];
@@ -164,7 +164,7 @@ export default function FeedOfPosts() {
         );
       })}
 
-      <div id="feed-infinite-sentinel" className="h-1 w-full" />
+      <div ref={sentinelRef} className="h-1 w-full" />
       {hasMore && <p className="py-2 text-center text-sm text-umami-gray">Загружаем еще...</p>}
     </div>
   );

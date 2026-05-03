@@ -31,6 +31,8 @@ export default function RecipeDetailsPage() {
   );
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
+  const [showTasteDetails, setShowTasteDetails] = useState(false);
+  const [isTasteDetailsSaved, setIsTasteDetailsSaved] = useState(false);
   const [commentForm, setCommentForm] = useState({
     content: "",
     rating: 5,
@@ -63,6 +65,16 @@ export default function RecipeDetailsPage() {
       }
     });
 
+    roots.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    children.forEach((list, key) => {
+      children.set(
+        key,
+        list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      );
+    });
+
     return { roots, children };
   }, [comments]);
 
@@ -84,7 +96,8 @@ export default function RecipeDetailsPage() {
       const data = await commentService.getByRecipe(recipeId);
       setComments(data);
     } catch (loadError) {
-      console.error("РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ:", loadError);
+      console.error("Ошибка загрузки комментариев:", loadError);
+      alert("Не удалось загрузить комментарии");
     } finally {
       setCommentsLoading(false);
     }
@@ -104,33 +117,46 @@ export default function RecipeDetailsPage() {
 
   const handleSubmitComment = async () => {
     if (!currentUserId) {
-      alert("РќРµРѕР±С…РѕРґРёРјРѕ Р°РІС‚РѕСЂРёР·РѕРІР°С‚СЊСЃСЏ");
+      alert("Необходимо авторизоваться");
       return;
     }
     if (!commentForm.content.trim()) {
-      alert("Р’РІРµРґРёС‚Рµ С‚РµРєСЃС‚ РєРѕРјРјРµРЅС‚Р°СЂРёСЏ");
+      alert("Введите текст комментария");
+      return;
+    }
+    if (!replyToCommentId && showTasteDetails && !isTasteDetailsSaved) {
+      alert("Сначала нажмите «Сохранить вкус», затем отправляйте отзыв");
       return;
     }
     if (!recipeId) return;
 
     try {
       setCommentSending(true);
+      const isReply = Boolean(replyToCommentId);
       await commentService.create(recipeId, {
         content: commentForm.content.trim(),
-        rating: commentForm.rating,
-        parent_comment_id: replyToCommentId || undefined,
-        taste_sweet: commentForm.taste_sweet,
-        taste_sour: commentForm.taste_sour,
-        taste_salty: commentForm.taste_salty,
-        taste_spicy: commentForm.taste_spicy,
-        taste_umami: commentForm.taste_umami,
+        ...(isReply
+          ? {}
+          : showTasteDetails
+            ? {
+                rating: commentForm.rating,
+                taste_sweet: commentForm.taste_sweet,
+                taste_sour: commentForm.taste_sour,
+                taste_salty: commentForm.taste_salty,
+                taste_spicy: commentForm.taste_spicy,
+                taste_umami: commentForm.taste_umami,
+              }
+            : {}),
+        parent_comment_id: replyToCommentId ? Number(replyToCommentId) : undefined,
       });
       setCommentForm((prev) => ({ ...prev, content: "" }));
       setReplyToCommentId(null);
+      setShowTasteDetails(false);
+      setIsTasteDetailsSaved(false);
       await loadComments();
     } catch (submitError) {
-      console.error("РћС€РёР±РєР° РѕС‚РїСЂР°РІРєРё РєРѕРјРјРµРЅС‚Р°СЂРёСЏ:", submitError);
-      alert("РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РїСЂР°РІРёС‚СЊ РєРѕРјРјРµРЅС‚Р°СЂРёР№");
+      console.error("Ошибка отправки комментария:", submitError);
+      alert(submitError instanceof Error ? `Не удалось отправить комментарий: ${submitError.message}` : "Не удалось отправить комментарий");
     } finally {
       setCommentSending(false);
     }
@@ -310,55 +336,101 @@ export default function RecipeDetailsPage() {
               {replyToCommentId && (
                 <button
                   type="button"
-                  onClick={() => setReplyToCommentId(null)}
+                  onClick={() => {
+                    setReplyToCommentId(null);
+                    setShowTasteDetails(false);
+                    setIsTasteDetailsSaved(false);
+                  }}
                   className="mt-1 rounded-full bg-gray-100 px-3 py-1 font-nunito text-xs text-umami-gray"
                 >
                   Отменить ответ
                 </button>
               )}
 
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <label className="block">
+              {!replyToCommentId && (
+                <div className="mt-3">
                   <span className="mb-1 block font-inter text-xs text-umami-gray">Рейтинг</span>
-                  <select
-                    value={commentForm.rating}
-                    onChange={(e) =>
-                      setCommentForm((prev) => ({ ...prev, rating: Number(e.target.value) }))
-                    }
-                    className="w-full rounded-full border border-umami-light-gray px-3 py-2 font-inter text-sm"
-                  >
+                  <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((value) => (
-                      <option key={value} value={value}>
-                        {value}
-                      </option>
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setCommentForm((prev) => ({ ...prev, rating: value }))}
+                        className={`text-2xl leading-none ${value <= commentForm.rating ? "text-umami-orange" : "text-umami-light-gray"}`}
+                        aria-label={`Оценка ${value}`}
+                      >
+                        ★
+                      </button>
                     ))}
-                  </select>
-                </label>
-                {(
-                  [
-                    ["taste_sweet", "Сладость"],
-                    ["taste_sour", "Кислота"],
-                    ["taste_salty", "Солёность"],
-                    ["taste_spicy", "Острота"],
-                    ["taste_umami", "Умами"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <label key={key} className="block">
-                    <span className="mb-1 block font-inter text-xs text-umami-gray">{label}</span>
-                    <input
-                      type="range"
-                      min={1}
-                      max={5}
-                      value={commentForm[key]}
-                      onChange={(e) =>
-                        setCommentForm((prev) => ({ ...prev, [key]: Number(e.target.value) }))
-                      }
-                      className="w-full accent-umami-orange"
-                    />
-                    <span className="font-inter text-xs text-umami-gray">{commentForm[key]}/5</span>
-                  </label>
-                ))}
-              </div>
+                    <span className="ml-2 font-inter text-xs text-umami-gray">{commentForm.rating}/5</span>
+                  </div>
+                </div>
+              )}
+
+              {!replyToCommentId && !showTasteDetails && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTasteDetails(true);
+                    setIsTasteDetailsSaved(false);
+                  }}
+                  className="mt-3 rounded-full border border-umami-orange px-4 py-2 font-nunito text-sm text-umami-orange"
+                >
+                  Добавить информацию о вкусе
+                </button>
+              )}
+
+              {!replyToCommentId && showTasteDetails && (
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {(
+                    [
+                      ["taste_sweet", "Сладость"],
+                      ["taste_sour", "Кислота"],
+                      ["taste_salty", "Солёность"],
+                      ["taste_spicy", "Острота"],
+                      ["taste_umami", "Умами"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <label key={key} className="block">
+                      <span className="mb-1 block font-inter text-xs text-umami-gray">{label}</span>
+                      <input
+                        type="range"
+                        min={1}
+                        max={5}
+                        value={commentForm[key]}
+                        onChange={(e) => {
+                          setCommentForm((prev) => ({ ...prev, [key]: Number(e.target.value) }));
+                          setIsTasteDetailsSaved(false);
+                        }}
+                        className="w-full accent-umami-orange"
+                      />
+                      <span className="font-inter text-xs text-umami-gray">{commentForm[key]}/5</span>
+                    </label>
+                  ))}
+                  <div className="col-span-2 mt-1 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsTasteDetailsSaved(true)}
+                      className="rounded-full bg-umami-green px-4 py-2 font-nunito text-sm text-white"
+                    >
+                      Сохранить вкус
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowTasteDetails(false);
+                        setIsTasteDetailsSaved(false);
+                      }}
+                      className="rounded-full bg-gray-100 px-4 py-2 font-nunito text-sm text-umami-gray"
+                    >
+                      Убрать вкусы
+                    </button>
+                    {isTasteDetailsSaved && (
+                      <span className="font-inter text-xs text-umami-green">Вкусы сохранены</span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <textarea
                 value={commentForm.content}
@@ -399,11 +471,18 @@ export default function RecipeDetailsPage() {
                         @{comment.Author.username}
                       </p>
                       <p className="font-inter text-sm text-umami-gray">{comment.content}</p>
-                      <p className="mt-1 font-inter text-xs text-umami-light-gray">
-                        Рейтинг: {comment.rating ?? 0}/5 | Сладость {comment.taste_sweet ?? 0} |
-                        Кислота {comment.taste_sour ?? 0} | Солёность {comment.taste_salty ?? 0} |
-                        Острота {comment.taste_spicy ?? 0} | Умами {comment.taste_umami ?? 0}
-                      </p>
+                      {(comment.rating ||
+                        comment.taste_sweet ||
+                        comment.taste_sour ||
+                        comment.taste_salty ||
+                        comment.taste_spicy ||
+                        comment.taste_umami) && (
+                        <p className="mt-1 font-inter text-xs text-umami-light-gray">
+                          Рейтинг: {comment.rating ?? 0}/5 | Сладость {comment.taste_sweet ?? 0} |
+                          Кислота {comment.taste_sour ?? 0} | Солёность {comment.taste_salty ?? 0} |
+                          Острота {comment.taste_spicy ?? 0} | Умами {comment.taste_umami ?? 0}
+                        </p>
+                      )}
                       <button
                         type="button"
                         onClick={() => setReplyToCommentId(comment.id)}
@@ -416,6 +495,7 @@ export default function RecipeDetailsPage() {
 
                   {(groupedComments.children.get(comment.id) || []).length > 0 && (
                     <div className="mt-3 space-y-2 border-l-2 border-umami-light-gray/40 pl-4">
+                      <p className="font-inter text-xs font-semibold text-umami-gray">Ответы:</p>
                       {(groupedComments.children.get(comment.id) || []).map((reply) => (
                         <div key={reply.id} className="flex gap-3">
                           <Image

@@ -7,6 +7,7 @@ interface UseRecipesOptions {
   initialParams?: GetRecipesParams;
   autoFetch?: boolean;
   useRecommendations?: boolean;
+  pageSize?: number;
 }
 
 let recommendationsCache: Recipe[] | null = null;
@@ -57,39 +58,58 @@ const hasActiveParams = (params: GetRecipesParams) =>
   Object.values(params).some((value) => value !== undefined && value !== null && value !== '');
 
 export function useRecipes(options: UseRecipesOptions = {}) {
-  const { initialParams = {}, autoFetch = true, useRecommendations = false } = options;
+  const { initialParams = {}, autoFetch = true, useRecommendations = false, pageSize = 8 } = options;
   
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [params, setParams] = useState<GetRecipesParams>(initialParams);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   
   // РСЃРїРѕР»СЊР·СѓРµРј ref РґР»СЏ РѕС‚СЃР»РµР¶РёРІР°РЅРёСЏ РїРµСЂРІРѕРіРѕ СЂРµРЅРґРµСЂР°
   const isMounted = useRef(true);
   const isFirstRender = useRef(true);
 
-  const fetchRecipes = useCallback(async (fetchParams?: GetRecipesParams) => {
+  const fetchRecipesPage = useCallback(async (pageToLoad: number, replace = false, fetchParams?: GetRecipesParams) => {
     try {
-      setLoading(true);
-      setError(null);
+      if (replace) {
+        setLoading(true);
+        setError(null);
+      } else {
+        setLoadingMore(true);
+      }
       const currentParams = fetchParams || params;
       
       const shouldUseRecommendations = useRecommendations && !hasActiveParams(currentParams);
       let data: Recipe[];
 
       if (shouldUseRecommendations) {
-        if (recommendationsCache) {
-          data = recommendationsCache;
-        } else {
-          data = await recipeService.getRecommendations();
-          recommendationsCache = data;
-        }
+        // Рекомендации без фильтров также грузим порционно из общей ленты,
+        // чтобы обеспечить бесконечный скролл.
+        data = await recipeService.getAll({
+          ...currentParams,
+          page: pageToLoad,
+          limit: pageSize,
+        });
       } else {
-        data = await recipeService.getAll(currentParams);
+        data = await recipeService.getAll({
+          ...currentParams,
+          page: pageToLoad,
+          limit: pageSize,
+        });
       }
         
       if (isMounted.current) {
-        setRecipes(data);
+        setRecipes((prev) => {
+          if (replace) return data;
+          const existingIds = new Set(prev.map((item) => item.id));
+          const nextChunk = data.filter((item) => !existingIds.has(item.id));
+          return [...prev, ...nextChunk];
+        });
+        setHasMore(data.length === pageSize);
+        setPage(pageToLoad);
       }
     } catch (err) {
       if (isMounted.current) {
@@ -98,13 +118,20 @@ export function useRecipes(options: UseRecipesOptions = {}) {
     } finally {
       if (isMounted.current) {
         setLoading(false);
+        setLoadingMore(false);
       }
     }
-  }, [params, useRecommendations]);
+  }, [params, useRecommendations, pageSize]);
 
   const refetch = useCallback(() => {
-    fetchRecipes();
-  }, [fetchRecipes]);
+    setHasMore(true);
+    fetchRecipesPage(1, true);
+  }, [fetchRecipesPage]);
+
+  const loadMore = useCallback(() => {
+    if (loading || loadingMore || !hasMore) return;
+    void fetchRecipesPage(page + 1, false);
+  }, [fetchRecipesPage, hasMore, loading, loadingMore, page]);
 
   const updateParams = useCallback((newParams: Partial<GetRecipesParams>) => {
     setParams(prev => ({ ...prev, ...newParams }));
@@ -126,8 +153,9 @@ export function useRecipes(options: UseRecipesOptions = {}) {
       isFirstRender.current = false;
     }
     
-    fetchRecipes();
-  }, [autoFetch, fetchRecipes]);
+    setHasMore(true);
+    fetchRecipesPage(1, true);
+  }, [autoFetch, fetchRecipesPage]);
 
   useEffect(() => {
     const handleRecipeLikeUpdated = (event: Event) => {
@@ -156,6 +184,9 @@ export function useRecipes(options: UseRecipesOptions = {}) {
     loading,
     error,
     refetch,
+    loadMore,
+    hasMore,
+    loadingMore,
     updateParams,
     params,
   };
