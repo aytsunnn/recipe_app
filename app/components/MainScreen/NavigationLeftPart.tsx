@@ -2,18 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { metaService, Category } from "../../services/metaService";
 import { authService } from "../../services/authService";
 
 const navItems = [
-  { href: "/profile", label: "Личный кабинет", icon: "/User.svg", active: false },
-  { href: "/profile#favorites", label: "Избранное", icon: "/Favorites.svg", active: false },
-  { href: "/", label: "Главная", icon: "/House.svg", active: true },
-  { href: "/profile#week-menu", label: "Меню недели", icon: "/ClipboardText.svg", active: false },
-  { href: "/recipes/random", label: "Случайный рецепт", icon: "/DiceFive.svg", active: false },
-  { href: "/profile#settings", label: "Настройки", icon: "/Settings.svg", active: false },
+  { href: "/profile", label: "Личный кабинет", icon: "/User.svg" },
+  { href: "/favorites", label: "Избранное", icon: "/Favorites.svg" },
+  { href: "/", label: "Главная", icon: "/House.svg" },
+  { href: "/profile#week-menu", label: "Меню недели", icon: "/ClipboardText.svg" },
+  { href: "/recipes/random", label: "Случайный рецепт", icon: "/DiceFive.svg" },
+  { href: "/profile#settings", label: "Настройки", icon: "/Settings.svg" },
 ];
 
 export default function LeftPart() {
@@ -22,6 +22,7 @@ export default function LeftPart() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -73,10 +74,8 @@ export default function LeftPart() {
     setSelectedCategories(newSelected);
 
     const params = new URLSearchParams(searchParams.toString());
-
     if (newSelected.size > 0) {
-      const categoriesString = Array.from(newSelected).join(",");
-      params.set("category_id", categoriesString);
+      params.set("category_id", Array.from(newSelected).join(","));
       params.set("filters", "true");
     } else {
       params.delete("category_id");
@@ -108,7 +107,7 @@ export default function LeftPart() {
                 key={item.label}
                 href={item.href}
                 className={`flex h-[30px] items-center gap-2.5 rounded-[7px] px-[5px] font-nunito text-xs font-bold text-umami-dark-gray transition-colors ${
-                  item.active ? "bg-[#f1ebdb]" : "hover:bg-[#f1ebdb]/70"
+                  pathname === item.href ? "bg-[#f1ebdb]" : "hover:bg-[#f1ebdb]/70"
                 }`}
               >
                 <Image width={20} height={20} src={item.icon} alt="" />

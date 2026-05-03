@@ -48,6 +48,26 @@ export interface GetRecipesParams {
   limit?: number;
 }
 
+export interface RecipeMutationData {
+  title?: string;
+  description?: string;
+  difficulty?: string;
+  image_url?: string | null;
+  is_private?: boolean;
+  kitchen_id?: number | null;
+  celebration_id?: number | null;
+  cooking_id?: number | null;
+  portion?: number;
+  calorific?: number | null;
+  cooking_time?: number;
+  proteins?: number;
+  fats?: number;
+  carbohydrates?: number;
+  categories?: number[];
+  ingredients?: Array<{ id: number; quantity: number; note?: string }>;
+  steps?: Array<{ description: string; image_url?: string }>;
+}
+
 class RecipeService {
   // Заменяет localhost URL на публичный адрес
   private fixImageUrl(url: string | null): string | null {
@@ -93,11 +113,11 @@ class RecipeService {
     return this.fixRecipeImages(recipe);
   }
 
-  async create(data: Partial<Recipe>): Promise<Recipe> {
+  async create(data: RecipeMutationData): Promise<Recipe> {
     return apiClient.post<Recipe>('/recipes', data);
   }
 
-  async update(id: string, data: Partial<Recipe>): Promise<Recipe> {
+  async update(id: string, data: RecipeMutationData): Promise<Recipe> {
     return apiClient.put<Recipe>(`/recipes/${id}`, data);
   }
 
