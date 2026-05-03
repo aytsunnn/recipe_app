@@ -11,6 +11,48 @@ interface UseRecipesOptions {
 
 let recommendationsCache: Recipe[] | null = null;
 
+type RecipeLikeUpdatedEventDetail = {
+  recipeId: string;
+  userId: string;
+  isLiked: boolean;
+};
+
+const applyLikeUpdateToRecipes = (
+  list: Recipe[],
+  { recipeId, userId, isLiked }: RecipeLikeUpdatedEventDetail
+): Recipe[] =>
+  list.map((recipe) => {
+    if (recipe.id !== recipeId) return recipe;
+
+    const currentLikes = recipe.Likes || [];
+    const hasUserLike = currentLikes.some((like) => like.user_id === userId);
+
+    let nextLikes = currentLikes;
+    if (isLiked && !hasUserLike) {
+      nextLikes = [...currentLikes, { id: `local-${userId}-${recipeId}`, user_id: userId }];
+    } else if (!isLiked && hasUserLike) {
+      nextLikes = currentLikes.filter((like) => like.user_id !== userId);
+    }
+
+    const nextLikesCount = recipe._count?.Likes ?? currentLikes.length;
+    const resolvedCount = isLiked
+      ? hasUserLike
+        ? nextLikesCount
+        : nextLikesCount + 1
+      : hasUserLike
+        ? Math.max(0, nextLikesCount - 1)
+        : nextLikesCount;
+
+    return {
+      ...recipe,
+      Likes: nextLikes,
+      _count: {
+        Likes: resolvedCount,
+        Comments: recipe._count?.Comments ?? recipe.Comments?.length ?? 0,
+      },
+    };
+  });
+
 const hasActiveParams = (params: GetRecipesParams) =>
   Object.values(params).some((value) => value !== undefined && value !== null && value !== '');
 
@@ -86,6 +128,28 @@ export function useRecipes(options: UseRecipesOptions = {}) {
     
     fetchRecipes();
   }, [autoFetch, fetchRecipes]);
+
+  useEffect(() => {
+    const handleRecipeLikeUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<RecipeLikeUpdatedEventDetail>;
+      if (!customEvent.detail) return;
+
+      setRecipes((prev) => applyLikeUpdateToRecipes(prev, customEvent.detail));
+      if (recommendationsCache) {
+        recommendationsCache = applyLikeUpdateToRecipes(recommendationsCache, customEvent.detail);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('recipe-like-updated', handleRecipeLikeUpdated);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('recipe-like-updated', handleRecipeLikeUpdated);
+      }
+    };
+  }, []);
 
   return {
     recipes,

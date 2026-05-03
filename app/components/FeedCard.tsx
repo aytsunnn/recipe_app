@@ -245,12 +245,26 @@ export default function FeedCard({
         setLikesCount((prev) => Math.max(0, prev - 1));
         // Убираем лайк на сервере
         await likeService.delete(recipe.id);
+        if (typeof window !== "undefined" && currentUserId) {
+          window.dispatchEvent(
+            new CustomEvent("recipe-like-updated", {
+              detail: { recipeId: recipe.id, userId: currentUserId, isLiked: false },
+            })
+          );
+        }
       } else {
         // Сразу обновляем UI
         setIsLiked(true);
         setLikesCount((prev) => prev + 1);
         // Ставим лайк на сервере
         await likeService.create(recipe.id);
+        if (typeof window !== "undefined" && currentUserId) {
+          window.dispatchEvent(
+            new CustomEvent("recipe-like-updated", {
+              detail: { recipeId: recipe.id, userId: currentUserId, isLiked: true },
+            })
+          );
+        }
       }
     } catch (error) {
       console.error("Ошибка при обработке лайка:", error);
