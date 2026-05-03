@@ -17,7 +17,7 @@ class UserService {
   }
 
   async updateProfile(data: Partial<User>): Promise<User> {
-    return apiClient.put<User>('/users/profile', data);
+    return apiClient.patch<User>('/users/me', data);
   }
 
   async getRecipes(userId: string): Promise<Recipe[]> {

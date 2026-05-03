@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { likeService } from "../services/likeService";
 import { commentService, Comment } from "../services/commentService";
 import { followService } from "../services/followService";
@@ -54,6 +55,7 @@ export default function FeedCard({
   currentUserId,
   showComments = false,
 }: FeedCardProps) {
+  const router = useRouter();
   // Проверяем, является ли текущий пользователь автором поста
   const isOwnPost = currentUserId && currentUserId === recipe.user_id;
 
@@ -269,8 +271,23 @@ export default function FeedCard({
     return `/${url}`;
   };
 
+  const handleOpenRecipe = () => {
+    router.push(`/recipes/${recipe.id}`);
+  };
+
   return (
-    <div className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5">
+    <div
+      className="rounded-lg w-full flex cursor-pointer flex-col gap-2.5 border border-umami-light-gray/50 bg-white p-4"
+      onClick={handleOpenRecipe}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleOpenRecipe();
+        }
+      }}
+    >
       <div className="flex items-center gap-2.5">
         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
           <Image
@@ -390,7 +407,7 @@ export default function FeedCard({
           <p className="font-inter text-sm text-umami-gray">{likesCount}</p>
         </div>
         <div className="flex gap-1 items-center">
-          <Link href="/">
+          <Link href={`/recipes/${recipe.id}#comments`}>
             <Image
               width={24}
               height={24}
