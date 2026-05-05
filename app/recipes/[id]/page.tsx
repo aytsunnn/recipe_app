@@ -37,6 +37,7 @@ export default function RecipeDetailsPage() {
   const [isTasteDetailsSaved, setIsTasteDetailsSaved] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isCooked, setIsCooked] = useState(false);
   const [likeBusy, setLikeBusy] = useState(false);
   const [favoriteBusy, setFavoriteBusy] = useState(false);
   const [commentForm, setCommentForm] = useState({
@@ -197,6 +198,10 @@ export default function RecipeDetailsPage() {
     }
   };
 
+  const handleCookedToggle = () => {
+    setIsCooked((prev) => !prev);
+  };
+
   const handleSubmitComment = async () => {
     if (!currentUserId) {
       alert("Необходимо авторизоваться");
@@ -325,7 +330,38 @@ export default function RecipeDetailsPage() {
             <h1 className="font-nunito text-2xl font-bold leading-none text-umami-orange">
               {recipe.title}
             </h1>
+            <button
+              type="button"
+              onClick={handleFavoriteRecipe}
+              disabled={favoriteBusy}
+              className={`ml-auto rounded-full px-3 py-1.5 font-nunito text-sm text-white disabled:opacity-60 ${
+                isFavorite ? "bg-umami-green" : "bg-umami-orange"
+              }`}
+            >
+              {isFavorite ? "В избранном" : "В избранное"}
+            </button>
           </div>
+
+          <Link
+            href={`/users/${recipe.User.id}`}
+            className="mb-4 flex items-center gap-3 rounded-2xl border border-umami-light-gray/50 bg-white p-3"
+          >
+            <Image
+              width={44}
+              height={44}
+              src={getSafeImageUrl(recipe.User.avatar_url, "/avatar.jpg")}
+              alt="author avatar"
+              className="h-11 w-11 rounded-full object-cover"
+            />
+            <div className="flex flex-col">
+              <p className="font-inter text-sm font-semibold text-umami-dark-gray">
+                @{recipe.User.username}
+              </p>
+              <p className="font-inter text-sm text-umami-gray">
+                {recipe.User.name}
+              </p>
+            </div>
+          </Link>
 
           <div className="overflow-hidden rounded-[20px] bg-[#d9d9d9]">
             <Image
@@ -400,11 +436,12 @@ export default function RecipeDetailsPage() {
             </div>
             <button
               type="button"
-              onClick={handleFavoriteRecipe}
-              disabled={favoriteBusy}
-              className="rounded-full bg-umami-orange px-2.5 py-1.25 font-nunito text-xs text-white"
+              onClick={handleCookedToggle}
+              className={`rounded-full px-2.5 py-1.25 font-nunito text-xs text-white ${
+                isCooked ? "bg-umami-green" : "bg-umami-orange"
+              }`}
             >
-              {isFavorite ? "В избранном" : "В избранное"}
+              {isCooked ? "Приготовлено" : "Отметить приготовленным"}
             </button>
           </div>
 
