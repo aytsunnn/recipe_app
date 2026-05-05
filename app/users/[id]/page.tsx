@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import FeedCard from "../../components/FeedCard";
 import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
+import ScrollToTopButton from "../../components/ScrollToTopButton";
 import { authService } from "../../services/authService";
 import { followService, FollowUser } from "../../services/followService";
 import { Recipe } from "../../services/recipeService";
@@ -33,6 +34,7 @@ export default function PublicUserPage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const feedColumnRef = useRef<HTMLDivElement | null>(null);
 
   const isOwnProfile = useMemo(() => Boolean(currentUserId && currentUserId === profile?.id), [currentUserId, profile?.id]);
 
@@ -137,7 +139,7 @@ export default function PublicUserPage() {
             {recipes.length === 0 ? (
               <div className="rounded-[20px] bg-white p-8 text-center font-nunito text-umami-gray">У автора пока нет рецептов</div>
             ) : (
-              <div className="flex flex-col gap-3">
+              <div ref={feedColumnRef} className="flex flex-col gap-3">
                 {recipes.map((recipe) => (
                   <FeedCard
                     key={recipe.id}
@@ -147,6 +149,7 @@ export default function PublicUserPage() {
                     showAuthorHeader={false}
                   />
                 ))}
+                <ScrollToTopButton anchorRef={feedColumnRef} />
               </div>
             )}
           </div>

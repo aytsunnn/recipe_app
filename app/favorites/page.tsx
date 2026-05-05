@@ -1,9 +1,10 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import FeedCard from "../components/FeedCard";
 import LeftPart from "../components/MainScreen/NavigationLeftPart";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 import { authService } from "../services/authService";
 import { followService } from "../services/followService";
 import { favoriteService } from "../services/favoriteService";
@@ -16,6 +17,7 @@ export default function FavoritesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const feedColumnRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,7 +71,7 @@ export default function FavoritesPage() {
       </div>
 
       <div className="flex w-169.5">
-        <div className="w-full flex flex-col gap-4">
+        <div ref={feedColumnRef} className="w-full flex flex-col gap-4">
           <div className="bg-white rounded-lg border border-umami-light-gray/50 p-4">
             <h1 className="font-nunito font-bold text-2xl text-umami-dark-gray">Избранное</h1>
             <p className="font-inter text-sm text-umami-gray mt-1">Сохраненные рецепты: {recipes.length}</p>
@@ -104,6 +106,7 @@ export default function FavoritesPage() {
                 showComments={index === 0}
               />
             ))}
+          <ScrollToTopButton anchorRef={feedColumnRef} />
         </div>
       </div>
     </div>

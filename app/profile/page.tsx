@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import FeedCard from "../components/FeedCard";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 import { authService, User } from "../services/authService";
 import { followService, FollowUser } from "../services/followService";
 import { Recipe, recipeService } from "../services/recipeService";
@@ -173,6 +174,7 @@ export default function ProfilePage() {
   );
 
   const visibleFriends = useMemo(() => friends.slice(0, 6), [friends]);
+  const feedColumnRef = useRef<HTMLDivElement | null>(null);
   const getSafeImageUrl = (url: string | null) => {
     return normalizeImageUrl(url, "/avatar.jpg");
   };
@@ -840,7 +842,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 ) : recipes.length > 0 ? (
-                  <>
+                  <div ref={feedColumnRef} className="flex flex-col gap-0">
                     {recipes.map((recipe) => (
                       <div key={recipe.id} className="relative">
                         <div className="absolute right-3 top-3 z-10 flex gap-2">
@@ -871,8 +873,9 @@ export default function ProfilePage() {
                           showAuthorHeader={false}
                         />
                       </div>
-                    ))}{" "}
-                  </>
+                    ))}
+                    <ScrollToTopButton anchorRef={feedColumnRef} />
+                  </div>
                 ) : (
                   <div className="rounded-[15px] border border-[#eaeaea] bg-white p-8 text-center">
                     <p className="font-nunito text-lg font-bold text-umami-gray">

@@ -7,6 +7,7 @@ import FiltersPanel, { FilterValues } from "./FiltersPanel";
 import { useRecipes } from "../../hooks/useRecipes";
 import { authService } from "../../services/authService";
 import { followService } from "../../services/followService";
+import ScrollToTopButton from "../ScrollToTopButton";
 
 const firstFromCsv = (csvValue: string | null) =>
   csvValue ? csvValue.split(",").filter(Boolean)[0] : undefined;
@@ -65,6 +66,7 @@ export default function FeedOfPosts() {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const feedColumnRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -129,7 +131,7 @@ export default function FeedOfPosts() {
   }
 
   return (
-    <div className="w-full flex flex-col gap-2">
+    <div ref={feedColumnRef} className="w-full flex flex-col gap-2">
       {showFilters && (
         <FiltersPanel onApplyFilters={handleApplyFilters} resultsCount={recipes.length} />
       )}
@@ -161,6 +163,7 @@ export default function FeedOfPosts() {
           {loadingMore ? "Загружаем еще..." : "Прокрутите вниз, чтобы загрузить еще"}
         </p>
       )}
+      <ScrollToTopButton anchorRef={feedColumnRef} />
     </div>
   );
 }
