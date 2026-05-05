@@ -10,7 +10,13 @@ interface UseRecipesOptions {
   pageSize?: number;
 }
 
-let recommendationsCache: Recipe[] | null = null;
+type RecommendationsCache = {
+  recipes: Recipe[];
+  loadedPage: number;
+  hasMore: boolean;
+};
+
+let recommendationsCache: RecommendationsCache | null = null;
 
 type RecipeLikeUpdatedEventDetail = {
   recipeId: string;
@@ -86,6 +92,16 @@ export function useRecipes(options: UseRecipesOptions = {}) {
       let data: Recipe[];
 
       if (shouldUseRecommendations) {
+        if (replace && recommendationsCache && recommendationsCache.recipes.length > 0) {
+          if (isMounted.current) {
+            setRecipes(recommendationsCache.recipes);
+            setPage(recommendationsCache.loadedPage);
+            setHasMore(recommendationsCache.hasMore);
+            setLoading(false);
+          }
+          return;
+        }
+
         data = await recipeService.getRecommendations(pageToLoad, pageSize);
       } else {
         data = await recipeService.getAll({
@@ -96,14 +112,28 @@ export function useRecipes(options: UseRecipesOptions = {}) {
       }
         
       if (isMounted.current) {
+        let resolvedRecipes: Recipe[] = [];
         setRecipes((prev) => {
-          if (replace) return data;
-          const existingIds = new Set(prev.map((item) => item.id));
-          const nextChunk = data.filter((item) => !existingIds.has(item.id));
-          return [...prev, ...nextChunk];
+          resolvedRecipes = replace
+            ? data
+            : (() => {
+                const existingIds = new Set(prev.map((item) => item.id));
+                const nextChunk = data.filter((item) => !existingIds.has(item.id));
+                return [...prev, ...nextChunk];
+              })();
+          return resolvedRecipes;
         });
-        setHasMore(data.length === pageSize);
+        const nextHasMore = data.length === pageSize;
+        setHasMore(nextHasMore);
         setPage(pageToLoad);
+
+        if (shouldUseRecommendations) {
+          recommendationsCache = {
+            recipes: resolvedRecipes,
+            loadedPage: pageToLoad,
+            hasMore: nextHasMore,
+          };
+        }
       }
     } catch (err) {
       if (isMounted.current) {
@@ -128,8 +158,23 @@ export function useRecipes(options: UseRecipesOptions = {}) {
   }, [fetchRecipesPage, hasMore, loading, loadingMore, page]);
 
   const updateParams = useCallback((newParams: Partial<GetRecipesParams>) => {
-    setParams(prev => ({ ...prev, ...newParams }));
-  }, []);
+    setParams((prev) => {
+      const merged = { ...prev, ...newParams };
+
+      const changed = Object.keys(merged).some((key) => {
+        const typedKey = key as keyof GetRecipesParams;
+        return merged[typedKey] !== prev[typedKey];
+      });
+
+      if (!changed) return prev;
+
+      if (useRecommendations && hasActiveParams(merged)) {
+        recommendationsCache = null;
+      }
+
+      return merged;
+    });
+  }, [useRecommendations]);
 
   // РћС‚РґРµР»СЊРЅС‹Р№ useEffect РґР»СЏ РЅР°С‡Р°Р»СЊРЅРѕР№ Р·Р°РіСЂСѓР·РєРё
   useEffect(() => {
@@ -158,7 +203,10 @@ export function useRecipes(options: UseRecipesOptions = {}) {
 
       setRecipes((prev) => applyLikeUpdateToRecipes(prev, customEvent.detail));
       if (recommendationsCache) {
-        recommendationsCache = applyLikeUpdateToRecipes(recommendationsCache, customEvent.detail);
+        recommendationsCache = {
+          ...recommendationsCache,
+          recipes: applyLikeUpdateToRecipes(recommendationsCache.recipes, customEvent.detail),
+        };
       }
     };
 

@@ -92,7 +92,7 @@ export default function LeftPart() {
   };
 
   const getCategoryImageUrl = (imageUrl?: string | null) => {
-    return normalizeImageUrl(imageUrl, "/placeholder.jpg");
+    return normalizeImageUrl(imageUrl, "/Pizza_3D.svg");
   };
 
   if (isLoading) {

@@ -31,7 +31,7 @@ export default function FeedOfPosts() {
   const useRecommendations =
     !searchQuery && !kitchenId && !categoryId && !celebrationId && !cookingId && !difficulty;
 
-  const { recipes, loading, error, refetch, updateParams } = useRecipes({
+  const { recipes, loading, loadingMore, error, refetch, updateParams, loadMore, hasMore } = useRecipes({
     initialParams: {
       search: searchQuery || undefined,
       kitchen_id: kitchenId,
@@ -53,7 +53,6 @@ export default function FeedOfPosts() {
       difficulty,
     });
   }, [
-    searchParams,
     updateParams,
     searchQuery,
     kitchenId,
@@ -65,7 +64,6 @@ export default function FeedOfPosts() {
 
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
-  const [visibleCount, setVisibleCount] = useState(8);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -93,27 +91,20 @@ export default function FeedOfPosts() {
   };
 
   useEffect(() => {
-    setVisibleCount(8);
-  }, [searchQuery, kitchenId, categoryId, celebrationId, cookingId, difficulty, recipes.length]);
-
-  useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
     const observer = new IntersectionObserver(
       (entries) => {
         const first = entries[0];
         if (!first?.isIntersecting) return;
-        setVisibleCount((prev) => Math.min(prev + 8, recipes.length));
+        loadMore();
       },
       { rootMargin: "300px 0px" }
     );
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [recipes.length]);
-
-  const visibleRecipes = recipes.slice(0, visibleCount);
-  const hasMore = visibleCount < recipes.length;
+  }, [loadMore]);
 
   if (loading) {
     return (
@@ -151,7 +142,7 @@ export default function FeedOfPosts() {
         </div>
       )}
 
-      {visibleRecipes.map((recipe, index) => {
+      {recipes.map((recipe, index) => {
         const isFollowing = followingIds.has(recipe.user_id);
         return (
           <FeedCard
@@ -165,7 +156,11 @@ export default function FeedOfPosts() {
       })}
 
       <div ref={sentinelRef} className="h-1 w-full" />
-      {hasMore && <p className="py-2 text-center text-sm text-umami-gray">Загружаем еще...</p>}
+      {hasMore && (
+        <p className="py-2 text-center text-sm text-umami-gray">
+          {loadingMore ? "Загружаем еще..." : "Прокрутите вниз, чтобы загрузить еще"}
+        </p>
+      )}
     </div>
   );
 }
