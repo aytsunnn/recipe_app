@@ -36,6 +36,10 @@ export interface AuthResponse {
   };
 }
 
+export interface RegisterResponse {
+  message: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -62,8 +66,8 @@ class AuthService {
   }
 
   // Регистрация
-  async register(data: RegisterData): Promise<AuthResponse> {
-    return apiClient.post<AuthResponse>('/auth/register', data);
+  async register(data: RegisterData): Promise<RegisterResponse> {
+    return apiClient.post<RegisterResponse>('/auth/register', data);
   }
 
   // Подтверждение email

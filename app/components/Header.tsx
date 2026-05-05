@@ -67,10 +67,16 @@ function HeaderContent() {
     setIsAuthModalOpen(true);
   };
 
-  const handleLogout = () => {
-    authService.removeToken();
-    authService.dispatchAuthChange();
-    router.push("/");
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error("Ошибка при выходе из аккаунта:", error);
+    } finally {
+      authService.removeToken();
+      authService.dispatchAuthChange();
+      router.push("/");
+    }
   };
 
   const handleSearch = (e?: React.FormEvent) => {
@@ -190,6 +196,20 @@ function HeaderContent() {
                 className="w-5.25 h-5.25"
               />
             </Link>
+            <button
+              onClick={() => void handleLogout()}
+              className="w-9 h-9 rounded-full border flex justify-center items-center border-umami-light-gray/50"
+              title="Выйти"
+              aria-label="Выйти"
+            >
+              <Image
+                width={20}
+                height={20}
+                src="/SignOut.svg"
+                alt="logout"
+                className="w-5 h-5"
+              />
+            </button>
             <Link
               href="/profile"
               className="bg-umami-orange custom-button h-10.25 flex items-center justify-center font-medium font-nunito gap-5 pr-0"

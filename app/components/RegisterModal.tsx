@@ -14,7 +14,6 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   const modalRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({ email: "", password: "", confirmPassword: "", username: "", name: "" });
   const [verifyCode, setVerifyCode] = useState("");
-  const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [isVerifyStep, setIsVerifyStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -22,7 +21,6 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   const resetForm = () => {
     setFormData({ email: "", password: "", confirmPassword: "", username: "", name: "" });
     setVerifyCode("");
-    setPendingToken(null);
     setIsVerifyStep(false);
     setFieldErrors({});
   };
@@ -89,8 +87,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
         name: formData.name,
       };
 
-      const response = await authService.register(registerData);
-      setPendingToken(response.access_token);
+      await authService.register(registerData);
       setIsVerifyStep(true);
       setFieldErrors({ general: "Код отправлен на email" });
     } catch (error) {
@@ -110,7 +107,11 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
     setIsLoading(true);
     try {
       await authService.verifyEmail({ email: normalizedEmail, code: verifyCode.trim() });
-      if (pendingToken) authService.saveToken(pendingToken);
+      const loginResponse = await authService.login({
+        email: normalizedEmail,
+        password: formData.password,
+      });
+      authService.saveToken(loginResponse.access_token);
       authService.dispatchAuthChange();
       handleClose();
     } catch (error) {

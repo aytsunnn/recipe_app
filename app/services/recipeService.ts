@@ -1,4 +1,4 @@
-// app/services/recipeService.ts
+﻿// app/services/recipeService.ts
 import { apiClient } from './api';
 
 export interface Recipe {
@@ -70,7 +70,6 @@ export interface RecipeMutationData {
 }
 
 class RecipeService {
-  // Заменяет localhost URL на публичный адрес
   private fixImageUrl(url: string | null): string | null {
     if (!url) return null;
     const fixed = url.replace('http://127.0.0.1:9000', 'http://188.233.238.70:9001');
@@ -80,7 +79,6 @@ class RecipeService {
     return null;
   }
 
-  // Исправляет URL изображений в рецепте
   private fixRecipeImages(recipe: Recipe): Recipe {
     return {
       ...recipe,
@@ -126,15 +124,20 @@ class RecipeService {
     return apiClient.delete(`/recipes/${id}`);
   }
 
-  async getRecommendations(): Promise<Recipe[]> {
+  async getRecommendations(page = 1, limit = 8): Promise<Recipe[]> {
     try {
-      const recipes = await apiClient.get<Recipe[]>('/recipes/recommendations');
+      const queryParams = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+      });
+      const recipes = await apiClient.get<Recipe[]>(`/recipes/recommendations?${queryParams.toString()}`);
       return recipes.map(recipe => this.fixRecipeImages(recipe));
     } catch (error) {
       console.error('Ошибка загрузки рекомендаций, показываем общую ленту:', error);
-      return this.getAll();
+      return this.getAll({ page, limit });
     }
   }
 }
 
 export const recipeService = new RecipeService();
+

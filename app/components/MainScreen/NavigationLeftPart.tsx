@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -8,12 +8,11 @@ import { metaService, Category } from "../../services/metaService";
 import { authService } from "../../services/authService";
 
 const navItems = [
+  { href: "/", label: "Главная", icon: "/House.svg" },
   { href: "/profile", label: "Личный кабинет", icon: "/User.svg" },
   { href: "/favorites", label: "Избранное", icon: "/Favorites.svg" },
-  { href: "/", label: "Главная", icon: "/House.svg" },
   { href: "/profile#week-menu", label: "Меню недели", icon: "/ClipboardText.svg" },
   { href: "/recipes/random", label: "Случайный рецепт", icon: "/DiceFive.svg" },
-  { href: "/profile#settings", label: "Настройки", icon: "/Settings.svg" },
 ];
 
 export default function LeftPart() {
@@ -85,6 +84,16 @@ export default function LeftPart() {
     router.push(`/?${params.toString()}`);
   };
 
+  const getCategoryImageUrl = (imageUrl?: string | null) => {
+    if (!imageUrl || imageUrl === "null" || imageUrl === "undefined") {
+      return "/placeholder.jpg";
+    }
+    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://") || imageUrl.startsWith("/")) {
+      return imageUrl;
+    }
+    return "/placeholder.jpg";
+  };
+
   if (isLoading) {
     return (
       <div className="w-full flex flex-col">
@@ -134,7 +143,13 @@ export default function LeftPart() {
                       : "border-umami-light-gray/50 bg-white"
                   }`}
                 >
-                  <Image src="/Pizza_3D.svg" width={55} height={55} alt={category.name} />
+                  <Image
+                    src={getCategoryImageUrl(category.image_url)}
+                    width={55}
+                    height={55}
+                    alt={category.name}
+                    className="h-[55px] w-[55px] rounded-xl object-cover"
+                  />
                 </div>
                 <p
                   className={`font-nunito font-bold text-sm max-w-17.75 transition-colors ${
@@ -151,3 +166,4 @@ export default function LeftPart() {
     </div>
   );
 }
+

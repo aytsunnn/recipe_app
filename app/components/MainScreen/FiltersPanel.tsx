@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -157,6 +157,14 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
 
   const activeOptions = openFilter ? optionMap[openFilter] : [];
   const activeSelected = openFilter ? getSelected(openFilter) : [];
+  const getRecipeWord = (count: number) => {
+    const abs = Math.abs(count) % 100;
+    const last = abs % 10;
+    if (abs >= 11 && abs <= 14) return "рецептов";
+    if (last === 1) return "рецепт";
+    if (last >= 2 && last <= 4) return "рецепта";
+    return "рецептов";
+  };
 
   if (isLoading) {
     return (
@@ -247,8 +255,10 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
       )}
 
       <p className="mt-2 text-center font-nunito text-xl font-bold text-umami-dark-gray">
-        Найдено <span className="text-umami-green">{resultsCount}</span> рецепта
+        Найдено <span className="text-umami-green">{resultsCount}</span> {getRecipeWord(resultsCount)}
       </p>
     </div>
   );
 }
+
+

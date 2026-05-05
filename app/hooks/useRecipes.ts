@@ -86,13 +86,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
       let data: Recipe[];
 
       if (shouldUseRecommendations) {
-        // Рекомендации без фильтров также грузим порционно из общей ленты,
-        // чтобы обеспечить бесконечный скролл.
-        data = await recipeService.getAll({
-          ...currentParams,
-          page: pageToLoad,
-          limit: pageSize,
-        });
+        data = await recipeService.getRecommendations(pageToLoad, pageSize);
       } else {
         data = await recipeService.getAll({
           ...currentParams,

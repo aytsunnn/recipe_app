@@ -1,4 +1,4 @@
-const nextConfig = {
+﻿const nextConfig = {
   images: {
     remotePatterns: [
       {
@@ -21,13 +21,19 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'loremflickr.com',
         port: '',
-        pathname: '/**', // Разрешаем все пути на этом домене
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.freepik.com',
+        port: '',
+        pathname: '/**',
       },
       {
         protocol: 'http',
         hostname: '127.0.0.1',
         port: '9000',
-        pathname: '/vkusno/**', // Разрешаем доступ к бакету vkusno
+        pathname: '/vkusno/**',
       },
     ],
     formats: ['image/avif', 'image/webp'],
@@ -35,3 +41,4 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
+
