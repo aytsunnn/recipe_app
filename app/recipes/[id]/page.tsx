@@ -57,6 +57,24 @@ export default function RecipeDetailsPage() {
     );
   }, [recipe?.Categories]);
 
+  const descriptionItems = useMemo(
+    () => [
+      { label: "Кухня", value: recipe?.Kitchen?.name || "—" },
+      { label: "Праздник", value: recipe?.Celebration?.name || "—" },
+      { label: "Тип приготовления", value: recipe?.TypeCooking?.name || "—" },
+      { label: "Калории", value: recipe?.calorific ?? "—" },
+      { label: "Порции", value: recipe?.portion ?? "—" },
+      {
+        label: "Время приготовления",
+        value: recipe?.cooking_time ? `${recipe.cooking_time} мин` : "—",
+      },
+      { label: "Белки", value: recipe?.proteins ?? "—" },
+      { label: "Жиры", value: recipe?.fats ?? "—" },
+      { label: "Углеводы", value: recipe?.carbohydrates ?? "—" },
+    ],
+    [recipe]
+  );
+
   const groupedComments = useMemo(() => {
     const roots: Comment[] = [];
     const children = new Map<string, Comment[]>();
@@ -254,6 +272,7 @@ export default function RecipeDetailsPage() {
         taste_spicy: null,
         taste_umami: null,
       });
+      setCommentsCountState((prev) => prev + 1);
       setReplyToCommentId(null);
       await loadComments();
     } catch (submitError) {
@@ -439,6 +458,18 @@ export default function RecipeDetailsPage() {
                 <span className="font-nunito text-base">5,0</span>
                 {/* рейтинг выставляется на основе отзывов, если отзывов нет, то рейтинг 0,0 */}
               </div>
+              <div className="flex items-center gap-1">
+                <Image
+                  width={20}
+                  height={20}
+                  src="/Difficulty.svg"
+                  alt="difficulty"
+                />
+                <span className="font-nunito text-base">
+                  {recipe.difficulty}
+                </span>
+                {/* вывести сложность рецепта словом */}
+              </div>
             </div>
             <button
               type="button"
@@ -453,29 +484,6 @@ export default function RecipeDetailsPage() {
             </button>
           </div>
 
-          <div className="mt-5 grid grid-cols-3 gap-10">
-            <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white">
-              <p className="font-nunito text-base font-bold text-umami-orange">
-                {recipe.cooking_time} мин
-              </p>
-              <p className="font-nunito text-sm text-umami-light-gray">
-                готовка
-              </p>
-            </div>
-            <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white">
-              <p className="font-nunito text-base font-bold text-umami-orange">
-                {recipe.portion} порции
-              </p>
-              <p className="font-nunito text-sm text-umami-light-gray">выход</p>
-            </div>
-            <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white">
-              <p className="font-nunito text-base font-bold text-umami-orange">
-                {recipe.calorific ?? 0}
-              </p>
-              <p className="font-nunito text-sm text-umami-light-gray">ккал</p>
-            </div>
-          </div>
-
           <div className="mt-5 grid h-10 grid-cols-4 overflow-hidden rounded-[20px] bg-white border border-umami-light-gray/50">
             <button
               onClick={() => setActiveTab("info")}
@@ -485,17 +493,7 @@ export default function RecipeDetailsPage() {
                   : "text-umami-gray"
               }`}
             >
-              Инфо
-            </button>
-            <button
-              onClick={() => setActiveTab("recipe")}
-              className={`font-nunito text-base ${
-                activeTab === "recipe"
-                  ? "bg-umami-orange text-white rounded-[20px]"
-                  : "text-umami-gray"
-              }`}
-            >
-              Рецепт
+              Описание
             </button>
             <button
               onClick={() => setActiveTab("ingredients")}
@@ -507,6 +505,17 @@ export default function RecipeDetailsPage() {
             >
               Ингредиенты
             </button>
+            <button
+              onClick={() => setActiveTab("recipe")}
+              className={`font-nunito text-base ${
+                activeTab === "recipe"
+                  ? "bg-umami-orange text-white rounded-[20px]"
+                  : "text-umami-gray"
+              }`}
+            >
+              Рецепт
+            </button>
+
             <button
               id="comments"
               onClick={async () => {
@@ -526,10 +535,135 @@ export default function RecipeDetailsPage() {
           </div>
 
           <div className="mt-4 min-h-[120px] rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
-            {activeTab !== "comments" && (
-              <p className="font-inter text-base text-umami-gray">
-                {recipe.description}
-              </p>
+            {activeTab === "info" && (
+              <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-3 gap-10">
+                  <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white">
+                    <p className="font-nunito text-base font-bold text-umami-orange">
+                      {recipe.cooking_time} мин
+                    </p>
+                    <p className="font-nunito text-sm text-umami-light-gray">
+                      готовка
+                    </p>
+                  </div>
+                  <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white">
+                    <p className="font-nunito text-base font-bold text-umami-orange">
+                      {recipe.portion} порции
+                    </p>
+                    <p className="font-nunito text-sm text-umami-light-gray">
+                      выход
+                    </p>
+                  </div>
+                  <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white">
+                    <p className="font-nunito text-base font-bold text-umami-orange">
+                      {recipe.calorific ?? 0}
+                    </p>
+                    <p className="font-nunito text-sm text-umami-light-gray">
+                      ккал
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col">
+                  <p className="font-nunito text-sm text-umami-light-gray">
+                    Белки
+                  </p>
+                  <p className="font-nunito text-base text-umami-gray">Белки</p>
+                </div>
+                <div className="flex flex-col">
+                  <p className="font-nunito text-sm text-umami-light-gray">
+                    Жиры
+                  </p>
+                  <p className="font-nunito text-base text-umami-gray">Жиры</p>
+                </div>
+                <div className="flex flex-col">
+                  <p className="font-nunito text-sm text-umami-light-gray">
+                    Углеводы
+                  </p>
+                  <p className="font-nunito text-base text-umami-gray">
+                    Углеводы
+                  </p>
+                </div>
+                <div className="flex flex-col">
+                  <p className="font-nunito text-sm text-umami-light-gray">
+                    Кухня
+                  </p>
+                  <p className="font-nunito text-base text-umami-gray">Кухня</p>
+                </div>
+                <div className="flex flex-col">
+                  <p className="font-nunito text-sm text-umami-light-gray">
+                    Праздник
+                  </p>
+                  <p className="font-nunito text-base text-umami-gray">
+                    Праздник
+                  </p>
+                </div>
+                <div className="flex flex-col">
+                  <p className="font-nunito text-sm text-umami-light-gray">
+                    Тип приготовления
+                  </p>
+                  <p className="font-nunito text-base text-umami-gray">
+                    Тип приготовления
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "ingredients" && (
+              <div className="space-y-2">
+                {(recipe.Ingredients || []).length === 0 && (
+                  <p className="font-inter text-sm text-umami-gray">
+                    Ингредиенты не указаны
+                  </p>
+                )}
+                {(recipe.Ingredients || []).map((ingredient) => {
+                  const quantity = ingredient.RecipeIngredient?.quantity ?? "—";
+                  const unit =
+                    ingredient.Unit?.short_name ||
+                    ingredient.Unit?.name ||
+                    ingredient.unit_of_measurement ||
+                    "";
+                  return (
+                    <div
+                      key={ingredient.id}
+                      className="flex items-center justify-between rounded-xl border border-umami-light-gray/40 px-3 py-2"
+                    >
+                      <p className="font-inter text-sm text-umami-dark-gray">
+                        {ingredient.name}
+                      </p>
+                      <p className="font-inter text-sm text-umami-gray">
+                        {quantity} {unit}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {activeTab === "recipe" && (
+              <div className="space-y-3">
+                {(recipe.Steps || []).length === 0 && (
+                  <p className="font-inter text-sm text-umami-gray">
+                    Шаги рецепта не указаны
+                  </p>
+                )}
+                {(recipe.Steps || [])
+                  .slice()
+                  .sort((a, b) => (a.step_number ?? 0) - (b.step_number ?? 0))
+                  .map((step, index) => (
+                    <div
+                      key={step.id}
+                      className="rounded-xl border border-umami-light-gray/40 p-3"
+                    >
+                      <p className="font-nunito text-sm font-bold text-umami-orange">
+                        Шаг {step.step_number ?? index + 1}
+                      </p>
+                      <p className="mt-1 font-inter text-sm text-umami-dark-gray">
+                        {step.description || "Описание шага отсутствует"}
+                      </p>
+                    </div>
+                  ))}
+              </div>
             )}
 
             {activeTab === "comments" && (

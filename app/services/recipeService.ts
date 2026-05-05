@@ -14,6 +14,9 @@ export interface Recipe {
   cooking_id: string | null;
   portion: number;
   calorific: number | null;
+  proteins?: number | null;
+  fats?: number | null;
+  carbohydrates?: number | null;
   cooking_time: number;
   createdAt: string;
   updatedAt: string;
@@ -27,6 +30,34 @@ export interface Recipe {
     id: string;
     name: string;
   } | null;
+  Celebration?: {
+    id: string;
+    name: string;
+  } | null;
+  TypeCooking?: {
+    id: string;
+    name: string;
+  } | null;
+  Ingredients?: Array<{
+    id: string;
+    name: string;
+    RecipeIngredient?: {
+      quantity?: string | number | null;
+      note?: string | null;
+    };
+    Unit?: {
+      id: string;
+      name: string;
+      short_name?: string | null;
+    } | null;
+    unit_of_measurement?: string | null;
+  }>;
+  Steps?: Array<{
+    id: string;
+    step_number?: number | null;
+    description?: string | null;
+    image_url?: string | null;
+  }>;
   Likes: Array<{ id: string; user_id: string }>;
   Comments?: Array<{ id: string }>;
   Categories: unknown[];
