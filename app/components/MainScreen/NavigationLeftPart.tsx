@@ -11,13 +11,19 @@ const navItems = [
   { href: "/", label: "Главная", icon: "/House.svg" },
   { href: "/profile", label: "Личный кабинет", icon: "/User.svg" },
   { href: "/favorites", label: "Избранное", icon: "/Favorites.svg" },
-  { href: "/profile#week-menu", label: "Меню недели", icon: "/ClipboardText.svg" },
+  {
+    href: "/profile#week-menu",
+    label: "Меню недели",
+    icon: "/ClipboardText.svg",
+  },
   { href: "/recipes/random", label: "Случайный рецепт", icon: "/DiceFive.svg" },
 ];
 
 export default function LeftPart() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
+    new Set()
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
@@ -36,7 +42,7 @@ export default function LeftPart() {
       }
     };
 
-    loadCategories();
+    void loadCategories();
   }, []);
 
   useEffect(() => {
@@ -88,7 +94,11 @@ export default function LeftPart() {
     if (!imageUrl || imageUrl === "null" || imageUrl === "undefined") {
       return "/placeholder.jpg";
     }
-    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://") || imageUrl.startsWith("/")) {
+    if (
+      imageUrl.startsWith("http://") ||
+      imageUrl.startsWith("https://") ||
+      imageUrl.startsWith("/")
+    ) {
       return imageUrl;
     }
     return "/placeholder.jpg";
@@ -98,7 +108,9 @@ export default function LeftPart() {
     return (
       <div className="w-full flex flex-col">
         <div className="flex flex-col gap-1.25">
-          <p className="font-nunito font-bold text-xl text-umami-orange">Категории</p>
+          <p className="font-nunito font-bold text-xl text-umami-orange">
+            Категории
+          </p>
           <p className="text-umami-gray text-sm">Загрузка...</p>
         </div>
       </div>
@@ -110,13 +122,14 @@ export default function LeftPart() {
       <div className="flex flex-col gap-1.25">
         {isAuthenticated && (
           <div className="mb-5 flex flex-col gap-1">
-            <p className="font-nunito font-bold text-xl text-umami-orange">Навигация</p>
             {navItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
                 className={`flex h-[30px] items-center gap-2.5 rounded-[7px] px-[5px] font-nunito text-xs font-bold text-umami-dark-gray transition-colors ${
-                  pathname === item.href ? "bg-[#f1ebdb]" : "hover:bg-[#f1ebdb]/70"
+                  pathname === item.href
+                    ? "bg-[#f1ebdb]"
+                    : "hover:bg-[#f1ebdb]/70"
                 }`}
               >
                 <Image width={20} height={20} src={item.icon} alt="" />
@@ -126,7 +139,9 @@ export default function LeftPart() {
           </div>
         )}
 
-        <p className="font-nunito font-bold text-xl text-umami-orange">Категории</p>
+        <p className="font-nunito font-bold text-xl text-umami-orange">
+          Категории
+        </p>
         <div className="grid grid-cols-3 w-full gap-2.5">
           {categories.map((category) => {
             const isSelected = selectedCategories.has(category.id);
@@ -166,4 +181,3 @@ export default function LeftPart() {
     </div>
   );
 }
-

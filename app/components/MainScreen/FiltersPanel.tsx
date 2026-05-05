@@ -74,7 +74,7 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
       }
     };
 
-    loadFilterData();
+    void loadFilterData();
   }, []);
 
   useEffect(() => {
@@ -157,6 +157,7 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
 
   const activeOptions = openFilter ? optionMap[openFilter] : [];
   const activeSelected = openFilter ? getSelected(openFilter) : [];
+
   const getRecipeWord = (count: number) => {
     const abs = Math.abs(count) % 100;
     const last = abs % 10;
@@ -260,5 +261,3 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
     </div>
   );
 }
-
-

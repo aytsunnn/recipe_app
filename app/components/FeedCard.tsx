@@ -3,11 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { likeService } from "../services/likeService";
 import { commentService, Comment } from "../services/commentService";
 import { followService } from "../services/followService";
-import { favoriteService } from "../services/favoriteService";
 
 interface Recipe {
   id: string;
@@ -57,7 +55,11 @@ export default function FeedCard({
   showComments = false,
   showAuthorHeader = true,
 }: FeedCardProps) {
-  const router = useRouter();
+  const [following, setFollowing] = useState(isFollowing);
+  const [justFollowed, setJustFollowed] = useState(false); // Отслеживаем подписку в текущей сессии
+  const [lastComment, setLastComment] = useState<Comment | null>(null);
+  const [loadingComment, setLoadingComment] = useState(false);
+
   // Проверяем, является ли текущий пользователь автором поста
   const isOwnPost = currentUserId && currentUserId === recipe.user_id;
 
@@ -70,18 +72,10 @@ export default function FeedCard({
     : false;
 
   const [isLiked, setIsLiked] = useState(isLikedByUser);
-  const [following, setFollowing] = useState(isFollowing);
-  const [justFollowed, setJustFollowed] = useState(false);
   const [likesCount, setLikesCount] = useState(
     recipe._count?.Likes ?? recipe.Likes?.length ?? 0
   );
-  const [localCommentsCount, setLocalCommentsCount] = useState(
-    recipe._count?.Comments ?? recipe.Comments?.length ?? 0
-  );
-  const [lastComment, setLastComment] = useState<Comment | null>(null);
-  const [loadingComment, setLoadingComment] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [loadingFavorite, setLoadingFavorite] = useState(false);
+  const commentsCount = recipe._count?.Comments ?? recipe.Comments?.length ?? 0;
 
   // Синхронизируем состояние following с пропсом isFollowing
   useEffect(() => {
@@ -96,98 +90,26 @@ export default function FeedCard({
     setIsLiked(liked);
   }, [currentUserId, recipe.Likes]);
 
+  // Загружаем последний комментарий, если нужно показывать комментарии
   useEffect(() => {
-    setLikesCount(recipe._count?.Likes ?? recipe.Likes?.length ?? 0);
-  }, [recipe._count?.Likes, recipe.Likes]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const syncLikesFromServer = async () => {
-      if (!currentUserId) return;
-      try {
-        const likes = await likeService.getByRecipe(recipe.id);
-        if (cancelled) return;
-        setLikesCount(likes.length);
-        setIsLiked(likes.some((like) => like.user_id === currentUserId));
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Ошибка синхронизации лайков:", error);
-        }
-      }
-    };
-
-    syncLikesFromServer();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [recipe.id, currentUserId]);
-
-  // Проверяем, добавлен ли рецепт в избранное
-  useEffect(() => {
-    let cancelled = false;
-
-    const checkFavorite = async () => {
-      if (!isAuthenticated) {
-        setIsFavorite(false);
-        return;
-      }
-
-      try {
-        const isFav = await favoriteService.checkIsFavorite(recipe.id);
-        if (!cancelled) {
-          setIsFavorite(isFav);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Ошибка при проверке избранного:", error);
-        }
-      }
-    };
-
-    checkFavorite();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [recipe.id, isAuthenticated]);
-
-  // Загружаем последний комментарий
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadComment = async () => {
-      try {
-        if (!cancelled) {
-          setLoadingComment(true);
-        }
-        const comments = await commentService.getByRecipe(recipe.id);
-        if (!cancelled) {
-          setLocalCommentsCount(comments.length);
+    if (showComments && commentsCount > 0) {
+      setLoadingComment(true);
+      commentService
+        .getByRecipe(recipe.id)
+        .then((comments) => {
           if (comments.length > 0) {
-            // Берем самый новый комментарий
-            setLastComment(comments[0]);
+            // Берем последний комментарий
+            setLastComment(comments[comments.length - 1]);
           }
-        }
-      } catch (error) {
-        if (!cancelled) {
+        })
+        .catch((error) => {
           console.error("Ошибка при загрузке комментариев:", error);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingComment(true); // Сохраняем true чтобы не мигало, или false если загрузка окончена
+        })
+        .finally(() => {
           setLoadingComment(false);
-        }
-      }
-    };
-
-    loadComment();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [recipe.id]);
+        });
+    }
+  }, [showComments, recipe.id, commentsCount]);
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -229,7 +151,6 @@ export default function FeedCard({
     e.stopPropagation();
 
     if (!isAuthenticated) {
-      // TODO: Показать модалку авторизации
       alert("Необходимо авторизоваться");
       return;
     }
@@ -245,26 +166,12 @@ export default function FeedCard({
         setLikesCount((prev) => Math.max(0, prev - 1));
         // Убираем лайк на сервере
         await likeService.delete(recipe.id);
-        if (typeof window !== "undefined" && currentUserId) {
-          window.dispatchEvent(
-            new CustomEvent("recipe-like-updated", {
-              detail: { recipeId: recipe.id, userId: currentUserId, isLiked: false },
-            })
-          );
-        }
       } else {
         // Сразу обновляем UI
         setIsLiked(true);
         setLikesCount((prev) => prev + 1);
         // Ставим лайк на сервере
         await likeService.create(recipe.id);
-        if (typeof window !== "undefined" && currentUserId) {
-          window.dispatchEvent(
-            new CustomEvent("recipe-like-updated", {
-              detail: { recipeId: recipe.id, userId: currentUserId, isLiked: true },
-            })
-          );
-        }
       }
     } catch (error) {
       console.error("Ошибка при обработке лайка:", error);
@@ -275,87 +182,36 @@ export default function FeedCard({
     }
   };
 
-  const handleFavorite = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!isAuthenticated) {
-      alert("Необходимо авторизоваться");
-      return;
-    }
-
-    if (loadingFavorite) return;
-
-    const previousIsFavorite = isFavorite;
-
-    try {
-      setLoadingFavorite(true);
-      
-      if (isFavorite) {
-        setIsFavorite(false);
-        await favoriteService.removeFromFavorites(recipe.id);
-      } else {
-        setIsFavorite(true);
-        await favoriteService.addToFavorites(recipe.id);
-      }
-    } catch (error) {
-      console.error("Ошибка при обработке избранного:", error);
-      setIsFavorite(previousIsFavorite);
-      alert("Не удалось обработать избранное. Попробуйте еще раз.");
-    } finally {
-      setLoadingFavorite(false);
-    }
-  };
-
-  const getSafeImageUrl = (url: string | null, fallback: string) => {
-    if (!url || url === "null" || url === "undefined") return fallback;
-    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
-      return url;
-    }
-    return `/${url}`;
-  };
-
-  const handleOpenRecipe = () => {
-    router.push(`/recipes/${recipe.id}`);
-  };
-
-  const handleOpenAuthorProfile = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    router.push(`/users/${recipe.user_id}`);
-  };
-
   return (
-    <div
-      className="w-full cursor-pointer rounded-lg border border-umami-light-gray/50 bg-white p-3"
-      onClick={handleOpenRecipe}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleOpenRecipe();
-        }
-      }}
-    >
-      {showAuthorHeader && <div className="mb-2 flex cursor-pointer items-center gap-2" onClick={handleOpenAuthorProfile}>
-        <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gray-200">
-          <Image
-            width={32}
-            height={32}
-            src={getSafeImageUrl(recipe.User.avatar_url, "/avatar.jpg")}
-            className="w-full h-full object-cover"
-            alt="avatar"
-          />
-
+    <div className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5">
+      {showAuthorHeader && (
+      <div className="flex items-center gap-2.5">
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+          {recipe.User.avatar_url ? (
+            <Image
+              width={40}
+              height={40}
+              src={recipe.User.avatar_url}
+              className="w-full h-full object-cover"
+              alt="avatar"
+            />
+          ) : (
+            <Image
+              width={40}
+              height={40}
+              src="/avatar.jpg"
+              className=" object-cover"
+              alt="avatar"
+            />
+          )}
         </div>
-        <div className="flex w-full flex-col justify-between">
-          <div className="flex flex-row items-center justify-between">
+        <div className="w-full flex flex-col justify-between">
+          <div className="flex flex-row justify-between items-center">
             <div className="flex flex-col">
-              <p className="font-inter text-xs font-medium text-umami-dark-gray">
+              <p className="font-inter text-sm font-medium text-umami-dark-gray">
                 {recipe.User.name}
               </p>
-              <p className="font-inter text-[11px] text-umami-light-gray">
+              <p className="font-inter text-xs text-umami-light-gray">
                 @{recipe.User.username}
               </p>
             </div>
@@ -384,31 +240,25 @@ export default function FeedCard({
             )}
           </div>
         </div>
-      </div>}
+      </div>
+      )}
 
-      <div className="relative mb-2 overflow-hidden rounded-lg">
+      <Link href={`/recipes/${recipe.id}`} className="block">
+      <div className="relative">
         <Image
           width={600}
           height={400}
-          src={getSafeImageUrl(recipe.image_url, "/placeholder.jpg")}
-          className="h-52 w-full object-cover"
+          src={recipe.image_url || "/placeholder.jpg"}
+          className="w-full h-full object-cover rounded-lg"
           alt="recipe"
           quality={95}
         />
         <div className="absolute top-2.5 right-2.5">
-          <button 
-            onClick={handleFavorite}
-            disabled={loadingFavorite}
-            className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
-              isFavorite 
-                ? 'bg-umami-orange' 
-                : 'bg-white'
-            }`}
-          >
+          <button className="bg-white w-9 h-9 rounded-full flex items-center justify-center">
             <Image
               width={20}
               height={20}
-              src={isFavorite ? "/FavoritesCurrent.svg" : "/Favorites.svg"}
+              src="/Favorites.svg"
               alt="favorites"
             />
           </button>
@@ -435,17 +285,18 @@ export default function FeedCard({
           </div>
         </div>
       </div>
-      <div className="mb-2 flex flex-col">
-        <p className="w-full font-inter text-base font-medium text-umami-dark-gray">
+      <div className="flex flex-col">
+        <p className="w-full font-inter font-medium text-lg text-umami-dark-gray">
           {recipe.title}
         </p>
-        <p className="font-inter text-xs text-umami-gray">
+        <p className="font-inter font-regular text-sm text-umami-gray">
           {recipe.description}
         </p>
       </div>
-      <div className="flex flex-row gap-3">
+      </Link>
+      <div className="flex flex-row gap-2">
         <div className="flex gap-1 items-center">
-          <button type="button" onClick={handleLike} className="cursor-pointer">
+          <button onClick={handleLike} className="cursor-pointer">
             <Image
               width={24}
               height={24}
@@ -457,7 +308,7 @@ export default function FeedCard({
           <p className="font-inter text-sm text-umami-gray">{likesCount}</p>
         </div>
         <div className="flex gap-1 items-center">
-          <Link href={`/recipes/${recipe.id}#comments`}>
+          <Link href={`/recipes/${recipe.id}`}>
             <Image
               width={24}
               height={24}
@@ -466,12 +317,12 @@ export default function FeedCard({
               alt="comments"
             />
           </Link>
-          <p className="font-inter text-sm text-umami-gray">{localCommentsCount}</p>
+          <p className="font-inter text-sm text-umami-gray">{commentsCount}</p>
         </div>
       </div>
 
       {/* Блок последнего комментария */}
-      {localCommentsCount > 0 && (
+      {showComments && commentsCount > 0 && (
         <div className="border-t border-umami-light-gray/50 pt-2.5">
           {loadingComment ? (
             <p className="font-inter text-xs text-umami-gray">
@@ -480,17 +331,27 @@ export default function FeedCard({
           ) : lastComment ? (
             <div className="flex gap-2">
               <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
-                <Image
-                  width={32}
-                  height={32}
-                  src={getSafeImageUrl(lastComment.Author.avatar_url, "/avatar.jpg")}
-                  className="w-full h-full object-cover"
-                  alt="avatar"
-                />
+                {lastComment.Author.avatar_url ? (
+                  <Image
+                    width={32}
+                    height={32}
+                    src={lastComment.Author.avatar_url}
+                    className="w-full h-full object-cover"
+                    alt="avatar"
+                  />
+                ) : (
+                  <Image
+                    width={32}
+                    height={32}
+                    src="/avatar.jpg"
+                    className="object-cover"
+                    alt="avatar"
+                  />
+                )}
               </div>
               <div className="flex flex-col flex-1">
                 <p className="font-inter text-xs font-medium text-umami-dark-gray">
-                  {lastComment.Author.username}
+                  @{lastComment.Author.username}
                 </p>
                 <p className="font-inter text-sm text-umami-gray">
                   {lastComment.content}
