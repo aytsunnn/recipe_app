@@ -108,6 +108,14 @@ export default function RecipeDetailsPage() {
 
     return { roots, children };
   }, [comments]);
+  const averageRating = useMemo(() => {
+    const rated = comments
+      .map((comment) => (typeof comment.rating === "number" ? comment.rating : null))
+      .filter((value): value is number => value !== null && value > 0);
+    if (rated.length === 0) return null;
+    const avg = rated.reduce((sum, value) => sum + value, 0) / rated.length;
+    return avg.toFixed(1).replace(".", ",");
+  }, [comments]);
 
   const likesCount = likesCountState;
   const commentsCount = commentsCountState;
@@ -158,6 +166,11 @@ export default function RecipeDetailsPage() {
     setLikesCountState(recipe._count?.Likes ?? recipe.Likes?.length ?? 0);
     setCommentsCountState(recipe._count?.Comments ?? comments.length ?? 0);
   }, [recipe]);
+
+  useEffect(() => {
+    if (!recipeId) return;
+    void loadComments();
+  }, [recipeId]);
 
   useEffect(() => {
     if (!recipe) return;
@@ -306,6 +319,8 @@ export default function RecipeDetailsPage() {
     }
   };
 
+  const backHref = searchParams?.get("from") === "random" ? "/recipes/random" : "/";
+
   if (loading) {
     return (
       <div className="flex w-full gap-5">
@@ -362,7 +377,7 @@ export default function RecipeDetailsPage() {
         <div className="mx-auto w-full max-w-[980px] rounded-[20px] bg-[#fffadd] p-5">
           <div className="mb-5 flex items-center gap-2.5">
             <Link
-              href="/"
+              href={backHref}
               className="inline-flex items-center gap-2.5 rounded-full bg-umami-orange px-2.5 py-1.25 font-nunito text-base text-white"
             >
               <Image width={22} height={22} src="/ArrowLeft.svg" alt="back" />
@@ -474,8 +489,7 @@ export default function RecipeDetailsPage() {
                   src="/StarGray.svg"
                   alt="rating"
                 />
-                <span className="font-nunito text-base">5,0</span>
-                {/* рейтинг выставляется на основе отзывов, если отзывов нет, то рейтинг 0,0 */}
+                <span className="font-nunito text-base">{averageRating ?? "0,0"}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Image

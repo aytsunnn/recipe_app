@@ -48,6 +48,7 @@ interface FeedCardProps {
   currentUserId?: string;
   showComments?: boolean;
   showAuthorHeader?: boolean;
+  detailsQuery?: string;
 }
 
 export default function FeedCard({
@@ -56,6 +57,7 @@ export default function FeedCard({
   currentUserId,
   showComments = false,
   showAuthorHeader = true,
+  detailsQuery,
 }: FeedCardProps) {
   const [following, setFollowing] = useState(isFollowing);
   const [justFollowed, setJustFollowed] = useState(false); // Отслеживаем подписку в текущей сессии
@@ -229,6 +231,17 @@ export default function FeedCard({
     }
   };
 
+  const buildRecipeLink = (tab?: "comments") => {
+    const params = new URLSearchParams();
+    if (detailsQuery) {
+      const fromIncoming = new URLSearchParams(detailsQuery);
+      fromIncoming.forEach((value, key) => params.set(key, value));
+    }
+    if (tab) params.set("tab", tab);
+    const query = params.toString();
+    return `/recipes/${recipe.id}${query ? `?${query}` : ""}`;
+  };
+
   return (
     <div className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5">
       {showAuthorHeader && (
@@ -283,7 +296,7 @@ export default function FeedCard({
         </div>
       )}
 
-      <Link href={`/recipes/${recipe.id}`} className="block">
+      <Link href={buildRecipeLink()} className="block">
         <div className="relative">
           <Image
             width={600}
@@ -351,7 +364,7 @@ export default function FeedCard({
           <p className="font-inter text-sm text-umami-gray">{likesCount}</p>
         </div>
         <div className="flex gap-1 items-center">
-          <Link href={`/recipes/${recipe.id}?tab=comments`}>
+          <Link href={buildRecipeLink("comments")}>
             <Image
               width={24}
               height={24}

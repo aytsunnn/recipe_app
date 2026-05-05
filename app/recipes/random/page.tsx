@@ -8,6 +8,8 @@ import { authService } from "../../services/authService";
 import { followService } from "../../services/followService";
 import { Recipe, recipeService } from "../../services/recipeService";
 
+const RANDOM_RECIPE_STORAGE_KEY = "random_recipe_page:last_recipe";
+
 export default function RandomRecipePage() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
@@ -15,24 +17,30 @@ export default function RandomRecipePage() {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [isFollowing, setIsFollowing] = useState(false);
 
+  const syncUserContext = async (targetRecipe: Recipe) => {
+    if (authService.isAuthenticated()) {
+      const me = await authService.getCurrentUser();
+      setCurrentUserId(me?.id);
+      if (me?.id) {
+        const following = await followService.getFollowing(me.id);
+        setIsFollowing(following.some((u) => u.id === targetRecipe.user_id));
+      }
+    } else {
+      setCurrentUserId(undefined);
+      setIsFollowing(false);
+    }
+  };
+
   const loadRandom = async () => {
     try {
       setLoading(true);
       setError(null);
       const nextRecipe = await recipeService.getRandom();
       setRecipe(nextRecipe);
-
-      if (authService.isAuthenticated()) {
-        const me = await authService.getCurrentUser();
-        setCurrentUserId(me?.id);
-        if (me?.id) {
-          const following = await followService.getFollowing(me.id);
-          setIsFollowing(following.some((u) => u.id === nextRecipe.user_id));
-        }
-      } else {
-        setCurrentUserId(undefined);
-        setIsFollowing(false);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(RANDOM_RECIPE_STORAGE_KEY, JSON.stringify(nextRecipe));
       }
+      await syncUserContext(nextRecipe);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Не удалось загрузить случайный рецепт");
       setRecipe(null);
@@ -42,7 +50,24 @@ export default function RandomRecipePage() {
   };
 
   useEffect(() => {
-    void loadRandom();
+    const bootstrap = async () => {
+      if (typeof window !== "undefined") {
+        const cached = sessionStorage.getItem(RANDOM_RECIPE_STORAGE_KEY);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached) as Recipe;
+            setRecipe(parsed);
+            await syncUserContext(parsed);
+            setLoading(false);
+            return;
+          } catch {
+            sessionStorage.removeItem(RANDOM_RECIPE_STORAGE_KEY);
+          }
+        }
+      }
+      await loadRandom();
+    };
+    void bootstrap();
   }, []);
 
   return (
@@ -70,7 +95,13 @@ export default function RandomRecipePage() {
           <div className="rounded-lg border border-umami-light-gray/50 bg-white p-6 text-red-500">{error}</div>
         )}
         {!loading && !error && recipe && (
-          <FeedCard recipe={recipe} currentUserId={currentUserId} isFollowing={isFollowing} showComments />
+          <FeedCard
+            recipe={recipe}
+            currentUserId={currentUserId}
+            isFollowing={isFollowing}
+            showComments
+            detailsQuery="from=random"
+          />
         )}
       </div>
 

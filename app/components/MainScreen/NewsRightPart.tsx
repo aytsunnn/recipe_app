@@ -38,6 +38,16 @@ interface ChatMessage {
   recipeCard?: Recipe;
 }
 
+const toDifficultyValue = (value?: string): string => {
+  if (!value) return "1";
+  const lowered = value.toLowerCase();
+  if (lowered.includes("лег")) return "1";
+  if (lowered.includes("сред")) return "3";
+  if (lowered.includes("слож")) return "5";
+  if (["1", "2", "3", "4", "5"].includes(value)) return value;
+  return "1";
+};
+
 const getSafeImageUrl = (url: string | null) => {
   if (!url || url === "null" || url === "undefined") return "/avatar.jpg";
   if (
@@ -53,7 +63,11 @@ const toRecipeDraft = (value: unknown): RecipeDraft | null => {
   if (!value || typeof value !== "object") return null;
   const root = value as Record<string, unknown>;
   const source = (
-    root.recipe && typeof root.recipe === "object" ? root.recipe : root
+    root.suggestion && typeof root.suggestion === "object"
+      ? root.suggestion
+      : root.recipe && typeof root.recipe === "object"
+      ? root.recipe
+      : root
   ) as Record<string, unknown>;
 
   const title = typeof source.title === "string" ? source.title.trim() : "";
@@ -96,22 +110,27 @@ const toRecipeCard = (value: unknown): Recipe | null => {
   if (!value || typeof value !== "object") return null;
   const root = value as Record<string, unknown>;
   const source = (
-    root.recipe && typeof root.recipe === "object" ? root.recipe : root
+    root.suggestion && typeof root.suggestion === "object"
+      ? root.suggestion
+      : root.recipe && typeof root.recipe === "object"
+      ? root.recipe
+      : root
   ) as Record<string, unknown>;
 
-  const id = source.id;
-  const userId = source.user_id;
-  const title = source.title;
-  const description = source.description;
-
-  if (
-    typeof id !== "string" ||
-    typeof userId !== "string" ||
-    typeof title !== "string" ||
-    typeof description !== "string"
-  ) {
+  const title = typeof source.title === "string" ? source.title : "";
+  const description =
+    typeof source.description === "string" ? source.description : "";
+  if (!title || !description) {
     return null;
   }
+  const id =
+    typeof source.id === "string"
+      ? source.id
+      : `ai-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  const userId =
+    typeof source.user_id === "string"
+      ? source.user_id
+      : "ai-assistant-user";
 
   const userRaw =
     source.User && typeof source.User === "object"
@@ -194,6 +213,8 @@ export default function RightPart() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [savingDraftId, setSavingDraftId] = useState<string | null>(null);
+  const [openedDraftId, setOpenedDraftId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
@@ -318,6 +339,36 @@ export default function RightPart() {
     }
   };
 
+  const handleSaveDraftAsPrivateRecipe = async (messageId: string, draft: RecipeDraft) => {
+    try {
+      setSavingDraftId(messageId);
+      const created = await recipeService.create({
+        title: draft.title,
+        description: draft.description,
+        difficulty: toDifficultyValue(draft.difficulty),
+        portion: draft.portion ?? 1,
+        cooking_time: draft.cooking_time ?? 30,
+        calorific: draft.calorific ?? 0,
+        is_private: true,
+        steps: draft.steps
+          .map((description) => description.trim())
+          .filter(Boolean)
+          .map((description) => ({ description })),
+      });
+      alert("Рецепт сохранен как приватный");
+      setMessages((prev) =>
+        prev.map((item) =>
+          item.id === messageId ? { ...item, recipeCard: created } : item
+        )
+      );
+    } catch (error) {
+      console.error("Ошибка сохранения приватного рецепта:", error);
+      alert("Не удалось сохранить приватный рецепт");
+    } finally {
+      setSavingDraftId(null);
+    }
+  };
+
   const handleSendMessage = async () => {
     const userText = chatInput.trim();
     if (!userText) return;
@@ -337,7 +388,7 @@ export default function RightPart() {
         .slice(0, 20);
 
       const response = await aiService.generateByProducts(
-        products.length > 0 ? products : [userText]
+        [products.length > 0 ? products.join(", ") : userText]
       );
       const recipeDraft = toRecipeDraft(response);
       const recipeCard = toRecipeCard(response);
@@ -354,12 +405,16 @@ export default function RightPart() {
       ]);
     } catch (error) {
       console.error("Ошибка чата микро-шефа:", error);
+      const errorText =
+        error instanceof Error && error.message
+          ? error.message
+          : "Не получилось получить ответ. Попробуйте еще раз через пару секунд.";
       setMessages((prev) => [
         ...prev,
         {
           id: `a-err-${Date.now()}`,
           role: "assistant",
-          text: "Не получилось получить ответ. Попробуйте еще раз через пару секунд.",
+          text: errorText,
         },
       ]);
     } finally {
@@ -488,65 +543,50 @@ export default function RightPart() {
                         />
                       </div>
                     ) : message.recipeDraft ? (
-                      <div className="rounded-2xl border border-[#e9e3d3] bg-white px-3 py-3 text-umami-dark-gray">
-                        <p className="font-nunito text-lg font-bold">
-                          {message.recipeDraft.title}
-                        </p>
-                        <p className="mt-1 text-sm text-umami-gray">
-                          {message.recipeDraft.description}
-                        </p>
-                        <p className="mt-2 text-xs text-umami-gray">
-                          {message.recipeDraft.portion
-                            ? `${message.recipeDraft.portion} порц. • `
-                            : ""}
-                          {message.recipeDraft.cooking_time
-                            ? `${message.recipeDraft.cooking_time} мин • `
-                            : ""}
-                          {message.recipeDraft.difficulty || "без уровня"}
-                        </p>
-                        {message.recipeDraft.ingredients.length > 0 && (
-                          <div className="mt-3">
-                            <p className="font-nunito text-sm font-bold">
-                              Ингредиенты
-                            </p>
-                            <ul className="mt-1 list-disc pl-4 text-sm">
-                              {message.recipeDraft.ingredients
-                                .slice(0, 6)
-                                .map((item, idx) => (
-                                  <li key={`${message.id}-ing-${idx}`}>
-                                    {item}
-                                  </li>
-                                ))}
-                            </ul>
-                          </div>
-                        )}
-                        {message.recipeDraft.steps.length > 0 && (
-                          <div className="mt-3">
-                            <p className="font-nunito text-sm font-bold">
-                              Шаги
-                            </p>
-                            <ol className="mt-1 list-decimal pl-4 text-sm">
-                              {message.recipeDraft.steps
-                                .slice(0, 4)
-                                .map((item, idx) => (
-                                  <li key={`${message.id}-step-${idx}`}>
-                                    {item}
-                                  </li>
-                                ))}
-                            </ol>
-                          </div>
-                        )}
+                      <div className="max-w-[560px] rounded-lg border border-umami-light-gray/50 bg-white p-4">
+                        <button
+                          type="button"
+                          onClick={() => setOpenedDraftId(message.id)}
+                          className="w-full text-left"
+                        >
+                          <p className="font-nunito text-lg font-bold text-umami-dark-gray">
+                            {message.recipeDraft.title}
+                          </p>
+                          <p className="mt-1 line-clamp-2 text-sm text-umami-gray">
+                            {message.recipeDraft.description}
+                          </p>
+                          <p className="mt-2 text-xs text-umami-gray">
+                            {message.recipeDraft.portion
+                              ? `${message.recipeDraft.portion} порц. • `
+                              : ""}
+                            {message.recipeDraft.cooking_time
+                              ? `${message.recipeDraft.cooking_time} мин • `
+                              : ""}
+                            {message.recipeDraft.difficulty || "без уровня"}
+                          </p>
+                        </button>
                         <div className="mt-3 flex gap-2">
                           <button
                             type="button"
+                            disabled={savingDraftId === message.id}
                             onClick={() =>
-                              void handleSaveAiRecipeToFavorites(
-                                message.recipeDraft!.title
+                              void handleSaveDraftAsPrivateRecipe(
+                                message.id,
+                                message.recipeDraft!
                               )
                             }
+                            className="rounded-full bg-umami-green px-3 py-1.5 font-nunito text-xs font-bold text-white disabled:opacity-60"
+                          >
+                            {savingDraftId === message.id
+                              ? "Сохраняем..."
+                              : "Сохранить как приватный"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOpenedDraftId(message.id)}
                             className="rounded-full bg-umami-orange px-3 py-1.5 font-nunito text-xs font-bold text-white"
                           >
-                            Сохранить в избранное
+                            Подробнее
                           </button>
                         </div>
                       </div>
@@ -598,6 +638,70 @@ export default function RightPart() {
                 <li>Например: без сахара, острое, на 2 порции.</li>
               </ul>
             </aside>
+          </div>
+        </div>
+      )}
+
+      {openedDraftId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <div className="max-h-[85vh] w-full max-w-[760px] overflow-y-auto rounded-[20px] bg-white p-5">
+            {(() => {
+              const openedMessage = messages.find((item) => item.id === openedDraftId);
+              const draft = openedMessage?.recipeDraft;
+              if (!draft) {
+                return (
+                  <p className="font-inter text-sm text-umami-gray">
+                    Не удалось открыть рецепт.
+                  </p>
+                );
+              }
+              return (
+                <>
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <h3 className="font-nunito text-2xl font-bold text-umami-dark-gray">
+                      {draft.title}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setOpenedDraftId(null)}
+                      className="rounded-full bg-umami-gray px-3 py-1 font-nunito text-xs text-white"
+                    >
+                      Закрыть
+                    </button>
+                  </div>
+                  <p className="text-sm text-umami-gray">{draft.description}</p>
+                  <p className="mt-2 text-sm text-umami-gray">
+                    {draft.portion ? `${draft.portion} порц. • ` : ""}
+                    {draft.cooking_time ? `${draft.cooking_time} мин • ` : ""}
+                    {draft.difficulty || "без уровня"}
+                  </p>
+                  {draft.ingredients.length > 0 && (
+                    <div className="mt-4">
+                      <p className="font-nunito text-base font-bold text-umami-dark-gray">
+                        Ингредиенты
+                      </p>
+                      <ul className="mt-1 list-disc pl-5 text-sm text-umami-dark-gray">
+                        {draft.ingredients.map((item, idx) => (
+                          <li key={`preview-ing-${idx}`}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {draft.steps.length > 0 && (
+                    <div className="mt-4">
+                      <p className="font-nunito text-base font-bold text-umami-dark-gray">
+                        Шаги
+                      </p>
+                      <ol className="mt-1 list-decimal pl-5 text-sm text-umami-dark-gray">
+                        {draft.steps.map((item, idx) => (
+                          <li key={`preview-step-${idx}`}>{item}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
