@@ -209,12 +209,16 @@ export default function FiltersPanel({
   }
 
   return (
-    <div className="mb-4">
-      <div className="flex flex-wrap gap-2">
+    <div className="mb-2">
+      <div
+        className={`flex gap-2 ${
+          !openFilter ? "flex-nowrap overflow-x-auto pb-1" : "flex-wrap"
+        }`}
+      >
         {selectedTotal > 0 && (
           <button
             onClick={resetAll}
-            className="flex h-9 items-center gap-2 rounded-full border border-umami-dark-gray px-3 font-nunito text-umami-dark-gray"
+            className="flex h-9 shrink-0 items-center gap-2 rounded-full border border-umami-dark-gray px-3 font-nunito text-umami-dark-gray"
           >
             <span className="text-sm font-bold">Сбросить фильтры</span>
             <Image src="/X.svg" alt="cross" width={15} height={15} />
@@ -231,7 +235,7 @@ export default function FiltersPanel({
               onClick={() =>
                 setOpenFilter((prev) => (prev === key ? null : key))
               }
-              className={`flex h-9 items-center gap-2 rounded-full border px-3 font-nunito transition-colors ${
+              className={`flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 font-nunito transition-colors ${
                 isOpen
                   ? "border-umami-orange bg-[#fff8ef] text-umami-dark-gray"
                   : "border-umami-dark-gray text-umami-dark-gray"
@@ -243,7 +247,13 @@ export default function FiltersPanel({
                   {selectedCount}
                 </span>
               )}
-              <span className="text-xs">{isOpen ? "⌃" : "⌄"}</span>
+              <Image
+                src="/CaretDown.svg"
+                alt="toggle"
+                width={14}
+                height={14}
+                className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
+              />
             </button>
           );
         })}

@@ -473,7 +473,7 @@ export default function RecipeDetailsPage() {
                 <Image
                   width={20}
                   height={20}
-                  src="/Difficulty.svg"
+                  src="/PuzzlePieceGray.svg"
                   alt="difficulty"
                 />
                 <span className="font-nunito text-base">

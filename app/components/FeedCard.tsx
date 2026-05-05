@@ -231,119 +231,122 @@ export default function FeedCard({
   return (
     <div className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5">
       {showAuthorHeader && (
-      <div className="flex items-center gap-2.5">
-        <Link href={`/users/${recipe.user_id}`} className="flex min-w-0 items-center gap-2.5">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-            {recipe.User.avatar_url ? (
-              <Image
-                width={40}
-                height={40}
-                src={recipe.User.avatar_url}
-                className="w-full h-full object-cover"
-                alt="avatar"
-              />
-            ) : (
-              <Image
-                width={40}
-                height={40}
-                src="/avatar.jpg"
-                className=" object-cover"
-                alt="avatar"
-              />
-            )}
-          </div>
-          <div className="flex flex-col">
-            <p className="font-inter text-sm font-medium text-umami-dark-gray">
-              {recipe.User.name}
-            </p>
-            <p className="font-inter text-xs text-umami-light-gray">
-              @{recipe.User.username}
-            </p>
-          </div>
-        </Link>
-        <div className="w-full flex flex-col justify-between">
-          <div className="flex flex-row justify-end items-center">
-            {isAuthenticated && !isOwnPost && (
-              <>
-                {/* Показываем "Подписаться" если не подписан и не подписался только что */}
-                {!following && !justFollowed && (
-                  <button
-                    onClick={handleFollow}
-                    className="custom-button bg-umami-green font-inter font-medium text-xs h-7"
-                  >
-                    Подписаться
-                  </button>
-                )}
-                {/* Показываем "Подписки" если только что подписался в ленте */}
-                {justFollowed && (
-                  <button
-                    onClick={handleFollow}
-                    className="custom-button bg-umami-gray font-inter font-medium text-xs h-7"
-                  >
-                    Подписки
-                  </button>
-                )}
-                {/* Если был подписан изначально (following && !justFollowed) - ничего не показываем */}
-              </>
-            )}
+        <div className="flex items-center gap-2.5">
+          <Link
+            href={`/users/${recipe.user_id}`}
+            className="flex min-w-0 items-center gap-2.5"
+          >
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+              {recipe.User.avatar_url ? (
+                <Image
+                  width={40}
+                  height={40}
+                  src={recipe.User.avatar_url}
+                  className="w-full h-full object-cover"
+                  alt="avatar"
+                />
+              ) : (
+                <Image
+                  width={40}
+                  height={40}
+                  src="/avatar.jpg"
+                  className=" object-cover"
+                  alt="avatar"
+                />
+              )}
+            </div>
+            <div className="flex flex-col">
+              <p className="font-inter text-sm font-medium text-umami-dark-gray">
+                {recipe.User.name}
+              </p>
+              <p className="font-inter text-xs text-umami-light-gray">
+                @{recipe.User.username}
+              </p>
+            </div>
+          </Link>
+          <div className="w-full flex flex-col justify-between">
+            <div className="flex flex-row justify-end items-center">
+              {isAuthenticated && !isOwnPost && (
+                <>
+                  {/* Показываем "Подписаться" если не подписан и не подписался только что */}
+                  {!following && !justFollowed && (
+                    <button
+                      onClick={handleFollow}
+                      className="custom-button bg-umami-green font-inter font-medium text-xs h-7"
+                    >
+                      Подписаться
+                    </button>
+                  )}
+                  {/* Показываем "Подписки" если только что подписался в ленте */}
+                  {justFollowed && (
+                    <button
+                      onClick={handleFollow}
+                      className="custom-button bg-umami-gray font-inter font-medium text-xs h-7"
+                    >
+                      Подписки
+                    </button>
+                  )}
+                  {/* Если был подписан изначально (following && !justFollowed) - ничего не показываем */}
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
       )}
 
       <Link href={`/recipes/${recipe.id}`} className="block">
-      <div className="relative">
-        <Image
-          width={600}
-          height={400}
-          src={recipe.image_url || "/placeholder.jpg"}
-          className="w-full h-full object-cover rounded-lg"
-          alt="recipe"
-          quality={95}
-        />
-        <div className="absolute top-2.5 right-2.5">
-          <button
-            onClick={handleFavorite}
-            className="bg-white w-9 h-9 rounded-full flex items-center justify-center"
-          >
-            <Image
-              width={20}
-              height={20}
-              src={isFavorite ? "/FavoritesCurrent.svg" : "/Favorites.svg"}
-              alt="favorites"
-            />
-          </button>
-        </div>
-        <div className="absolute bottom-2.5 right-2.5">
-          <div className="bg-white p-2 rounded-full flex items-center justify-center gap-4">
-            <div className="flex gap-1 items-center">
-              <Image width={20} height={20} src="/Time.svg" alt="time" />
-              <p className="font-inter font-regular text-sm text-umami-dark-gray">
-                {recipe.cooking_time} мин
-              </p>
-            </div>
-            <div className="flex gap-1 items-center">
+        <div className="relative">
+          <Image
+            width={600}
+            height={400}
+            src={recipe.image_url || "/placeholder.jpg"}
+            className="w-full h-full object-cover rounded-lg"
+            alt="recipe"
+            quality={95}
+          />
+          <div className="absolute top-2.5 right-2.5">
+            <button
+              onClick={handleFavorite}
+              className="bg-white w-9 h-9 rounded-full flex items-center justify-center"
+            >
               <Image
                 width={20}
                 height={20}
-                src="/Difficulty.svg"
-                alt="difficulty"
+                src={isFavorite ? "/FavoritesCurrent.svg" : "/Favorites.svg"}
+                alt="favorites"
               />
-              <p className="font-inter font-regular text-sm text-umami-dark-gray">
-                {recipe.difficulty}
-              </p>
+            </button>
+          </div>
+          <div className="absolute bottom-2.5 right-2.5">
+            <div className="bg-white p-2 rounded-full flex items-center justify-center gap-4">
+              <div className="flex gap-1 items-center">
+                <Image width={20} height={20} src="/Time.svg" alt="time" />
+                <p className="font-inter font-regular text-sm text-umami-dark-gray">
+                  {recipe.cooking_time} мин
+                </p>
+              </div>
+              <div className="flex gap-1 items-center">
+                <Image
+                  width={20}
+                  height={20}
+                  src="/Difficulty.svg"
+                  alt="difficulty"
+                />
+                <p className="font-inter font-regular text-sm text-umami-dark-gray">
+                  {recipe.difficulty}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div className="flex flex-col">
-        <p className="w-full font-inter font-medium text-lg text-umami-dark-gray">
-          {recipe.title}
-        </p>
-        <p className="font-inter font-regular text-sm text-umami-gray">
-          {recipe.description}
-        </p>
-      </div>
+        <div className="flex flex-col">
+          <p className="w-full font-inter font-medium text-lg text-umami-dark-gray">
+            {recipe.title}
+          </p>
+          <p className="font-inter font-regular text-sm text-umami-gray">
+            {recipe.description}
+          </p>
+        </div>
       </Link>
       <div className="flex flex-row gap-2">
         <div className="flex gap-1 items-center">
@@ -402,7 +405,7 @@ export default function FeedCard({
               </div>
               <div className="flex flex-col flex-1">
                 <p className="font-inter text-xs font-medium text-umami-dark-gray">
-                  @{lastComment.Author.username}
+                  {lastComment.Author.name}
                 </p>
                 <p className="font-inter text-sm text-umami-gray">
                   {lastComment.content}
