@@ -24,13 +24,13 @@ export interface Comment {
 
 export interface CreateCommentData {
   content: string;
-  rating?: number;
+  rating?: number | null;
   parent_comment_id?: number;
-  taste_sweet?: number;
-  taste_sour?: number;
-  taste_salty?: number;
-  taste_spicy?: number;
-  taste_umami?: number;
+  taste_sweet?: number | null;
+  taste_sour?: number | null;
+  taste_salty?: number | null;
+  taste_spicy?: number | null;
+  taste_umami?: number | null;
 }
 
 class CommentService {

@@ -33,21 +33,21 @@ export default function RecipeDetailsPage() {
   >("info");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
-  const [showTasteDetails, setShowTasteDetails] = useState(false);
-  const [isTasteDetailsSaved, setIsTasteDetailsSaved] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isCooked, setIsCooked] = useState(false);
   const [likeBusy, setLikeBusy] = useState(false);
   const [favoriteBusy, setFavoriteBusy] = useState(false);
+  const [likesCountState, setLikesCountState] = useState(0);
+  const [commentsCountState, setCommentsCountState] = useState(0);
   const [commentForm, setCommentForm] = useState({
     content: "",
-    rating: 0,
-    taste_sweet: 0,
-    taste_sour: 0,
-    taste_salty: 0,
-    taste_spicy: 0,
-    taste_umami: 0,
+    rating: null as number | null,
+    taste_sweet: null as number | null,
+    taste_sour: null as number | null,
+    taste_salty: null as number | null,
+    taste_spicy: null as number | null,
+    taste_umami: null as number | null,
   });
 
   const categories = useMemo(() => {
@@ -89,8 +89,8 @@ export default function RecipeDetailsPage() {
     return { roots, children };
   }, [comments]);
 
-  const likesCount = recipe?._count?.Likes ?? recipe?.Likes?.length ?? 0;
-  const commentsCount = recipe?._count?.Comments ?? comments.length;
+  const likesCount = likesCountState;
+  const commentsCount = commentsCountState;
 
   const getSafeImageUrl = (url: string | null, fallback: string) => {
     if (!url || url === "null" || url === "undefined") return fallback;
@@ -110,6 +110,7 @@ export default function RecipeDetailsPage() {
       setCommentsLoading(true);
       const data = await commentService.getByRecipe(recipeId);
       setComments(data);
+      setCommentsCountState(data.length);
     } catch (loadError) {
       console.error("Ошибка загрузки комментариев:", loadError);
       alert("Не удалось загрузить комментарии");
@@ -129,6 +130,12 @@ export default function RecipeDetailsPage() {
     };
     loadUser();
   }, []);
+
+  useEffect(() => {
+    if (!recipe) return;
+    setLikesCountState(recipe._count?.Likes ?? recipe.Likes?.length ?? 0);
+    setCommentsCountState(recipe._count?.Comments ?? comments.length ?? 0);
+  }, [recipe]);
 
   useEffect(() => {
     if (!recipe) return;
@@ -167,10 +174,16 @@ export default function RecipeDetailsPage() {
     try {
       setLikeBusy(true);
       setIsLiked(!prev);
+      setLikesCountState((count) =>
+        prev ? Math.max(0, count - 1) : count + 1
+      );
       if (prev) await likeService.delete(recipeId);
       else await likeService.create(recipeId);
     } catch (error) {
       setIsLiked(prev);
+      setLikesCountState((count) =>
+        prev ? count + 1 : Math.max(0, count - 1)
+      );
       console.error("Ошибка при лайке рецепта:", error);
       alert("Не удалось поставить лайк");
     } finally {
@@ -211,10 +224,6 @@ export default function RecipeDetailsPage() {
       alert("Введите текст комментария");
       return;
     }
-    if (!replyToCommentId && showTasteDetails && !isTasteDetailsSaved) {
-      alert("Сначала нажмите «Сохранить вкус», затем отправляйте отзыв");
-      return;
-    }
     if (!recipeId) return;
 
     try {
@@ -224,34 +233,28 @@ export default function RecipeDetailsPage() {
         content: commentForm.content.trim(),
         ...(isReply
           ? {}
-          : showTasteDetails
-          ? {
-              ...(commentForm.rating > 0 ? { rating: commentForm.rating } : {}),
-              ...(commentForm.taste_sweet > 0
-                ? { taste_sweet: commentForm.taste_sweet }
-                : {}),
-              ...(commentForm.taste_sour > 0
-                ? { taste_sour: commentForm.taste_sour }
-                : {}),
-              ...(commentForm.taste_salty > 0
-                ? { taste_salty: commentForm.taste_salty }
-                : {}),
-              ...(commentForm.taste_spicy > 0
-                ? { taste_spicy: commentForm.taste_spicy }
-                : {}),
-              ...(commentForm.taste_umami > 0
-                ? { taste_umami: commentForm.taste_umami }
-                : {}),
-            }
-          : {}),
+          : {
+              rating: commentForm.rating,
+              taste_sweet: commentForm.taste_sweet,
+              taste_sour: commentForm.taste_sour,
+              taste_salty: commentForm.taste_salty,
+              taste_spicy: commentForm.taste_spicy,
+              taste_umami: commentForm.taste_umami,
+            }),
         parent_comment_id: replyToCommentId
           ? Number(replyToCommentId)
           : undefined,
       });
-      setCommentForm((prev) => ({ ...prev, content: "" }));
+      setCommentForm({
+        content: "",
+        rating: null,
+        taste_sweet: null,
+        taste_sour: null,
+        taste_salty: null,
+        taste_spicy: null,
+        taste_umami: null,
+      });
       setReplyToCommentId(null);
-      setShowTasteDetails(false);
-      setIsTasteDetailsSaved(false);
       await loadComments();
     } catch (submitError) {
       console.error("Ошибка отправки комментария:", submitError);
@@ -334,11 +337,14 @@ export default function RecipeDetailsPage() {
               type="button"
               onClick={handleFavoriteRecipe}
               disabled={favoriteBusy}
-              className={`ml-auto rounded-full px-3 py-1.5 font-nunito text-sm text-white disabled:opacity-60 ${
-                isFavorite ? "bg-umami-green" : "bg-umami-orange"
-              }`}
+              className="ml-auto h-9 w-9 rounded-full bg-white border border-umami-light-gray/60 flex items-center justify-center disabled:opacity-60"
             >
-              {isFavorite ? "В избранном" : "В избранное"}
+              <Image
+                width={20}
+                height={20}
+                src={isFavorite ? "/FavoritesCurrent.svg" : "/Favorites.svg"}
+                alt="favorite"
+              />
             </button>
           </div>
 
@@ -355,10 +361,10 @@ export default function RecipeDetailsPage() {
             />
             <div className="flex flex-col">
               <p className="font-inter text-sm font-semibold text-umami-dark-gray">
-                @{recipe.User.username}
+                {recipe.User.name}
               </p>
               <p className="font-inter text-sm text-umami-gray">
-                {recipe.User.name}
+                @{recipe.User.username}
               </p>
             </div>
           </Link>
@@ -391,8 +397,8 @@ export default function RecipeDetailsPage() {
           <p className="mt-2 max-w-[637px] font-nunito text-sm text-umami-gray">
             {recipe.description}
           </p>
-          <div className="flex justify-between">
-            <div className="mt-4 flex items-center gap-5 text-umami-gray">
+          <div className="flex justify-between items-center mt-4">
+            <div className=" flex items-center gap-5 text-umami-gray">
               <button
                 type="button"
                 onClick={handleLikeRecipe}
@@ -437,8 +443,10 @@ export default function RecipeDetailsPage() {
             <button
               type="button"
               onClick={handleCookedToggle}
-              className={`rounded-full px-2.5 py-1.25 font-nunito text-xs text-white ${
-                isCooked ? "bg-umami-green" : "bg-umami-orange"
+              className={`rounded-full px-2 py-1.25 font-nunito text-xs  ${
+                isCooked
+                  ? "bg-white border border-umami-gray/50 text-umami-orange"
+                  : "bg-umami-orange text-white"
               }`}
             >
               {isCooked ? "Приготовлено" : "Отметить приготовленным"}
@@ -537,8 +545,6 @@ export default function RecipeDetailsPage() {
                       type="button"
                       onClick={() => {
                         setReplyToCommentId(null);
-                        setShowTasteDetails(false);
-                        setIsTasteDetailsSaved(false);
                       }}
                       className="mt-1 rounded-full bg-gray-100 px-3 py-1 font-nunito text-xs text-umami-gray"
                     >
@@ -559,11 +565,11 @@ export default function RecipeDetailsPage() {
                             onClick={() =>
                               setCommentForm((prev) => ({
                                 ...prev,
-                                rating: value,
+                                rating: prev.rating === value ? null : value,
                               }))
                             }
                             className={`text-2xl leading-none ${
-                              value <= commentForm.rating
+                              value <= (commentForm.rating ?? 0)
                                 ? "text-umami-orange"
                                 : "text-umami-light-gray"
                             }`}
@@ -573,26 +579,13 @@ export default function RecipeDetailsPage() {
                           </button>
                         ))}
                         <span className="ml-2 font-inter text-xs text-umami-gray">
-                          {commentForm.rating}/5
+                          {commentForm.rating ?? "—"}/5
                         </span>
                       </div>
                     </div>
                   )}
 
-                  {!replyToCommentId && !showTasteDetails && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowTasteDetails(true);
-                        setIsTasteDetailsSaved(false);
-                      }}
-                      className="mt-3 rounded-full border border-umami-orange px-4 py-2 font-nunito text-sm text-umami-orange"
-                    >
-                      Добавить информацию о вкусе
-                    </button>
-                  )}
-
-                  {!replyToCommentId && showTasteDetails && (
+                  {!replyToCommentId && (
                     <div className="mt-3 grid grid-cols-2 gap-3">
                       {(
                         [
@@ -611,45 +604,21 @@ export default function RecipeDetailsPage() {
                             type="range"
                             min={0}
                             max={5}
-                            value={commentForm[key]}
+                            value={commentForm[key] ?? 0}
                             onChange={(e) => {
+                              const nextValue = Number(e.target.value);
                               setCommentForm((prev) => ({
                                 ...prev,
-                                [key]: Number(e.target.value),
+                                [key]: nextValue === 0 ? null : nextValue,
                               }));
-                              setIsTasteDetailsSaved(false);
                             }}
                             className="w-full accent-umami-orange"
                           />
                           <span className="font-inter text-xs text-umami-gray">
-                            {commentForm[key]}/5
+                            {commentForm[key] ?? "—"}/5
                           </span>
                         </label>
                       ))}
-                      <div className="col-span-2 mt-1 flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setIsTasteDetailsSaved(true)}
-                          className="rounded-full bg-umami-green px-4 py-2 font-nunito text-sm text-white"
-                        >
-                          Сохранить вкус
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowTasteDetails(false);
-                            setIsTasteDetailsSaved(false);
-                          }}
-                          className="rounded-full bg-gray-100 px-4 py-2 font-nunito text-sm text-umami-gray"
-                        >
-                          Убрать вкусы
-                        </button>
-                        {isTasteDetailsSaved && (
-                          <span className="font-inter text-xs text-umami-green">
-                            Вкусы сохранены
-                          </span>
-                        )}
-                      </div>
                     </div>
                   )}
 
