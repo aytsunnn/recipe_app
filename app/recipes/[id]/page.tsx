@@ -568,34 +568,40 @@ export default function RecipeDetailsPage() {
                   <p className="font-nunito text-sm text-umami-light-gray">
                     Белки
                   </p>
-                  <p className="font-nunito text-base text-umami-gray">Белки</p>
+                  <p className="font-nunito text-base text-umami-gray">
+                    {recipe.proteins ?? "—"}
+                  </p>
                 </div>
                 <div className="flex flex-col">
                   <p className="font-nunito text-sm text-umami-light-gray">
                     Жиры
                   </p>
-                  <p className="font-nunito text-base text-umami-gray">Жиры</p>
+                  <p className="font-nunito text-base text-umami-gray">
+                    {recipe.fats ?? "—"}
+                  </p>
                 </div>
                 <div className="flex flex-col">
                   <p className="font-nunito text-sm text-umami-light-gray">
                     Углеводы
                   </p>
                   <p className="font-nunito text-base text-umami-gray">
-                    Углеводы
+                    {recipe.carbohydrates ?? "—"}
                   </p>
                 </div>
                 <div className="flex flex-col">
                   <p className="font-nunito text-sm text-umami-light-gray">
                     Кухня
                   </p>
-                  <p className="font-nunito text-base text-umami-gray">Кухня</p>
+                  <p className="font-nunito text-base text-umami-gray">
+                    {recipe.Kitchen?.name || "—"}
+                  </p>
                 </div>
                 <div className="flex flex-col">
                   <p className="font-nunito text-sm text-umami-light-gray">
                     Праздник
                   </p>
                   <p className="font-nunito text-base text-umami-gray">
-                    Праздник
+                    {recipe.Celebration?.name || "—"}
                   </p>
                 </div>
                 <div className="flex flex-col">
@@ -603,7 +609,7 @@ export default function RecipeDetailsPage() {
                     Тип приготовления
                   </p>
                   <p className="font-nunito text-base text-umami-gray">
-                    Тип приготовления
+                    {recipe.TypeCooking?.name || "—"}
                   </p>
                 </div>
               </div>
@@ -658,7 +664,21 @@ export default function RecipeDetailsPage() {
                       <p className="font-nunito text-sm font-bold text-umami-orange">
                         Шаг {step.step_number ?? index + 1}
                       </p>
-                      <p className="mt-1 font-inter text-sm text-umami-dark-gray">
+                      {step.image_url && (
+                        <div className="mt-2 overflow-hidden rounded-xl border border-umami-light-gray/40">
+                          <Image
+                            width={800}
+                            height={450}
+                            src={getSafeImageUrl(
+                              step.image_url,
+                              "/placeholder.jpg"
+                            )}
+                            alt={`step-${step.step_number ?? index + 1}`}
+                            className="h-auto w-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <p className="mt-2 font-inter text-sm text-umami-dark-gray">
                         {step.description || "Описание шага отсутствует"}
                       </p>
                     </div>

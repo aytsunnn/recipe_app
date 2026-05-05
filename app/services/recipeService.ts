@@ -54,9 +54,12 @@ export interface Recipe {
   }>;
   Steps?: Array<{
     id: string;
+    recipe_id?: string;
     step_number?: number | null;
     description?: string | null;
     image_url?: string | null;
+    createdAt?: string;
+    updatedAt?: string;
   }>;
   Likes: Array<{ id: string; user_id: string }>;
   Comments?: Array<{ id: string }>;
