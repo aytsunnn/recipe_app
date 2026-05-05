@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import FeedCard from "../FeedCard";
 import { authService, User } from "../../services/authService";
 import { favoriteService } from "../../services/favoriteService";
 import { followService } from "../../services/followService";
@@ -34,6 +35,7 @@ interface ChatMessage {
   role: "user" | "assistant";
   text?: string;
   recipeDraft?: RecipeDraft;
+  recipeCard?: Recipe;
 }
 
 const getSafeImageUrl = (url: string | null) => {
@@ -87,6 +89,86 @@ const toRecipeDraft = (value: unknown): RecipeDraft | null => {
       typeof source.calorific === "number" ? source.calorific : undefined,
     ingredients: normalizeStringArray(source.ingredients),
     steps: normalizeStringArray(source.steps),
+  };
+};
+
+const toRecipeCard = (value: unknown): Recipe | null => {
+  if (!value || typeof value !== "object") return null;
+  const root = value as Record<string, unknown>;
+  const source = (
+    root.recipe && typeof root.recipe === "object" ? root.recipe : root
+  ) as Record<string, unknown>;
+
+  const id = source.id;
+  const userId = source.user_id;
+  const title = source.title;
+  const description = source.description;
+
+  if (
+    typeof id !== "string" ||
+    typeof userId !== "string" ||
+    typeof title !== "string" ||
+    typeof description !== "string"
+  ) {
+    return null;
+  }
+
+  const userRaw =
+    source.User && typeof source.User === "object"
+      ? (source.User as Record<string, unknown>)
+      : null;
+
+  return {
+    id,
+    user_id: userId,
+    title,
+    description,
+    difficulty:
+      typeof source.difficulty === "string" ? source.difficulty : "без уровня",
+    image_url: typeof source.image_url === "string" ? source.image_url : null,
+    is_private: Boolean(source.is_private),
+    kitchen_id:
+      typeof source.kitchen_id === "string" ? source.kitchen_id : null,
+    celebration_id:
+      typeof source.celebration_id === "string" ? source.celebration_id : null,
+    cooking_id:
+      typeof source.cooking_id === "string" ? source.cooking_id : null,
+    portion: typeof source.portion === "number" ? source.portion : 1,
+    calorific: typeof source.calorific === "number" ? source.calorific : null,
+    cooking_time:
+      typeof source.cooking_time === "number" ? source.cooking_time : 0,
+    createdAt:
+      typeof source.createdAt === "string"
+        ? source.createdAt
+        : new Date().toISOString(),
+    updatedAt:
+      typeof source.updatedAt === "string"
+        ? source.updatedAt
+        : new Date().toISOString(),
+    User: {
+      id: userRaw && typeof userRaw.id === "string" ? userRaw.id : userId,
+      username:
+        userRaw && typeof userRaw.username === "string"
+          ? userRaw.username
+          : "micro-chef",
+      name: userRaw && typeof userRaw.name === "string" ? userRaw.name : "Микро-шеф",
+      avatar_url:
+        userRaw && typeof userRaw.avatar_url === "string"
+          ? userRaw.avatar_url
+          : null,
+    },
+    Kitchen: null,
+    Likes: Array.isArray(source.Likes)
+      ? (source.Likes as Array<{ id: string; user_id: string }>)
+      : [],
+    Comments: Array.isArray(source.Comments)
+      ? (source.Comments as Array<{ id: string }>)
+      : [],
+    Categories: Array.isArray(source.Categories) ? source.Categories : [],
+    _count:
+      source._count && typeof source._count === "object"
+        ? (source._count as { Likes: number; Comments: number })
+        : undefined,
   };
 };
 
@@ -258,14 +340,16 @@ export default function RightPart() {
         products.length > 0 ? products : [userText]
       );
       const recipeDraft = toRecipeDraft(response);
+      const recipeCard = toRecipeCard(response);
 
       setMessages((prev) => [
         ...prev,
         {
           id: `a-${Date.now()}`,
           role: "assistant",
-          text: recipeDraft ? undefined : summarizeAiResponse(response),
+          text: recipeDraft || recipeCard ? undefined : summarizeAiResponse(response),
           recipeDraft,
+          recipeCard,
         },
       ]);
     } catch (error) {
@@ -394,7 +478,16 @@ export default function RightPart() {
                       message.role === "user" ? "ml-auto" : ""
                     } max-w-[85%]`}
                   >
-                    {message.recipeDraft ? (
+                    {message.recipeCard ? (
+                      <div className="max-w-[560px]">
+                        <FeedCard
+                          recipe={message.recipeCard}
+                          currentUserId={currentUser?.id}
+                          isFollowing={followingIds.has(message.recipeCard.user_id)}
+                          showComments={false}
+                        />
+                      </div>
+                    ) : message.recipeDraft ? (
                       <div className="rounded-2xl border border-[#e9e3d3] bg-white px-3 py-3 text-umami-dark-gray">
                         <p className="font-nunito text-lg font-bold">
                           {message.recipeDraft.title}

@@ -7,6 +7,7 @@ import { likeService } from "../services/likeService";
 import { commentService, Comment } from "../services/commentService";
 import { followService } from "../services/followService";
 import { favoriteService } from "../services/favoriteService";
+import { normalizeImageUrl } from "../utils/imageUrl";
 
 interface Recipe {
   id: string;
@@ -231,41 +232,30 @@ export default function FeedCard({
   return (
     <div className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5">
       {showAuthorHeader && (
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-start gap-2.5">
           <Link
             href={`/users/${recipe.user_id}`}
-            className="flex min-w-0 items-center gap-2.5"
+            className="flex min-w-0 flex-1 items-center gap-2.5"
           >
             <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-              {recipe.User.avatar_url ? (
-                <Image
-                  width={40}
-                  height={40}
-                  src={recipe.User.avatar_url}
-                  className="w-full h-full object-cover"
-                  alt="avatar"
-                />
-              ) : (
-                <Image
-                  width={40}
-                  height={40}
-                  src="/avatar.jpg"
-                  className=" object-cover"
-                  alt="avatar"
-                />
-              )}
+              <Image
+                width={40}
+                height={40}
+                src={normalizeImageUrl(recipe.User.avatar_url, "/avatar.jpg")}
+                className="w-full h-full object-cover"
+                alt="avatar"
+              />
             </div>
-            <div className="flex flex-col">
+            <div className="min-w-0 flex flex-col">
               <p className="font-inter text-sm font-medium text-umami-dark-gray">
                 {recipe.User.name}
               </p>
-              <p className="font-inter text-xs text-umami-light-gray">
+              <p className="truncate font-inter text-xs text-umami-light-gray">
                 @{recipe.User.username}
               </p>
             </div>
           </Link>
-          <div className="w-full flex flex-col justify-between">
-            <div className="flex flex-row justify-end items-center">
+          <div className="flex items-center">
               {isAuthenticated && !isOwnPost && (
                 <>
                   {/* Показываем "Подписаться" если не подписан и не подписался только что */}
@@ -289,7 +279,6 @@ export default function FeedCard({
                   {/* Если был подписан изначально (following && !justFollowed) - ничего не показываем */}
                 </>
               )}
-            </div>
           </div>
         </div>
       )}
@@ -299,7 +288,7 @@ export default function FeedCard({
           <Image
             width={600}
             height={400}
-            src={recipe.image_url || "/placeholder.jpg"}
+            src={normalizeImageUrl(recipe.image_url, "/placeholder.jpg")}
             className="w-full h-full object-cover rounded-lg"
             alt="recipe"
             quality={95}
@@ -385,23 +374,13 @@ export default function FeedCard({
           ) : lastComment ? (
             <div className="flex gap-2">
               <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
-                {lastComment.Author.avatar_url ? (
-                  <Image
-                    width={32}
-                    height={32}
-                    src={lastComment.Author.avatar_url}
-                    className="w-full h-full object-cover"
-                    alt="avatar"
-                  />
-                ) : (
-                  <Image
-                    width={32}
-                    height={32}
-                    src="/avatar.jpg"
-                    className="object-cover"
-                    alt="avatar"
-                  />
-                )}
+                <Image
+                  width={32}
+                  height={32}
+                  src={normalizeImageUrl(lastComment.Author.avatar_url, "/avatar.jpg")}
+                  className="w-full h-full object-cover"
+                  alt="avatar"
+                />
               </div>
               <div className="flex flex-col flex-1">
                 <p className="font-inter text-xs font-medium text-umami-dark-gray">

@@ -206,6 +206,20 @@ class RecipeService {
       return this.getAll({ page, limit });
     }
   }
+
+  async getRandom(): Promise<Recipe> {
+    try {
+      const recipe = await apiClient.get<Recipe>('/recipes/random');
+      return this.fixRecipeImages(recipe);
+    } catch {
+      const recipes = await this.getAll({ page: 1, limit: 50 });
+      if (!recipes.length) {
+        throw new Error('Не удалось получить случайный рецепт');
+      }
+      const randomIndex = Math.floor(Math.random() * recipes.length);
+      return recipes[randomIndex];
+    }
+  }
 }
 
 export const recipeService = new RecipeService();
