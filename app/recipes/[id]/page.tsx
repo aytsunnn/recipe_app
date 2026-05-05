@@ -251,22 +251,37 @@ export default function RecipeDetailsPage() {
     try {
       setCommentSending(true);
       const isReply = Boolean(replyToCommentId);
-      await commentService.create(recipeId, {
+      const payload: {
+        content: string;
+        parent_comment_id?: number;
+        rating: number | null;
+        taste_sweet: number | null;
+        taste_sour: number | null;
+        taste_salty: number | null;
+        taste_spicy: number | null;
+        taste_umami: number | null;
+      } = {
         content: commentForm.content.trim(),
-        ...(isReply
-          ? {}
-          : {
-              rating: commentForm.rating,
-              taste_sweet: commentForm.taste_sweet,
-              taste_sour: commentForm.taste_sour,
-              taste_salty: commentForm.taste_salty,
-              taste_spicy: commentForm.taste_spicy,
-              taste_umami: commentForm.taste_umami,
-            }),
-        parent_comment_id: replyToCommentId
-          ? Number(replyToCommentId)
-          : undefined,
-      });
+        rating: commentForm.rating ?? null,
+        taste_sweet: null,
+        taste_sour: null,
+        taste_salty: null,
+        taste_spicy: null,
+        taste_umami: null,
+        ...(replyToCommentId
+          ? { parent_comment_id: Number(replyToCommentId) }
+          : {}),
+      };
+
+      if (!isReply) {
+        payload.taste_sweet = commentForm.taste_sweet ?? null;
+        payload.taste_sour = commentForm.taste_sour ?? null;
+        payload.taste_salty = commentForm.taste_salty ?? null;
+        payload.taste_spicy = commentForm.taste_spicy ?? null;
+        payload.taste_umami = commentForm.taste_umami ?? null;
+      }
+
+      await commentService.create(recipeId, payload);
       setCommentForm({
         content: "",
         rating: null,
