@@ -7,6 +7,8 @@ import { useParams } from "next/navigation";
 import { useRecipe } from "../../hooks/useRecipe";
 import { authService } from "../../services/authService";
 import { commentService, Comment } from "../../services/commentService";
+import { likeService } from "../../services/likeService";
+import { favoriteService } from "../../services/favoriteService";
 import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
 
@@ -33,14 +35,18 @@ export default function RecipeDetailsPage() {
   const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
   const [showTasteDetails, setShowTasteDetails] = useState(false);
   const [isTasteDetailsSaved, setIsTasteDetailsSaved] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [likeBusy, setLikeBusy] = useState(false);
+  const [favoriteBusy, setFavoriteBusy] = useState(false);
   const [commentForm, setCommentForm] = useState({
     content: "",
-    rating: 5,
-    taste_sweet: 3,
-    taste_sour: 3,
-    taste_salty: 3,
-    taste_spicy: 3,
-    taste_umami: 3,
+    rating: 0,
+    taste_sweet: 0,
+    taste_sour: 0,
+    taste_salty: 0,
+    taste_spicy: 0,
+    taste_umami: 0,
   });
 
   const categories = useMemo(() => {
@@ -123,6 +129,74 @@ export default function RecipeDetailsPage() {
     loadUser();
   }, []);
 
+  useEffect(() => {
+    if (!recipe) return;
+    const liked = currentUserId
+      ? recipe.Likes?.some((like) => like.user_id === currentUserId)
+      : false;
+    setIsLiked(Boolean(liked));
+  }, [recipe, currentUserId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadFavoriteState = async () => {
+      if (!currentUserId || !recipeId) {
+        setIsFavorite(false);
+        return;
+      }
+      try {
+        const favorite = await favoriteService.checkIsFavorite(recipeId);
+        if (!cancelled) setIsFavorite(favorite);
+      } catch {
+        if (!cancelled) setIsFavorite(false);
+      }
+    };
+    void loadFavoriteState();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUserId, recipeId]);
+
+  const handleLikeRecipe = async () => {
+    if (!currentUserId || !recipeId || likeBusy) {
+      if (!currentUserId) alert("Необходимо авторизоваться");
+      return;
+    }
+    const prev = isLiked;
+    try {
+      setLikeBusy(true);
+      setIsLiked(!prev);
+      if (prev) await likeService.delete(recipeId);
+      else await likeService.create(recipeId);
+    } catch (error) {
+      setIsLiked(prev);
+      console.error("Ошибка при лайке рецепта:", error);
+      alert("Не удалось поставить лайк");
+    } finally {
+      setLikeBusy(false);
+    }
+  };
+
+  const handleFavoriteRecipe = async () => {
+    if (!currentUserId || !recipeId || favoriteBusy) {
+      if (!currentUserId) alert("Необходимо авторизоваться");
+      return;
+    }
+    const prev = isFavorite;
+    try {
+      setFavoriteBusy(true);
+      setIsFavorite(!prev);
+      if (prev) await favoriteService.removeFromFavorites(recipeId);
+      else await favoriteService.addToFavorites(recipeId);
+    } catch (error) {
+      setIsFavorite(prev);
+      console.error("Ошибка при избранном:", error);
+      alert("Не удалось обновить избранное");
+    } finally {
+      setFavoriteBusy(false);
+    }
+  };
+
   const handleSubmitComment = async () => {
     if (!currentUserId) {
       alert("Необходимо авторизоваться");
@@ -147,12 +221,22 @@ export default function RecipeDetailsPage() {
           ? {}
           : showTasteDetails
           ? {
-              rating: commentForm.rating,
-              taste_sweet: commentForm.taste_sweet,
-              taste_sour: commentForm.taste_sour,
-              taste_salty: commentForm.taste_salty,
-              taste_spicy: commentForm.taste_spicy,
-              taste_umami: commentForm.taste_umami,
+              ...(commentForm.rating > 0 ? { rating: commentForm.rating } : {}),
+              ...(commentForm.taste_sweet > 0
+                ? { taste_sweet: commentForm.taste_sweet }
+                : {}),
+              ...(commentForm.taste_sour > 0
+                ? { taste_sour: commentForm.taste_sour }
+                : {}),
+              ...(commentForm.taste_salty > 0
+                ? { taste_salty: commentForm.taste_salty }
+                : {}),
+              ...(commentForm.taste_spicy > 0
+                ? { taste_spicy: commentForm.taste_spicy }
+                : {}),
+              ...(commentForm.taste_umami > 0
+                ? { taste_umami: commentForm.taste_umami }
+                : {}),
             }
           : {}),
         parent_comment_id: replyToCommentId
@@ -265,21 +349,36 @@ export default function RecipeDetailsPage() {
               )
             )}
           </div>
+          <p className="font-nunito text-xl mt-2 font-bold leading-none text-umami-orange">
+            {recipe.title}
+          </p>
           <p className="mt-2 max-w-[637px] font-nunito text-sm text-umami-gray">
             {recipe.description}
           </p>
           <div className="flex justify-between">
             <div className="mt-4 flex items-center gap-5 text-umami-gray">
-              <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={handleLikeRecipe}
+                disabled={likeBusy}
+                className="flex items-center gap-1"
+              >
                 <Image
                   width={20}
                   height={20}
-                  src="/HeartGray.svg"
+                  src={isLiked ? "/RedHeart.svg" : "/HeartGray.svg"}
                   alt="likes"
                 />
                 <span className="font-nunito text-base">{likesCount}</span>
-              </div>
-              <div className="flex items-center gap-1">
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setActiveTab("comments");
+                  if (comments.length === 0) await loadComments();
+                }}
+                className="flex items-center gap-1"
+              >
                 <Image
                   width={20}
                   height={20}
@@ -287,7 +386,7 @@ export default function RecipeDetailsPage() {
                   alt="comments"
                 />
                 <span className="font-nunito text-base">{commentsCount}</span>
-              </div>
+              </button>
               <div className="flex items-center gap-1">
                 <Image
                   width={20}
@@ -299,13 +398,14 @@ export default function RecipeDetailsPage() {
                 {/* рейтинг выставляется на основе отзывов, если отзывов нет, то рейтинг 0,0 */}
               </div>
             </div>
-            <Link
-              href="/"
-              // нужно записывать в бд что рецепт добавлен в приготовленные, сделать кнопку такого стиля как категория, если рецепт отмечен, как Приготовленный, то кнопка выглядит по-другому
+            <button
+              type="button"
+              onClick={handleFavoriteRecipe}
+              disabled={favoriteBusy}
               className="rounded-full bg-umami-orange px-2.5 py-1.25 font-nunito text-xs text-white"
             >
-              Приготовлено
-            </Link>
+              {isFavorite ? "В избранном" : "В избранное"}
+            </button>
           </div>
 
           <div className="mt-5 grid grid-cols-3 gap-10">
@@ -472,7 +572,7 @@ export default function RecipeDetailsPage() {
                           </span>
                           <input
                             type="range"
-                            min={1}
+                            min={0}
                             max={5}
                             value={commentForm[key]}
                             onChange={(e) => {
@@ -572,19 +672,49 @@ export default function RecipeDetailsPage() {
                           <p className="font-inter text-sm text-umami-gray">
                             {comment.content}
                           </p>
-                          {(comment.rating ||
-                            comment.taste_sweet ||
-                            comment.taste_sour ||
-                            comment.taste_salty ||
-                            comment.taste_spicy ||
-                            comment.taste_umami) && (
+                          {[
+                            comment.rating
+                              ? `Рейтинг: ${comment.rating}/5`
+                              : null,
+                            comment.taste_sweet
+                              ? `Сладость ${comment.taste_sweet}`
+                              : null,
+                            comment.taste_sour
+                              ? `Кислота ${comment.taste_sour}`
+                              : null,
+                            comment.taste_salty
+                              ? `Солёность ${comment.taste_salty}`
+                              : null,
+                            comment.taste_spicy
+                              ? `Острота ${comment.taste_spicy}`
+                              : null,
+                            comment.taste_umami
+                              ? `Умами ${comment.taste_umami}`
+                              : null,
+                          ].filter(Boolean).length > 0 && (
                             <p className="mt-1 font-inter text-xs text-umami-light-gray">
-                              Рейтинг: {comment.rating ?? 0}/5 | Сладость{" "}
-                              {comment.taste_sweet ?? 0} | Кислота{" "}
-                              {comment.taste_sour ?? 0} | Солёность{" "}
-                              {comment.taste_salty ?? 0} | Острота{" "}
-                              {comment.taste_spicy ?? 0} | Умами{" "}
-                              {comment.taste_umami ?? 0}
+                              {[
+                                comment.rating
+                                  ? `Рейтинг: ${comment.rating}/5`
+                                  : null,
+                                comment.taste_sweet
+                                  ? `Сладость ${comment.taste_sweet}`
+                                  : null,
+                                comment.taste_sour
+                                  ? `Кислота ${comment.taste_sour}`
+                                  : null,
+                                comment.taste_salty
+                                  ? `Солёность ${comment.taste_salty}`
+                                  : null,
+                                comment.taste_spicy
+                                  ? `Острота ${comment.taste_spicy}`
+                                  : null,
+                                comment.taste_umami
+                                  ? `Умами ${comment.taste_umami}`
+                                  : null,
+                              ]
+                                .filter(Boolean)
+                                .join(" | ")}
                             </p>
                           )}
                           <button
