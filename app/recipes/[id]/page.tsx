@@ -545,7 +545,7 @@ export default function RecipeDetailsPage() {
             </button>
           </div>
 
-          <div className="mt-4 min-h-[120px] rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
+          <div className="mt-4 rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
             {activeTab === "info" && (
               <div className="flex flex-col gap-3">
                 <div className="grid grid-cols-3 gap-10">

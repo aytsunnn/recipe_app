@@ -405,7 +405,7 @@ export default function FeedCard({
               </div>
               <div className="flex flex-col flex-1">
                 <p className="font-inter text-xs font-medium text-umami-dark-gray">
-                  {lastComment.Author.name}
+                  @{lastComment.Author.username}
                 </p>
                 <p className="font-inter text-sm text-umami-gray">
                   {lastComment.content}

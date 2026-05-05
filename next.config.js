@@ -18,6 +18,18 @@
         hostname: '188.233.238.70',
       },
       {
+        protocol: 'http',
+        hostname: '188.233.238.70',
+        port: '9001',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '188.233.238.70',
+        port: '9001',
+        pathname: '/**',
+      },
+      {
         protocol: 'https',
         hostname: 'loremflickr.com',
         port: '',

@@ -49,14 +49,41 @@ export interface User {
 }
 
 class AuthService {
+  private readonly storageBaseUrl = 'http://188.233.238.70:9001';
+
   // Заменяет localhost URL на публичный адрес
   private fixImageUrl(url: string | null): string | null {
     if (!url) return null;
-    const fixed = url.replace('http://127.0.0.1:9000', 'http://188.233.238.70:9000');
-    // Validate the URL is actually usable
-    if (fixed.startsWith('http://') || fixed.startsWith('https://') || fixed.startsWith('/')) {
-      return fixed;
+
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    const withPublicHost = trimmed
+      .replace('http://127.0.0.1:9000', this.storageBaseUrl)
+      .replace('http://localhost:9000', this.storageBaseUrl)
+      .replace('http://127.0.0.1:9001', this.storageBaseUrl)
+      .replace('http://localhost:9001', this.storageBaseUrl);
+
+    if (withPublicHost.startsWith('http://') || withPublicHost.startsWith('https://')) {
+      return withPublicHost;
     }
+
+    if (withPublicHost.startsWith('/vkusno/')) {
+      return `${this.storageBaseUrl}${withPublicHost}`;
+    }
+
+    if (withPublicHost.startsWith('vkusno/')) {
+      return `${this.storageBaseUrl}/${withPublicHost}`;
+    }
+
+    if (/^(avatars|recipes|steps)\//.test(withPublicHost)) {
+      return `${this.storageBaseUrl}/vkusno/${withPublicHost}`;
+    }
+
+    if (withPublicHost.startsWith('/')) {
+      return withPublicHost;
+    }
+
     return null;
   }
 
