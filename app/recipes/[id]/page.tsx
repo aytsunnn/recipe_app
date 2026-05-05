@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useRecipe } from "../../hooks/useRecipe";
 import { authService } from "../../services/authService";
 import { commentService, Comment } from "../../services/commentService";
@@ -23,6 +23,7 @@ function normalizeCategoryName(category: unknown): string | null {
 
 export default function RecipeDetailsPage() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const recipeId = params?.id || "";
   const { recipe, loading, error } = useRecipe(recipeId);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -148,6 +149,16 @@ export default function RecipeDetailsPage() {
     };
     loadUser();
   }, []);
+
+  useEffect(() => {
+    const tab = searchParams?.get("tab");
+    if (tab === "comments") {
+      setActiveTab("comments");
+      if (comments.length === 0) {
+        void loadComments();
+      }
+    }
+  }, [searchParams, comments.length]);
 
   useEffect(() => {
     if (!recipe) return;

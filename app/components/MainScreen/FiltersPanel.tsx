@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   metaService,
   Kitchen,
@@ -28,7 +29,12 @@ interface Option {
   label: string;
 }
 
-type FilterKey = "category_id" | "celebration_id" | "kitchen_id" | "cooking_id" | "difficulty";
+type FilterKey =
+  | "category_id"
+  | "celebration_id"
+  | "kitchen_id"
+  | "cooking_id"
+  | "difficulty";
 
 const parseMultiParam = (value: string | null): string[] =>
   value ? value.split(",").filter(Boolean) : [];
@@ -47,7 +53,10 @@ const difficultyOptions: Option[] = [
   { value: "3", label: "Сложно" },
 ];
 
-export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: FiltersPanelProps) {
+export default function FiltersPanel({
+  onApplyFilters,
+  resultsCount = 0,
+}: FiltersPanelProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -80,10 +89,18 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
   useEffect(() => {
     const nextFilters: FilterValues = {};
     const difficulty = parseMultiParam(searchParams?.get("difficulty") || null);
-    const kitchenIds = parseMultiParam(searchParams?.get("kitchen_id") || null).map(Number);
-    const categoryIds = parseMultiParam(searchParams?.get("category_id") || null).map(Number);
-    const celebrationIds = parseMultiParam(searchParams?.get("celebration_id") || null).map(Number);
-    const cookingIds = parseMultiParam(searchParams?.get("cooking_id") || null).map(Number);
+    const kitchenIds = parseMultiParam(
+      searchParams?.get("kitchen_id") || null
+    ).map(Number);
+    const categoryIds = parseMultiParam(
+      searchParams?.get("category_id") || null
+    ).map(Number);
+    const celebrationIds = parseMultiParam(
+      searchParams?.get("celebration_id") || null
+    ).map(Number);
+    const cookingIds = parseMultiParam(
+      searchParams?.get("cooking_id") || null
+    ).map(Number);
 
     if (difficulty.length > 0) nextFilters.difficulty = difficulty;
     if (kitchenIds.length > 0) nextFilters.kitchen_id = kitchenIds;
@@ -96,10 +113,22 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
 
   const optionMap = useMemo<Record<FilterKey, Option[]>>(
     () => ({
-      category_id: categories.map((item) => ({ value: item.id, label: item.name })),
-      celebration_id: celebrations.map((item) => ({ value: item.id, label: item.name })),
-      kitchen_id: kitchens.map((item) => ({ value: item.id, label: item.name })),
-      cooking_id: cookings.map((item) => ({ value: item.id, label: item.name })),
+      category_id: categories.map((item) => ({
+        value: item.id,
+        label: item.name,
+      })),
+      celebration_id: celebrations.map((item) => ({
+        value: item.id,
+        label: item.name,
+      })),
+      kitchen_id: kitchens.map((item) => ({
+        value: item.id,
+        label: item.name,
+      })),
+      cooking_id: cookings.map((item) => ({
+        value: item.id,
+        label: item.name,
+      })),
       difficulty: difficultyOptions,
     }),
     [categories, celebrations, kitchens, cookings]
@@ -125,7 +154,9 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
       [key]:
         key === "difficulty"
           ? values
-          : values.map((item) => Number(item)).filter((item) => !Number.isNaN(item)),
+          : values
+              .map((item) => Number(item))
+              .filter((item) => !Number.isNaN(item)),
     };
 
     setFilters(updatedFilters);
@@ -170,7 +201,9 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
   if (isLoading) {
     return (
       <div className="mb-4 py-2">
-        <p className="font-inter text-sm text-umami-gray">Загрузка фильтров...</p>
+        <p className="font-inter text-sm text-umami-gray">
+          Загрузка фильтров...
+        </p>
       </div>
     );
   }
@@ -184,7 +217,7 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
             className="flex h-9 items-center gap-2 rounded-full border border-umami-dark-gray px-3 font-nunito text-umami-dark-gray"
           >
             <span className="text-sm font-bold">Сбросить фильтры</span>
-            <span className="text-xl leading-none">×</span>
+            <Image src="/X.svg" alt="cross" width={15} height={15} />
           </button>
         )}
 
@@ -195,7 +228,9 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
           return (
             <button
               key={key}
-              onClick={() => setOpenFilter((prev) => (prev === key ? null : key))}
+              onClick={() =>
+                setOpenFilter((prev) => (prev === key ? null : key))
+              }
               className={`flex h-9 items-center gap-2 rounded-full border px-3 font-nunito transition-colors ${
                 isOpen
                   ? "border-umami-orange bg-[#fff8ef] text-umami-dark-gray"
@@ -204,7 +239,9 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
             >
               <span className="text-sm font-bold">{fieldLabels[key]}</span>
               {selectedCount > 0 && (
-                <span className="text-sm font-bold text-umami-orange">{selectedCount}</span>
+                <span className="text-sm font-bold text-umami-orange">
+                  {selectedCount}
+                </span>
               )}
               <span className="text-xs">{isOpen ? "⌃" : "⌄"}</span>
             </button>
@@ -215,7 +252,12 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
       {openFilter && (
         <div className="mt-3 flex flex-wrap gap-2">
           <button
-            onClick={() => setSelected(openFilter, activeOptions.map((item) => item.value))}
+            onClick={() =>
+              setSelected(
+                openFilter,
+                activeOptions.map((item) => item.value)
+              )
+            }
             className="h-9 rounded-full border border-umami-green px-4 font-nunito text-sm font-bold text-umami-green"
           >
             Выбрать все
@@ -255,8 +297,9 @@ export default function FiltersPanel({ onApplyFilters, resultsCount = 0 }: Filte
         </div>
       )}
 
-      <p className="mt-2 text-center font-nunito text-xl font-bold text-umami-dark-gray">
-        Найдено <span className="text-umami-green">{resultsCount}</span> {getRecipeWord(resultsCount)}
+      <p className="mt-2 text-center font-nunito text-sm font-bold text-umami-gray">
+        Найдено <span className="text-umami-green">{resultsCount}</span>{" "}
+        {getRecipeWord(resultsCount)}
       </p>
     </div>
   );

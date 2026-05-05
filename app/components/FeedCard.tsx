@@ -232,35 +232,37 @@ export default function FeedCard({
     <div className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5">
       {showAuthorHeader && (
       <div className="flex items-center gap-2.5">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-          {recipe.User.avatar_url ? (
-            <Image
-              width={40}
-              height={40}
-              src={recipe.User.avatar_url}
-              className="w-full h-full object-cover"
-              alt="avatar"
-            />
-          ) : (
-            <Image
-              width={40}
-              height={40}
-              src="/avatar.jpg"
-              className=" object-cover"
-              alt="avatar"
-            />
-          )}
-        </div>
+        <Link href={`/users/${recipe.user_id}`} className="flex min-w-0 items-center gap-2.5">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+            {recipe.User.avatar_url ? (
+              <Image
+                width={40}
+                height={40}
+                src={recipe.User.avatar_url}
+                className="w-full h-full object-cover"
+                alt="avatar"
+              />
+            ) : (
+              <Image
+                width={40}
+                height={40}
+                src="/avatar.jpg"
+                className=" object-cover"
+                alt="avatar"
+              />
+            )}
+          </div>
+          <div className="flex flex-col">
+            <p className="font-inter text-sm font-medium text-umami-dark-gray">
+              {recipe.User.name}
+            </p>
+            <p className="font-inter text-xs text-umami-light-gray">
+              @{recipe.User.username}
+            </p>
+          </div>
+        </Link>
         <div className="w-full flex flex-col justify-between">
-          <div className="flex flex-row justify-between items-center">
-            <div className="flex flex-col">
-              <p className="font-inter text-sm font-medium text-umami-dark-gray">
-                {recipe.User.name}
-              </p>
-              <p className="font-inter text-xs text-umami-light-gray">
-                @{recipe.User.username}
-              </p>
-            </div>
+          <div className="flex flex-row justify-end items-center">
             {isAuthenticated && !isOwnPost && (
               <>
                 {/* Показываем "Подписаться" если не подписан и не подписался только что */}
@@ -357,7 +359,7 @@ export default function FeedCard({
           <p className="font-inter text-sm text-umami-gray">{likesCount}</p>
         </div>
         <div className="flex gap-1 items-center">
-          <Link href={`/recipes/${recipe.id}`}>
+          <Link href={`/recipes/${recipe.id}?tab=comments`}>
             <Image
               width={24}
               height={24}
