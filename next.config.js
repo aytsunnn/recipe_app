@@ -24,9 +24,21 @@
         pathname: '/**',
       },
       {
+        protocol: 'http',
+        hostname: '188.233.238.70',
+        port: '9000',
+        pathname: '/**',
+      },
+      {
         protocol: 'https',
         hostname: '188.233.238.70',
         port: '9001',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '188.233.238.70',
+        port: '9000',
         pathname: '/**',
       },
       {

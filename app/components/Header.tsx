@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AuthModal from "./AuthModal";
 import RegisterModal from "./RegisterModal";
 import { authService } from "../services/authService";
+import { normalizeImageUrl } from "../utils/imageUrl";
 
 interface User {
   id: string;
@@ -113,11 +114,7 @@ function HeaderContent() {
   };
 
   const getSafeAvatarUrl = (url: string | null) => {
-    if (!url || url === "null" || url === "undefined") return "/avatar.jpg";
-    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
-      return url;
-    }
-    return `/${url}`;
+    return normalizeImageUrl(url, "/avatar.jpg");
   };
 
   return (

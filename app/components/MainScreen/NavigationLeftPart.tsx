@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { metaService, Category } from "../../services/metaService";
 import { authService } from "../../services/authService";
+import { normalizeImageUrl } from "../../utils/imageUrl";
 
 const navItems = [
   { href: "/", label: "Главная", icon: "/House.svg" },
@@ -91,17 +92,7 @@ export default function LeftPart() {
   };
 
   const getCategoryImageUrl = (imageUrl?: string | null) => {
-    if (!imageUrl || imageUrl === "null" || imageUrl === "undefined") {
-      return "/placeholder.jpg";
-    }
-    if (
-      imageUrl.startsWith("http://") ||
-      imageUrl.startsWith("https://") ||
-      imageUrl.startsWith("/")
-    ) {
-      return imageUrl;
-    }
-    return "/placeholder.jpg";
+    return normalizeImageUrl(imageUrl, "/placeholder.jpg");
   };
 
   if (isLoading) {

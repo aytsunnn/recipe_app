@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { authService, RegisterData } from "../services/authService";
-import { validatePassword, validateEmail, validateUsername } from "../utils/validation";
+import {
+  validatePassword,
+  validateEmail,
+  validateUsername,
+} from "../utils/validation";
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -10,16 +14,32 @@ interface RegisterModalProps {
   onSwitchToLogin: () => void;
 }
 
-export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: RegisterModalProps) {
+export default function RegisterModal({
+  isOpen,
+  onClose,
+  onSwitchToLogin,
+}: RegisterModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
-  const [formData, setFormData] = useState({ email: "", password: "", confirmPassword: "", username: "", name: "" });
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    username: "",
+    name: "",
+  });
   const [verifyCode, setVerifyCode] = useState("");
   const [isVerifyStep, setIsVerifyStep] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const resetForm = () => {
-    setFormData({ email: "", password: "", confirmPassword: "", username: "", name: "" });
+    setFormData({
+      email: "",
+      password: "",
+      confirmPassword: "",
+      username: "",
+      name: "",
+    });
     setVerifyCode("");
     setIsVerifyStep(false);
     setFieldErrors({});
@@ -47,7 +67,8 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   }, [isOpen]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (modalRef.current && !modalRef.current.contains(e.target as Node)) handleClose();
+    if (modalRef.current && !modalRef.current.contains(e.target as Node))
+      handleClose();
   };
 
   const handleRegisterSubmit = async () => {
@@ -62,16 +83,19 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
     }
 
     if (!normalizedEmail) errors.email = "Введите email";
-    else if (!validateEmail(normalizedEmail)) errors.email = "Некорректный email";
+    else if (!validateEmail(normalizedEmail))
+      errors.email = "Некорректный email";
 
     if (!formData.password) errors.password = "Введите пароль";
     else {
       const passwordValidation = validatePassword(formData.password);
-      if (!passwordValidation.isValid) errors.password = passwordValidation.errors[0];
+      if (!passwordValidation.isValid)
+        errors.password = passwordValidation.errors[0];
     }
 
     if (!formData.confirmPassword) errors.confirmPassword = "Повторите пароль";
-    else if (formData.password !== formData.confirmPassword) errors.confirmPassword = "Пароли не совпадают";
+    else if (formData.password !== formData.confirmPassword)
+      errors.confirmPassword = "Пароли не совпадают";
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -91,7 +115,9 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
       setIsVerifyStep(true);
       setFieldErrors({ general: "Код отправлен на email" });
     } catch (error) {
-      setFieldErrors({ general: error instanceof Error ? error.message : "Ошибка регистрации" });
+      setFieldErrors({
+        general: error instanceof Error ? error.message : "Ошибка регистрации",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +132,10 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
 
     setIsLoading(true);
     try {
-      await authService.verifyEmail({ email: normalizedEmail, code: verifyCode.trim() });
+      await authService.verifyEmail({
+        email: normalizedEmail,
+        code: verifyCode.trim(),
+      });
       const loginResponse = await authService.login({
         email: normalizedEmail,
         password: formData.password,
@@ -115,7 +144,9 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
       authService.dispatchAuthChange();
       handleClose();
     } catch (error) {
-      setFieldErrors({ general: error instanceof Error ? error.message : "Неверный код" });
+      setFieldErrors({
+        general: error instanceof Error ? error.message : "Неверный код",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +164,10 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
       await authService.requestEmailCode(normalizedEmail);
       setFieldErrors({ general: "Код отправлен повторно" });
     } catch (error) {
-      setFieldErrors({ general: error instanceof Error ? error.message : "Не удалось отправить код" });
+      setFieldErrors({
+        general:
+          error instanceof Error ? error.message : "Не удалось отправить код",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -152,46 +186,147 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-umami-dark-gray/80" onClick={handleBackdropClick}>
-      <div ref={modalRef} className="bg-white flex flex-row rounded-2xl w-178.5 h-134 shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-umami-dark-gray/80"
+      onClick={handleBackdropClick}
+    >
+      <div
+        ref={modalRef}
+        className="bg-white flex flex-row rounded-2xl w-178.5 h-134 shadow-2xl"
+      >
         <div className="flex justify-center w-127 items-center text-center px-20">
           <div className="flex flex-col justify-center gap-2.5 w-77">
             <p className="font-nunito font-black text-xl text-umami-green">
               {isVerifyStep ? "ПОДТВЕРЖДЕНИЕ EMAIL" : "РЕГИСТРАЦИЯ"}
             </p>
 
-            {fieldErrors.general && <p className="text-red-600 text-xs">{fieldErrors.general}</p>}
+            {fieldErrors.general && (
+              <p className="text-red-600 text-xs">{fieldErrors.general}</p>
+            )}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
-              <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm" placeholder="Имя" disabled={isVerifyStep} />
-              {!isVerifyStep && fieldErrors.name && <span className="text-red-600 text-xs text-left">{fieldErrors.name}</span>}
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm"
+                placeholder="Имя"
+                disabled={isVerifyStep}
+              />
+              {!isVerifyStep && fieldErrors.name && (
+                <span className="text-red-600 text-xs text-left">
+                  {fieldErrors.name}
+                </span>
+              )}
 
-              <input type="text" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm" placeholder="Имя пользователя" disabled={isVerifyStep} />
-              {!isVerifyStep && fieldErrors.username && <span className="text-red-600 text-xs text-left">{fieldErrors.username}</span>}
+              <input
+                type="text"
+                value={formData.username}
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
+                className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm"
+                placeholder="Имя пользователя"
+                disabled={isVerifyStep}
+              />
+              {!isVerifyStep && fieldErrors.username && (
+                <span className="text-red-600 text-xs text-left">
+                  {fieldErrors.username}
+                </span>
+              )}
 
-              <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm" placeholder="Email" disabled={isVerifyStep} />
-              {fieldErrors.email && <span className="text-red-600 text-xs text-left">{fieldErrors.email}</span>}
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm"
+                placeholder="Email"
+                disabled={isVerifyStep}
+              />
+              {fieldErrors.email && (
+                <span className="text-red-600 text-xs text-left">
+                  {fieldErrors.email}
+                </span>
+              )}
 
               {!isVerifyStep && (
                 <>
-                  <input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm" placeholder="Пароль" autoComplete="new-password" />
-                  {fieldErrors.password && <span className="text-red-600 text-xs text-left">{fieldErrors.password}</span>}
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm"
+                    placeholder="Пароль"
+                    autoComplete="new-password"
+                  />
+                  {fieldErrors.password && (
+                    <span className="text-red-600 text-xs text-left">
+                      {fieldErrors.password}
+                    </span>
+                  )}
 
-                  <input type="password" value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm" placeholder="Повторите пароль" autoComplete="new-password" />
-                  {fieldErrors.confirmPassword && <span className="text-red-600 text-xs text-left">{fieldErrors.confirmPassword}</span>}
+                  <input
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
+                    className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm"
+                    placeholder="Повторите пароль"
+                    autoComplete="new-password"
+                  />
+                  {fieldErrors.confirmPassword && (
+                    <span className="text-red-600 text-xs text-left">
+                      {fieldErrors.confirmPassword}
+                    </span>
+                  )}
                 </>
               )}
 
               {isVerifyStep && (
                 <>
-                  <input type="text" value={verifyCode} onChange={(e) => setVerifyCode(e.target.value)} className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm" placeholder="Код подтверждения" />
-                  {fieldErrors.code && <span className="text-red-600 text-xs text-left">{fieldErrors.code}</span>}
-                  <button type="button" onClick={handleResendCode} disabled={isLoading} className="text-xs text-umami-green underline disabled:opacity-50">Отправить код повторно</button>
+                  <input
+                    type="text"
+                    value={verifyCode}
+                    onChange={(e) => setVerifyCode(e.target.value)}
+                    className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm"
+                    placeholder="Код подтверждения"
+                  />
+                  {fieldErrors.code && (
+                    <span className="text-red-600 text-xs text-left">
+                      {fieldErrors.code}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleResendCode}
+                    disabled={isLoading}
+                    className="text-xs text-umami-green underline disabled:opacity-50"
+                  >
+                    Отправить код повторно
+                  </button>
                 </>
               )}
 
-              <button type="submit" disabled={isLoading} className="custom-button bg-umami-green text-sm disabled:opacity-50">
-                {isLoading ? "Загрузка..." : isVerifyStep ? "Подтвердить email" : "Зарегистрироваться"}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="custom-button bg-umami-green text-sm disabled:opacity-50"
+              >
+                {isLoading
+                  ? "Загрузка..."
+                  : isVerifyStep
+                  ? "Подтвердить email"
+                  : "Зарегистрироваться"}
               </button>
             </form>
           </div>
@@ -199,10 +334,17 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
 
         <div className="flex py-25 px-8 gap-8 w-60.5 flex-col bg-umami-green h-full rounded-r-2xl">
           <div className="flex flex-col text-end">
-            <p className="font-nunito font-black text-xl text-white">АВТОРИЗАЦИЯ</p>
+            <p className="font-nunito font-black text-xl text-white">
+              АВТОРИЗАЦИЯ
+            </p>
             <p className="font-nunito text-sm text-white">Уже есть аккаунт?</p>
           </div>
-          <button onClick={onSwitchToLogin} className="custom-button text-center bg-white text-umami-green font-nunito text-sm">Авторизоваться</button>
+          <button
+            onClick={onSwitchToLogin}
+            className="custom-button text-center bg-white text-umami-green font-nunito text-sm"
+          >
+            Авторизоваться
+          </button>
         </div>
       </div>
     </div>

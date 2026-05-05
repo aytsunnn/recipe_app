@@ -18,6 +18,7 @@ import {
   Ingredient,
   Kitchen,
 } from "../services/metaService";
+import { normalizeImageUrl } from "../utils/imageUrl";
 
 interface UserStats {
   followingCount: number;
@@ -173,16 +174,7 @@ export default function ProfilePage() {
 
   const visibleFriends = useMemo(() => friends.slice(0, 6), [friends]);
   const getSafeImageUrl = (url: string | null) => {
-    if (!url || url === "null" || url === "undefined") return "/avatar.jpg";
-    if (
-      url.startsWith("http://") ||
-      url.startsWith("https://") ||
-      url.startsWith("/") ||
-      url.startsWith("blob:")
-    ) {
-      return url;
-    }
-    return `/${url}`;
+    return normalizeImageUrl(url, "/avatar.jpg");
   };
 
   const loadMeta = async () => {

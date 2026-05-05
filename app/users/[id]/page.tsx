@@ -10,6 +10,7 @@ import { authService } from "../../services/authService";
 import { followService, FollowUser } from "../../services/followService";
 import { Recipe } from "../../services/recipeService";
 import { userService, User } from "../../services/userService";
+import { normalizeImageUrl } from "../../utils/imageUrl";
 
 interface ProfileStats {
   recipes: number;
@@ -18,9 +19,7 @@ interface ProfileStats {
 }
 
 const getSafeImageUrl = (url: string | null) => {
-  if (!url || url === "null" || url === "undefined") return "/avatar.jpg";
-  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) return url;
-  return `/${url}`;
+  return normalizeImageUrl(url, "/avatar.jpg");
 };
 
 export default function PublicUserPage() {

@@ -9,6 +9,7 @@ import { authService } from "../../services/authService";
 import { commentService, Comment } from "../../services/commentService";
 import { likeService } from "../../services/likeService";
 import { favoriteService } from "../../services/favoriteService";
+import { normalizeImageUrl } from "../../utils/imageUrl";
 import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
 
@@ -112,15 +113,7 @@ export default function RecipeDetailsPage() {
   const commentsCount = commentsCountState;
 
   const getSafeImageUrl = (url: string | null, fallback: string) => {
-    if (!url || url === "null" || url === "undefined") return fallback;
-    if (
-      url.startsWith("http://") ||
-      url.startsWith("https://") ||
-      url.startsWith("/")
-    ) {
-      return url;
-    }
-    return `/${url}`;
+    return normalizeImageUrl(url, fallback);
   };
 
   const loadComments = async () => {
