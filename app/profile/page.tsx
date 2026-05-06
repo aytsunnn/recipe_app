@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import FeedCard from "../components/FeedCard";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import { authService, User } from "../services/authService";
@@ -165,6 +165,7 @@ export default function ProfilePage() {
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
   const [recipeForm, setRecipeForm] = useState<RecipeFormData>(emptyRecipeForm);
   const [recipeActionLoading, setRecipeActionLoading] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
   const [followModalType, setFollowModalType] = useState<
     "following" | "followers" | null
   >(null);
@@ -179,6 +180,7 @@ export default function ProfilePage() {
     []
   );
   const [units, setUnits] = useState<Unit[]>([]);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   const visibleFriends = useMemo(() => friends.slice(0, 6), [friends]);
   const feedColumnRef = useRef<HTMLDivElement | null>(null);
@@ -201,10 +203,12 @@ export default function ProfilePage() {
   };
 
   const loadProfile = async (currentUser: User) => {
-    const [following, followers, userRecipes] = await Promise.all([
+    const [following, followers, userRecipesFromProfile, userRecipesFromFeed] =
+      await Promise.all([
       followService.getFollowing(currentUser.id),
       followService.getFollowers(currentUser.id),
       userService.getRecipes(currentUser.id),
+      recipeService.getAll({ user_id: currentUser.id, limit: 200 }),
     ]);
 
     const followingIds = new Set(following.map((follow) => follow.id));
@@ -213,8 +217,15 @@ export default function ProfilePage() {
     );
 
     setFriends(mutualFriends);
-    const ownRecipes = userRecipes.filter(
-      (recipe) => String(recipe.user_id) === String(currentUser.id)
+    const allById = new Map<string, Recipe>();
+    [...userRecipesFromProfile, ...userRecipesFromFeed].forEach((recipe) => {
+      if (String(recipe.user_id) === String(currentUser.id)) {
+        allById.set(recipe.id, recipe);
+      }
+    });
+    const ownRecipes = Array.from(allById.values()).sort(
+      (a, b) =>
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     );
     setRecipes(ownRecipes);
     setStats({
@@ -679,6 +690,56 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAvatarFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    if (!user) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      setAvatarLoading(true);
+      const avatarUrl = await uploadService.uploadImage(file, "avatars");
+      const updatedUser = await userService.updateProfile({ avatar_url: avatarUrl });
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...updatedUser,
+              avatar_url: updatedUser.avatar_url ?? avatarUrl,
+            }
+          : prev
+      );
+      authService.dispatchAuthChange();
+    } catch (error) {
+      console.error("Ошибка обновления аватарки:", error);
+      alert("Не удалось обновить аватарку");
+    } finally {
+      setAvatarLoading(false);
+      if (event.target) event.target.value = "";
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    if (!user) return;
+    try {
+      setAvatarLoading(true);
+      const updatedUser = await userService.updateProfile({ avatar_url: null });
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...updatedUser,
+              avatar_url: null,
+            }
+          : prev
+      );
+      authService.dispatchAuthChange();
+    } catch (error) {
+      console.error("Ошибка удаления аватарки:", error);
+      alert("Не удалось удалить аватарку");
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-[420px] items-center justify-center">
@@ -719,6 +780,13 @@ export default function ProfilePage() {
                   className="h-full w-full object-cover"
                 />
               </div>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarFileChange}
+              />
 
               <div className="flex min-w-0 flex-col gap-5">
                 <h1 className="font-nunito text-xl font-bold text-black">
@@ -757,6 +825,22 @@ export default function ProfilePage() {
                     className="w-fit rounded-full bg-umami-green px-3 py-[5px] font-nunito text-xs text-white transition-colors hover:bg-[#6a805e]"
                   >
                     Редактировать профиль
+                  </button>
+                  <button
+                    type="button"
+                    disabled={avatarLoading}
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="w-fit rounded-full bg-white border border-umami-light-gray px-3 py-[5px] font-nunito text-xs text-umami-dark-gray transition-colors hover:bg-[#f8f8f8] disabled:opacity-60"
+                  >
+                    {avatarLoading ? "Загрузка..." : "Изменить фото"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={avatarLoading}
+                    onClick={() => void handleDeleteAvatar()}
+                    className="w-fit rounded-full bg-red-500 px-3 py-[5px] font-nunito text-xs text-white transition-colors hover:bg-red-600 disabled:opacity-60"
+                  >
+                    Удалить фото
                   </button>
                   <button
                     type="button"

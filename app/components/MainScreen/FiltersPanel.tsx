@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -67,6 +67,10 @@ export default function FiltersPanel({
   const [cookings, setCookings] = useState<Cooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
+  const chipsRowRef = useRef<HTMLDivElement | null>(null);
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragStartScrollRef = useRef(0);
 
   useEffect(() => {
     const loadFilterData = async () => {
@@ -189,6 +193,33 @@ export default function FiltersPanel({
   const activeOptions = openFilter ? optionMap[openFilter] : [];
   const activeSelected = openFilter ? getSelected(openFilter) : [];
 
+  const handleWheelScroll = (event: React.WheelEvent<HTMLDivElement>) => {
+    const container = chipsRowRef.current;
+    if (!container || openFilter) return;
+    if (Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
+    event.preventDefault();
+    container.scrollLeft += event.deltaY;
+  };
+
+  const handleDragStart = (event: React.MouseEvent<HTMLDivElement>) => {
+    const container = chipsRowRef.current;
+    if (!container || openFilter) return;
+    isDraggingRef.current = true;
+    dragStartXRef.current = event.clientX;
+    dragStartScrollRef.current = container.scrollLeft;
+  };
+
+  const handleDragMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const container = chipsRowRef.current;
+    if (!container || !isDraggingRef.current || openFilter) return;
+    const delta = event.clientX - dragStartXRef.current;
+    container.scrollLeft = dragStartScrollRef.current - delta;
+  };
+
+  const stopDragging = () => {
+    isDraggingRef.current = false;
+  };
+
   const getRecipeWord = (count: number) => {
     const abs = Math.abs(count) % 100;
     const last = abs % 10;
@@ -211,9 +242,17 @@ export default function FiltersPanel({
   return (
     <div className="mb-2">
       <div
+        ref={chipsRowRef}
         className={`flex gap-2 ${
-          !openFilter ? "flex-nowrap overflow-x-auto pb-1" : "flex-wrap"
+          !openFilter
+            ? "flex-nowrap overflow-x-auto pb-1 cursor-grab active:cursor-grabbing select-none"
+            : "flex-wrap"
         }`}
+        onWheel={handleWheelScroll}
+        onMouseDown={handleDragStart}
+        onMouseMove={handleDragMove}
+        onMouseUp={stopDragging}
+        onMouseLeave={stopDragging}
       >
         {selectedTotal > 0 && (
           <button
