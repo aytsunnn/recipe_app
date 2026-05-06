@@ -1,5 +1,6 @@
 const nextConfig = {
   output: 'standalone',
+  allowedDevOrigins: ['188.233.238.70'],
   async rewrites() {
     return [
       {
