@@ -82,6 +82,16 @@ export default function RecipeDetailsPage() {
     const children = new Map<string, Comment[]>();
 
     comments.forEach((comment) => {
+      const replies = (
+        (comment as Comment & { Replies?: Comment[] }).Replies || []
+      ).map((reply) => ({
+        ...reply,
+        parent_comment_id: reply.parent_comment_id ?? comment.id,
+      }));
+      if (replies.length > 0) {
+        children.set(String(comment.id), replies);
+      }
+
       if (comment.parent_comment_id) {
         const parentId = String(comment.parent_comment_id);
         const list = children.get(parentId) || [];

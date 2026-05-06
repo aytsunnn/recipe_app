@@ -29,6 +29,14 @@ export interface Ingredient {
   description?: string;
 }
 
+export interface Unit {
+  id: string;
+  name: string;
+  short_name: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 class MetaService {
   async getKitchens(): Promise<Kitchen[]> {
     try {
@@ -89,14 +97,25 @@ class MetaService {
     }
   }
 
+  async getUnits(): Promise<Unit[]> {
+    try {
+      const data = await apiClient.get<Unit[]>('/meta/units');
+      return data;
+    } catch (error) {
+      console.error("[MetaService] Ошибка загрузки единиц измерения:", error);
+      return [];
+    }
+  }
+
   async getAll() {
     console.log('[MetaService] Загрузка всех метаданных...');
-    const [kitchens, categories, celebrations, cookings, ingredients] = await Promise.all([
+    const [kitchens, categories, celebrations, cookings, ingredients, units] = await Promise.all([
       this.getKitchens(),
       this.getCategories(),
       this.getCelebrations(),
       this.getCookings(),
       this.getIngredients(),
+      this.getUnits(),
     ]);
     
     return {
@@ -105,6 +124,7 @@ class MetaService {
       celebrations,
       cookings,
       ingredients,
+      units,
     };
   }
 }

@@ -18,6 +18,7 @@ import {
   Cooking,
   Ingredient,
   Kitchen,
+  Unit,
 } from "../services/metaService";
 import { normalizeImageUrl } from "../utils/imageUrl";
 
@@ -177,6 +178,7 @@ export default function ProfilePage() {
   const [ingredientsCatalog, setIngredientsCatalog] = useState<Ingredient[]>(
     []
   );
+  const [units, setUnits] = useState<Unit[]>([]);
 
   const visibleFriends = useMemo(() => friends.slice(0, 6), [friends]);
   const feedColumnRef = useRef<HTMLDivElement | null>(null);
@@ -192,6 +194,7 @@ export default function ProfilePage() {
       setCelebrations(data.celebrations);
       setCookings(data.cookings);
       setIngredientsCatalog(data.ingredients);
+      setUnits(data.units || []);
     } catch (error) {
       console.error("Ошибка загрузки метаданных рецепта:", error);
     }
@@ -1385,31 +1388,17 @@ export default function ProfilePage() {
                           className="rounded-full border border-umami-light-gray px-4 py-2 text-sm text-umami-gray"
                         >
                           <option value="">Ед. изм.</option>
-                          {Array.from(
-                            new Set(
-                              ingredientsCatalog
-                                .map(
-                                  (ingredient) =>
-                                    ingredient.unit_of_measurement?.trim() || ""
-                                )
-                                .filter(Boolean)
-                            )
-                          ).map((unit) => (
-                            <option key={`${index}-${unit}`} value={unit}>
-                              {unit}
+                          {units.map((unit) => (
+                            <option key={`${index}-${unit.id}`} value={unit.short_name || unit.name}>
+                              {unit.name} ({unit.short_name || unit.name})
                             </option>
                           ))}
                           {item.unit_of_measurement &&
-                            !Array.from(
-                              new Set(
-                                ingredientsCatalog
-                                  .map(
-                                    (ingredient) =>
-                                      ingredient.unit_of_measurement?.trim() || ""
-                                  )
-                                  .filter(Boolean)
-                              )
-                            ).includes(item.unit_of_measurement) && (
+                            !units.some(
+                              (unit) =>
+                                (unit.short_name || unit.name) ===
+                                item.unit_of_measurement
+                            ) && (
                               <option value={item.unit_of_measurement}>
                                 {item.unit_of_measurement}
                               </option>

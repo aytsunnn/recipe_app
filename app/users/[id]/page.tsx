@@ -53,8 +53,9 @@ export default function PublicUserPage() {
         ]);
 
         setProfile(publicProfile);
-        setRecipes(userRecipes);
-        setStats({ recipes: userRecipes.length, followers: followers.length, following: following.length });
+        const visibleRecipes = userRecipes.filter((recipe) => !recipe.is_private);
+        setRecipes(visibleRecipes);
+        setStats({ recipes: visibleRecipes.length, followers: followers.length, following: following.length });
 
         if (authService.isAuthenticated()) {
           const me = await authService.getCurrentUser();
