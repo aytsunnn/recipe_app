@@ -11,22 +11,24 @@ interface UploadResponse {
 
 class UploadService {
   private readonly storageBaseUrl =
-    process.env.NEXT_PUBLIC_STORAGE_URL || "http://188.233.238.70:9001";
+    process.env.NEXT_PUBLIC_STORAGE_URL || "http://188.233.238.70:9000";
 
   private toPublicUrl(value: string): string {
     const normalized = value.trim();
     if (!normalized) return normalized;
 
-    if (normalized.startsWith("http://127.0.0.1:9000")) {
-      return normalized.replace("http://127.0.0.1:9000", this.storageBaseUrl);
-    }
+    const withPublicHost = normalized
+      .replace("http://127.0.0.1:9000", this.storageBaseUrl)
+      .replace("http://localhost:9000", this.storageBaseUrl)
+      .replace("http://127.0.0.1:9001", this.storageBaseUrl)
+      .replace("http://localhost:9001", this.storageBaseUrl);
 
-    if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
-      return normalized;
+    if (withPublicHost.startsWith("http://") || withPublicHost.startsWith("https://")) {
+      return withPublicHost;
     }
 
     const base = this.storageBaseUrl.replace(/\/+$/, "");
-    const path = normalized.replace(/^\/+/, "");
+    const path = withPublicHost.replace(/^\/+/, "");
     return `${base}/${path}`;
   }
 

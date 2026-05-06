@@ -110,7 +110,9 @@ export default function RecipeDetailsPage() {
   }, [comments]);
   const averageRating = useMemo(() => {
     const rated = comments
-      .map((comment) => (typeof comment.rating === "number" ? comment.rating : null))
+      .map((comment) =>
+        typeof comment.rating === "number" ? comment.rating : null
+      )
       .filter((value): value is number => value !== null && value > 0);
     if (rated.length === 0) return null;
     const avg = rated.reduce((sum, value) => sum + value, 0) / rated.length;
@@ -319,7 +321,13 @@ export default function RecipeDetailsPage() {
     }
   };
 
-  const backHref = searchParams?.get("from") === "random" ? "/recipes/random" : "/";
+  const fromQuery = searchParams?.get("from");
+  const backHref =
+    fromQuery === "random"
+      ? "/recipes/random"
+      : fromQuery === "profile"
+      ? "/profile"
+      : "/";
 
   if (loading) {
     return (
@@ -422,13 +430,13 @@ export default function RecipeDetailsPage() {
             </div>
           </Link>
 
-          <div className="overflow-hidden rounded-[20px] bg-[#d9d9d9]">
+          <div className="overflow-hidden rounded-[20px] bg-[#d9d9d9] w-full">
             <Image
               width={638}
               height={380}
               src={getSafeImageUrl(recipe.image_url, "/placeholder.jpg")}
               alt={recipe.title}
-              className="h-[380px] w-full object-cover"
+              className="h-auto w-full rounded-[20px] object-contain"
             />
           </div>
 
@@ -489,7 +497,9 @@ export default function RecipeDetailsPage() {
                   src="/StarGray.svg"
                   alt="rating"
                 />
-                <span className="font-nunito text-base">{averageRating ?? "0,0"}</span>
+                <span className="font-nunito text-base">
+                  {averageRating ?? "0,0"}
+                </span>
               </div>
               <div className="flex items-center gap-1">
                 <Image
@@ -698,7 +708,7 @@ export default function RecipeDetailsPage() {
                         Шаг {step.step_number ?? index + 1}
                       </p>
                       {step.image_url && (
-                        <div className="mt-2 overflow-hidden rounded-xl border border-umami-light-gray/40">
+                        <div className="mt-2 overflow-hidden rounded-xl border border-umami-light-gray/40 w-full">
                           <Image
                             width={800}
                             height={450}
@@ -707,7 +717,7 @@ export default function RecipeDetailsPage() {
                               "/placeholder.jpg"
                             )}
                             alt={`step-${step.step_number ?? index + 1}`}
-                            className="h-auto w-full object-cover"
+                            className="h-auto w-full rounded-xl object-contain"
                           />
                         </div>
                       )}

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { likeService } from "../services/likeService";
 import { commentService, Comment } from "../services/commentService";
 import { followService } from "../services/followService";
@@ -49,6 +49,7 @@ interface FeedCardProps {
   showComments?: boolean;
   showAuthorHeader?: boolean;
   detailsQuery?: string;
+  footerRightSlot?: ReactNode;
 }
 
 export default function FeedCard({
@@ -58,6 +59,7 @@ export default function FeedCard({
   showComments = false,
   showAuthorHeader = true,
   detailsQuery,
+  footerRightSlot,
 }: FeedCardProps) {
   const [following, setFollowing] = useState(isFollowing);
   const [justFollowed, setJustFollowed] = useState(false); // Отслеживаем подписку в текущей сессии
@@ -297,12 +299,12 @@ export default function FeedCard({
       )}
 
       <Link href={buildRecipeLink()} className="block">
-        <div className="relative">
+        <div className="relative w-full overflow-hidden rounded-lg bg-[#d9d9d9]">
           <Image
             width={600}
             height={400}
             src={normalizeImageUrl(recipe.image_url, "/placeholder.jpg")}
-            className="w-full h-full object-cover rounded-lg"
+            className="h-auto w-full rounded-lg object-contain"
             alt="recipe"
             quality={95}
           />
@@ -350,31 +352,34 @@ export default function FeedCard({
           </p>
         </div>
       </Link>
-      <div className="flex flex-row gap-2">
-        <div className="flex gap-1 items-center">
-          <button onClick={handleLike} className="cursor-pointer">
-            <Image
-              width={24}
-              height={24}
-              src={isLiked ? "/RedHeart.svg" : "/Heart.svg"}
-              className="w-6 h-6"
-              alt="like"
-            />
-          </button>
-          <p className="font-inter text-sm text-umami-gray">{likesCount}</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-row gap-2">
+          <div className="flex gap-1 items-center">
+            <button onClick={handleLike} className="cursor-pointer">
+              <Image
+                width={24}
+                height={24}
+                src={isLiked ? "/RedHeart.svg" : "/Heart.svg"}
+                className="w-6 h-6"
+                alt="like"
+              />
+            </button>
+            <p className="font-inter text-sm text-umami-gray">{likesCount}</p>
+          </div>
+          <div className="flex gap-1 items-center">
+            <Link href={buildRecipeLink("comments")}>
+              <Image
+                width={24}
+                height={24}
+                src="/ChatCircle.svg"
+                className="w-6 h-6"
+                alt="comments"
+              />
+            </Link>
+            <p className="font-inter text-sm text-umami-gray">{commentsCount}</p>
+          </div>
         </div>
-        <div className="flex gap-1 items-center">
-          <Link href={buildRecipeLink("comments")}>
-            <Image
-              width={24}
-              height={24}
-              src="/ChatCircle.svg"
-              className="w-6 h-6"
-              alt="comments"
-            />
-          </Link>
-          <p className="font-inter text-sm text-umami-gray">{commentsCount}</p>
-        </div>
+        {footerRightSlot ? <div className="flex items-center gap-2">{footerRightSlot}</div> : null}
       </div>
 
       {/* Блок последнего комментария */}

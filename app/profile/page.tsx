@@ -164,6 +164,11 @@ export default function ProfilePage() {
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
   const [recipeForm, setRecipeForm] = useState<RecipeFormData>(emptyRecipeForm);
   const [recipeActionLoading, setRecipeActionLoading] = useState(false);
+  const [followModalType, setFollowModalType] = useState<
+    "following" | "followers" | null
+  >(null);
+  const [followModalUsers, setFollowModalUsers] = useState<FollowUser[]>([]);
+  const [followModalLoading, setFollowModalLoading] = useState(false);
 
   const [kitchens, setKitchens] = useState<Kitchen[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -385,42 +390,109 @@ export default function ProfilePage() {
     setIsRecipeEditorOpen(true);
   };
 
-  const openEditRecipeEditor = (recipe: Recipe) => {
+  const openEditRecipeEditor = async (recipe: Recipe) => {
+    let fullRecipe = recipe;
+    try {
+      fullRecipe = await recipeService.getById(recipe.id);
+    } catch (error) {
+      console.error(
+        "Не удалось загрузить полные данные рецепта для редактирования:",
+        error
+      );
+    }
+
+    const sortedSteps = (fullRecipe.Steps || [])
+      .slice()
+      .sort((a, b) => (a.step_number ?? 0) - (b.step_number ?? 0));
     setEditingRecipeId(recipe.id);
     setRecipeForm({
-      title: recipe.title || "",
-      description: recipe.description || "",
-      difficulty: normalizeDifficulty(recipe.difficulty),
-      portion: recipe.portion || 1,
-      cooking_time: recipe.cooking_time || 30,
-      calorific: recipe.calorific || 0,
-      proteins: 0,
-      fats: 0,
-      carbohydrates: 0,
-      image_url: recipe.image_url || "",
+      title: fullRecipe.title || "",
+      description: fullRecipe.description || "",
+      difficulty: normalizeDifficulty(fullRecipe.difficulty),
+      portion: fullRecipe.portion || 1,
+      cooking_time: fullRecipe.cooking_time || 30,
+      calorific: fullRecipe.calorific || 0,
+      proteins: fullRecipe.proteins || 0,
+      fats: fullRecipe.fats || 0,
+      carbohydrates: fullRecipe.carbohydrates || 0,
+      image_url: fullRecipe.image_url || "",
       image_file: null,
-      image_preview: recipe.image_url || "",
-      is_private: Boolean(recipe.is_private),
-      kitchen_id: recipe.kitchen_id ? Number(recipe.kitchen_id) : null,
-      celebration_id: recipe.celebration_id
-        ? Number(recipe.celebration_id)
+      image_preview: fullRecipe.image_url || "",
+      is_private: Boolean(fullRecipe.is_private),
+      kitchen_id: fullRecipe.kitchen_id ? Number(fullRecipe.kitchen_id) : null,
+      celebration_id: fullRecipe.celebration_id
+        ? Number(fullRecipe.celebration_id)
         : null,
-      cooking_id: recipe.cooking_id ? Number(recipe.cooking_id) : null,
-      categories: [],
-      ingredients: [
-        {
-          ingredient_id: null,
-          ingredient_name: "",
-          quantity: 1,
-          unit_of_measurement: "",
-          note: "",
-        },
-      ],
-      steps: [
-        { description: "", image_url: "", image_file: null, image_preview: "" },
-      ],
+      cooking_id: fullRecipe.cooking_id ? Number(fullRecipe.cooking_id) : null,
+      categories: (fullRecipe.Categories || [])
+        .map((category) => {
+          if (typeof category === "number") return category;
+          if (typeof category === "string") return Number(category);
+          if (category && typeof category === "object") {
+            const row = category as { id?: unknown };
+            return Number(row.id);
+          }
+          return NaN;
+        })
+        .filter((value) => Number.isFinite(value)),
+      ingredients:
+        (fullRecipe.Ingredients || []).length > 0
+          ? (fullRecipe.Ingredients || []).map((ingredient) => ({
+              ingredient_id: Number(ingredient.id),
+              ingredient_name: ingredient.name || "",
+              quantity: Number(ingredient.RecipeIngredient?.quantity) || 1,
+              unit_of_measurement:
+                ingredient.Unit?.short_name ||
+                ingredient.Unit?.name ||
+                ingredient.unit_of_measurement ||
+                "",
+              note: ingredient.RecipeIngredient?.note || "",
+            }))
+          : [
+              {
+                ingredient_id: null,
+                ingredient_name: "",
+                quantity: 1,
+                unit_of_measurement: "",
+                note: "",
+              },
+            ],
+      steps:
+        sortedSteps.length > 0
+          ? sortedSteps.map((step) => ({
+              description: step.description || "",
+              image_url: step.image_url || "",
+              image_file: null,
+              image_preview: step.image_url || "",
+            }))
+          : [
+              {
+                description: "",
+                image_url: "",
+                image_file: null,
+                image_preview: "",
+              },
+            ],
     });
     setIsRecipeEditorOpen(true);
+  };
+
+  const openFollowModal = async (type: "following" | "followers") => {
+    if (!user) return;
+    setFollowModalType(type);
+    setFollowModalLoading(true);
+    try {
+      const data =
+        type === "following"
+          ? await followService.getFollowing(user.id)
+          : await followService.getFollowers(user.id);
+      setFollowModalUsers(data);
+    } catch (error) {
+      console.error("Ошибка загрузки списка подписок:", error);
+      setFollowModalUsers([]);
+    } finally {
+      setFollowModalLoading(false);
+    }
   };
 
   const setIngredient = (index: number, patch: Partial<IngredientRow>) => {
@@ -656,18 +728,24 @@ export default function ProfilePage() {
                     </p>
                     <p className="mt-1 font-nunito text-sm">Рецепты</p>
                   </div>
-                  <div>
+                  <button
+                    type="button"
+                    onClick={() => void openFollowModal("following")}
+                  >
                     <p className="font-nunito text-xl font-semibold leading-none">
                       {stats.followingCount}
                     </p>
                     <p className="mt-1 font-nunito text-sm">Подписки</p>
-                  </div>
-                  <div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void openFollowModal("followers")}
+                  >
                     <p className="font-nunito text-xl font-semibold leading-none">
                       {stats.followersCount}
                     </p>
                     <p className="mt-1 font-nunito text-sm">Подписчики</p>
-                  </div>
+                  </button>
                 </div>
                 <div className="flex gap-2.5">
                   <button
@@ -842,25 +920,9 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 ) : recipes.length > 0 ? (
-                  <div ref={feedColumnRef} className="flex flex-col gap-0">
+                  <div ref={feedColumnRef} className="flex flex-col gap-2.5">
                     {recipes.map((recipe) => (
                       <div key={recipe.id} className="relative">
-                        <div className="absolute right-3 top-3 z-10 flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEditRecipeEditor(recipe)}
-                            className="rounded-full bg-white/95 px-3 py-1 font-nunito text-xs font-bold text-umami-dark-gray shadow"
-                          >
-                            Редактировать
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteRecipe(recipe.id)}
-                            className="rounded-full bg-red-500 px-3 py-1 font-nunito text-xs font-bold text-white shadow"
-                          >
-                            Удалить
-                          </button>
-                        </div>
                         {recipe.is_private && (
                           <span className="absolute left-3 top-3 z-10 rounded-full bg-[#333]/90 px-3 py-1 font-nunito text-xs font-bold text-white">
                             Приватный
@@ -871,6 +933,25 @@ export default function ProfilePage() {
                           currentUserId={user.id}
                           isFollowing={false}
                           showAuthorHeader={false}
+                          detailsQuery="from=profile"
+                          footerRightSlot={
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => void openEditRecipeEditor(recipe)}
+                                className="rounded-full bg-white px-3 py-1 font-nunito text-xs font-bold text-umami-dark-gray border border-umami-light-gray/70"
+                              >
+                                Редактировать
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteRecipe(recipe.id)}
+                                className="rounded-full bg-red-500 px-3 py-1 font-nunito text-xs font-bold text-white"
+                              >
+                                Удалить
+                              </button>
+                            </>
+                          }
                         />
                       </div>
                     ))}
@@ -987,12 +1068,13 @@ export default function ProfilePage() {
                     className="w-full rounded-2xl border border-umami-light-gray px-4 py-2 font-nunito text-sm"
                   />
                   {recipeForm.image_preview && (
-                    <div className="relative mt-2 h-36 w-full overflow-hidden rounded-2xl border border-umami-light-gray">
+                    <div className="relative mt-2 w-full overflow-hidden rounded-2xl border border-umami-light-gray">
                       <Image
                         src={getSafeImageUrl(recipeForm.image_preview)}
                         alt="recipe preview"
-                        fill
-                        className="object-cover"
+                        width={960}
+                        height={960}
+                        className="h-auto w-full rounded-2xl object-contain"
                       />
                     </div>
                   )}
@@ -1293,13 +1375,46 @@ export default function ProfilePage() {
                           placeholder="Кол-во"
                           className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
                         />
-                        <input
-                          type="text"
+                        <select
                           value={item.unit_of_measurement}
-                          readOnly
-                          placeholder="Ед. изм."
-                          className="rounded-full border border-umami-light-gray bg-gray-50 px-4 py-2 text-sm text-umami-gray"
-                        />
+                          onChange={(e) =>
+                            setIngredient(index, {
+                              unit_of_measurement: e.target.value,
+                            })
+                          }
+                          className="rounded-full border border-umami-light-gray px-4 py-2 text-sm text-umami-gray"
+                        >
+                          <option value="">Ед. изм.</option>
+                          {Array.from(
+                            new Set(
+                              ingredientsCatalog
+                                .map(
+                                  (ingredient) =>
+                                    ingredient.unit_of_measurement?.trim() || ""
+                                )
+                                .filter(Boolean)
+                            )
+                          ).map((unit) => (
+                            <option key={`${index}-${unit}`} value={unit}>
+                              {unit}
+                            </option>
+                          ))}
+                          {item.unit_of_measurement &&
+                            !Array.from(
+                              new Set(
+                                ingredientsCatalog
+                                  .map(
+                                    (ingredient) =>
+                                      ingredient.unit_of_measurement?.trim() || ""
+                                  )
+                                  .filter(Boolean)
+                              )
+                            ).includes(item.unit_of_measurement) && (
+                              <option value={item.unit_of_measurement}>
+                                {item.unit_of_measurement}
+                              </option>
+                            )}
+                        </select>
                         <input
                           type="text"
                           value={item.note}
@@ -1376,12 +1491,13 @@ export default function ProfilePage() {
                           className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
                         />
                         {item.image_preview && (
-                          <div className="relative h-32 w-full overflow-hidden rounded-2xl border border-umami-light-gray">
+                          <div className="relative w-full overflow-hidden rounded-2xl border border-umami-light-gray">
                             <Image
                               src={getSafeImageUrl(item.image_preview)}
                               alt="step preview"
-                              fill
-                              className="object-cover"
+                              width={960}
+                              height={960}
+                              className="h-auto w-full rounded-2xl object-contain"
                             />
                           </div>
                         )}
@@ -1449,6 +1565,56 @@ export default function ProfilePage() {
           )}
         </section>
       </div>
+      {followModalType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-[520px] rounded-[20px] bg-white p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-nunito text-xl font-bold text-umami-dark-gray">
+                {followModalType === "following" ? "Подписки" : "Подписчики"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setFollowModalType(null)}
+                className="rounded-full bg-umami-gray px-3 py-1 font-nunito text-xs text-white"
+              >
+                Закрыть
+              </button>
+            </div>
+            {followModalLoading ? (
+              <p className="py-4 text-sm text-umami-gray">Загрузка...</p>
+            ) : followModalUsers.length === 0 ? (
+              <p className="py-4 text-sm text-umami-gray">Список пуст</p>
+            ) : (
+              <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+                {followModalUsers.map((person) => (
+                  <Link
+                    key={person.id}
+                    href={`/users/${person.id}`}
+                    onClick={() => setFollowModalType(null)}
+                    className="flex items-center gap-3 rounded-xl border border-umami-light-gray/50 p-2 hover:bg-[#faf7ef]"
+                  >
+                    <Image
+                      width={40}
+                      height={40}
+                      src={getSafeImageUrl(person.avatar_url)}
+                      alt={person.name}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate font-nunito text-sm font-bold text-umami-dark-gray">
+                        {person.name}
+                      </p>
+                      <p className="truncate font-inter text-xs text-umami-gray">
+                        @{person.username}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
