@@ -1,5 +1,5 @@
 // app/services/api.ts
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://188.233.238.70:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 class ApiClient {
   private baseUrl: string;

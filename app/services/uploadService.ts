@@ -11,7 +11,7 @@ interface UploadResponse {
 
 class UploadService {
   private readonly storageBaseUrl =
-    process.env.NEXT_PUBLIC_STORAGE_URL || "http://188.233.238.70:9000";
+    process.env.NEXT_PUBLIC_STORAGE_URL || "/storage";
 
   private toPublicUrl(value: string): string {
     const normalized = value.trim();

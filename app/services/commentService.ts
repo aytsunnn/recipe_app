@@ -34,7 +34,7 @@ export interface CreateCommentData {
 }
 
 class CommentService {
-  private readonly storageBaseUrl = 'http://188.233.238.70:9000';
+  private readonly storageBaseUrl = process.env.NEXT_PUBLIC_STORAGE_URL || '/storage';
 
   private fixImageUrl(url: string | null): string | null {
     if (!url) return null;

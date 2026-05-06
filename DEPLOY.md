@@ -13,9 +13,13 @@ Place project in:
 Create `.env.production` in project root:
 
 ```env
-NEXT_PUBLIC_API_URL=http://188.233.238.70:5000
-NEXT_PUBLIC_STORAGE_URL=http://188.233.238.70:9000
+NEXT_PUBLIC_API_URL=/api
+NEXT_PUBLIC_STORAGE_URL=/storage
 ```
+
+Project is configured to proxy:
+- `/api/*` -> `http://127.0.0.1:5000/*`
+- `/storage/*` -> `http://127.0.0.1:9000/*`
 
 ## 4) Install and build
 ```bash

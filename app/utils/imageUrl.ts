@@ -1,4 +1,4 @@
-const STORAGE_BASE_URL = "http://188.233.238.70:9000";
+const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_STORAGE_URL || "/storage";
 
 export function normalizeImageUrl(
   url: string | null | undefined,

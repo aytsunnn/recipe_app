@@ -49,7 +49,7 @@ export interface User {
 }
 
 class AuthService {
-  private readonly storageBaseUrl = 'http://188.233.238.70:9000';
+  private readonly storageBaseUrl = process.env.NEXT_PUBLIC_STORAGE_URL || '/storage';
 
   // Заменяет localhost URL на публичный адрес
   private fixImageUrl(url: string | null): string | null {
