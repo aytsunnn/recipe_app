@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Suspense } from "react";
 import FeedCard from "../../components/FeedCard";
 import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
@@ -73,7 +74,9 @@ export default function RandomRecipePage() {
   return (
     <div className="w-full gap-5 flex flex-row">
       <div className="hidden w-55.75 lg:flex">
-        <LeftPart />
+        <Suspense fallback={<div className="text-umami-gray">Загрузка...</div>}>
+          <LeftPart />
+        </Suspense>
       </div>
 
       <div className="w-full lg:w-169.5">
