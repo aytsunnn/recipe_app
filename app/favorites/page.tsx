@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import FeedCard from "../components/FeedCard";
 import LeftPart from "../components/MainScreen/NavigationLeftPart";
@@ -67,7 +68,9 @@ export default function FavoritesPage() {
   return (
     <div className="w-full gap-5 flex flex-row">
       <div className="flex w-55.75">
-        <LeftPart />
+        <Suspense fallback={<div className="text-umami-gray">Загрузка...</div>}>
+          <LeftPart />
+        </Suspense>
       </div>
 
       <div className="flex w-169.5">
