@@ -769,6 +769,26 @@ export default function RecipeDetailsPage() {
             </button>
           </div>
 
+          <div className="mt-4 rounded-2xl border border-umami-light-gray/50 bg-white p-4">
+            <p className="font-nunito text-base font-bold text-umami-dark-gray">
+              Личная заметка
+            </p>
+            <textarea
+              value={personalNote}
+              onChange={(e) => setPersonalNote(e.target.value)}
+              placeholder="Заметка видна только вам"
+              className="mt-2 h-20 w-full rounded-2xl border border-umami-light-gray px-3 py-2 font-inter text-sm"
+            />
+            <button
+              type="button"
+              onClick={handleSavePersonalNote}
+              disabled={noteSaving}
+              className="mt-2 rounded-full bg-umami-orange px-4 py-2 font-nunito text-sm text-white disabled:opacity-60"
+            >
+              {noteSaving ? "Сохраняем..." : "Сохранить заметку"}
+            </button>
+          </div>
+
           <div className="mt-5 grid h-10 grid-cols-4 overflow-hidden rounded-[20px] bg-white border border-umami-light-gray/50">
             <button
               onClick={() => setActiveTab("info")}
@@ -820,26 +840,6 @@ export default function RecipeDetailsPage() {
           </div>
 
           <div className="mt-4 rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
-            <div className="mb-4 rounded-2xl border border-umami-light-gray/50 p-4">
-              <p className="font-nunito text-base font-bold text-umami-dark-gray">
-                Личная заметка
-              </p>
-              <textarea
-                value={personalNote}
-                onChange={(e) => setPersonalNote(e.target.value)}
-                placeholder="Заметка видна только вам"
-                className="mt-2 h-20 w-full rounded-2xl border border-umami-light-gray px-3 py-2 font-inter text-sm"
-              />
-              <button
-                type="button"
-                onClick={handleSavePersonalNote}
-                disabled={noteSaving}
-                className="mt-2 rounded-full bg-umami-orange px-4 py-2 font-nunito text-sm text-white disabled:opacity-60"
-              >
-                {noteSaving ? "Сохраняем..." : "Сохранить заметку"}
-              </button>
-            </div>
-
             {activeTab === "info" && (
               <div className="flex flex-col gap-3">
                 <div className="grid grid-cols-3 gap-10">
