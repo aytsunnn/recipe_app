@@ -73,6 +73,8 @@ export interface Recipe {
   total_reviews?: number | string | null;
   comments_count?: number | string | null;
   is_ai_pfc?: boolean | null;
+  parsed_from_url?: boolean | null;
+  source_url?: string | null;
 }
 
 export interface GetRecipesParams {
@@ -126,13 +128,13 @@ class RecipeService {
       ? recipe.Likes.length
       : 0;
     const commentsCountRaw =
-      recipe._count?.Comments ??
       (typeof recipe.total_reviews === "string"
         ? Number(recipe.total_reviews)
         : recipe.total_reviews) ??
       (typeof recipe.comments_count === "string"
         ? Number(recipe.comments_count)
         : recipe.comments_count) ??
+      recipe._count?.Comments ??
       (Array.isArray(recipe.Comments) ? recipe.Comments.length : 0);
     const commentsCount = Number.isFinite(Number(commentsCountRaw))
       ? Number(commentsCountRaw)

@@ -443,6 +443,33 @@ export default function ProfilePage() {
     const sortedSteps = (fullRecipe.Steps || [])
       .slice()
       .sort((a, b) => (a.step_number ?? 0) - (b.step_number ?? 0));
+    const recipeAny = fullRecipe as unknown as Record<string, unknown>;
+    const toBool = (value: unknown): boolean => {
+      if (typeof value === "boolean") return value;
+      if (typeof value === "number") return value === 1;
+      if (typeof value === "string") {
+        const lowered = value.trim().toLowerCase();
+        return lowered === "true" || lowered === "1" || lowered === "yes";
+      }
+      return false;
+    };
+    const sourceUrlFromApi = (
+      typeof fullRecipe.source_url === "string"
+        ? fullRecipe.source_url
+        : typeof recipeAny.sourceUrl === "string"
+        ? (recipeAny.sourceUrl as string)
+        : typeof recipeAny.sourceURL === "string"
+        ? (recipeAny.sourceURL as string)
+        : ""
+    ).trim();
+    const isParsedRecipe =
+      toBool(fullRecipe.parsed_from_url) ||
+      toBool(recipeAny.parsedFromUrl) ||
+      toBool(recipeAny.is_parsed) ||
+      toBool(recipeAny.isParsed) ||
+      toBool(recipeAny.parsed) ||
+      sourceUrlFromApi.length > 0;
+
     setEditingRecipeId(recipe.id);
     setRecipeForm({
       title: fullRecipe.title || "",
@@ -457,7 +484,7 @@ export default function ProfilePage() {
       image_url: fullRecipe.image_url || "",
       image_file: null,
       image_preview: fullRecipe.image_url || "",
-      is_private: Boolean(fullRecipe.is_private),
+      is_private: isParsedRecipe ? true : Boolean(fullRecipe.is_private),
       kitchen_id: fullRecipe.kitchen_id ? Number(fullRecipe.kitchen_id) : null,
       celebration_id: fullRecipe.celebration_id
         ? Number(fullRecipe.celebration_id)
@@ -512,8 +539,8 @@ export default function ProfilePage() {
               image_preview: "",
             },
           ],
-      source_url: "",
-      parsed_from_url: false,
+      source_url: sourceUrlFromApi,
+      parsed_from_url: isParsedRecipe,
     });
     setParseWarnings([]);
     setIsRecipeEditorOpen(true);
@@ -984,6 +1011,36 @@ export default function ProfilePage() {
     }
   };
 
+  const handleDeleteProfile = async () => {
+    if (!user || recipeActionLoading) return;
+    const confirmed = window.confirm(
+      "Удалить профиль? Это действие необратимо."
+    );
+    if (!confirmed) return;
+
+    try {
+      setRecipeActionLoading(true);
+      await userService.deleteProfile();
+      try {
+        await authService.logout();
+      } catch {
+        // Профиль уже удален, logout может вернуть ошибку.
+      }
+      authService.removeToken();
+      authService.dispatchAuthChange();
+      router.push("/");
+    } catch (error) {
+      console.error("Ошибка удаления профиля:", error);
+      alert(
+        error instanceof Error
+          ? `Не удалось удалить профиль: ${error.message}`
+          : "Не удалось удалить профиль"
+      );
+    } finally {
+      setRecipeActionLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-[420px] items-center justify-center">
@@ -1100,6 +1157,14 @@ export default function ProfilePage() {
                     className="w-fit rounded-full bg-umami-green px-3 py-[5px] font-nunito text-xs text-white transition-colors hover:bg-[#6a805e]"
                   >
                     Редактировать профиль
+                  </button>
+                  <button
+                    type="button"
+                    disabled={recipeActionLoading}
+                    onClick={() => void handleDeleteProfile()}
+                    className="w-fit rounded-full bg-red-500 px-3 py-[5px] font-nunito text-xs text-white transition-colors hover:bg-red-600 disabled:opacity-60"
+                  >
+                    Удалить профиль
                   </button>
                   <button
                     type="button"

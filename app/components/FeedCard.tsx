@@ -85,9 +85,6 @@ export default function FeedCard({
     recipe._count?.Likes ?? recipe.Likes?.length ?? 0
   );
   const resolveCommentsCount = () => {
-    const fromCount = recipe._count?.Comments;
-    if (typeof fromCount === "number") return fromCount;
-
     const totalReviews =
       typeof recipe.total_reviews === "string"
         ? Number(recipe.total_reviews)
@@ -106,6 +103,9 @@ export default function FeedCard({
     ) {
       return commentsCountRaw;
     }
+
+    const fromCount = recipe._count?.Comments;
+    if (typeof fromCount === "number") return fromCount;
 
     return recipe.Comments?.length ?? 0;
   };
@@ -131,6 +131,24 @@ export default function FeedCard({
     const next = resolveCommentsCount();
     setCommentsCountState(next);
   }, [recipe._count?.Comments, recipe.total_reviews, recipe.comments_count, recipe.Comments?.length]);
+
+  useEffect(() => {
+    let cancelled = false;
+    commentService
+      .getByRecipe(recipe.id)
+      .then((comments) => {
+        if (!cancelled) {
+          setCommentsCountState(comments.length);
+        }
+      })
+      .catch(() => {
+        // fallback already handled by resolveCommentsCount
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [recipe.id]);
 
   useEffect(() => {
     const raw = localStorage.getItem("recipe_comments_overrides");

@@ -228,7 +228,7 @@ export default function RegisterModal({
                   setFormData({ ...formData, username: e.target.value })
                 }
                 className="border border-umami-green rounded-full px-2.5 py-1.25 text-sm"
-                placeholder="Имя пользователя"
+                placeholder="Логин"
                 disabled={isVerifyStep}
               />
               {!isVerifyStep && fieldErrors.username && (
@@ -325,8 +325,8 @@ export default function RegisterModal({
                 {isLoading
                   ? "Загрузка..."
                   : isVerifyStep
-                    ? "Подтвердить email"
-                    : "Зарегистрироваться"}
+                  ? "Подтвердить email"
+                  : "Зарегистрироваться"}
               </button>
             </form>
           </div>

@@ -31,6 +31,10 @@ class UserService {
   async search(query: string): Promise<User[]> {
     return apiClient.get<User[]>(`/users/search?q=${encodeURIComponent(query)}`);
   }
+
+  async deleteProfile(): Promise<void> {
+    await apiClient.delete<unknown>('/users/me');
+  }
 }
 
 

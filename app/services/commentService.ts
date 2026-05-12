@@ -27,6 +27,9 @@ export interface Comment {
   };
   likes_count?: number;
   is_liked?: boolean;
+  likeCount?: number;
+  isLiked?: boolean;
+  Replies?: Comment[];
 }
 
 export interface CreateCommentData {
@@ -48,12 +51,60 @@ class CommentService {
   }
 
   private fixCommentImages(comment: Comment): Comment {
+    const raw = comment as unknown as Record<string, unknown>;
+    const normalizedLikesCount = (() => {
+      const direct =
+        typeof comment.likes_count === "number"
+          ? comment.likes_count
+          : typeof comment.likeCount === "number"
+          ? comment.likeCount
+          : typeof raw.likes_count === "number"
+          ? (raw.likes_count as number)
+          : typeof raw.likeCount === "number"
+          ? (raw.likeCount as number)
+          : typeof raw.likes_count === "string"
+          ? Number(raw.likes_count)
+          : typeof raw.likeCount === "string"
+          ? Number(raw.likeCount)
+          : null;
+      return typeof direct === "number" && Number.isFinite(direct)
+        ? Math.max(0, direct)
+        : undefined;
+    })();
+
+    const normalizedIsLiked =
+      typeof comment.is_liked === "boolean"
+        ? comment.is_liked
+        : typeof comment.isLiked === "boolean"
+        ? comment.isLiked
+        : typeof raw.is_liked === "boolean"
+        ? (raw.is_liked as boolean)
+        : typeof raw.isLiked === "boolean"
+        ? (raw.isLiked as boolean)
+        : undefined;
+
     return {
       ...comment,
+      ...(normalizedLikesCount !== undefined
+        ? {
+            likes_count: normalizedLikesCount,
+            likeCount: normalizedLikesCount,
+            _count: {
+              ...(comment._count || {}),
+              Likes: normalizedLikesCount,
+            },
+          }
+        : {}),
+      ...(normalizedIsLiked !== undefined
+        ? { is_liked: normalizedIsLiked, isLiked: normalizedIsLiked }
+        : {}),
       Author: {
         ...comment.Author,
         avatar_url: this.fixImageUrl(comment.Author.avatar_url),
       },
+      Replies: Array.isArray(comment.Replies)
+        ? comment.Replies.map((reply) => this.fixCommentImages(reply))
+        : comment.Replies,
     };
   }
 
