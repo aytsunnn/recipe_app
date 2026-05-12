@@ -697,7 +697,7 @@ export default function RecipeDetailsPage() {
           <p className="font-nunito text-xl mt-2 font-bold leading-none text-umami-orange">
             {recipe.title}
           </p>
-          <p className="mt-2 max-w-[637px] font-nunito text-sm text-umami-gray">
+          <p className="text-wrap-safe mt-2 max-w-[637px] font-nunito text-sm text-umami-gray">
             {recipe.description}
           </p>
           <div className="flex justify-between items-center mt-4">
@@ -1156,20 +1156,50 @@ export default function RecipeDetailsPage() {
                       className="rounded-xl border border-umami-light-gray/40 p-3"
                     >
                       <div className="flex gap-3">
-                        <Image
-                          width={36}
-                          height={36}
-                          src={getSafeImageUrl(
-                            comment.Author.avatar_url,
-                            "/avatar.jpg"
-                          )}
-                          alt="avatar"
-                          className="h-9 w-9 rounded-full object-cover"
-                        />
-                        <div className="flex-1">
-                          <p className="font-inter text-sm font-semibold text-umami-dark-gray">
-                            @{comment.Author.username}
-                          </p>
+                        <Link
+                          href={`/users/${comment.Author.id}`}
+                          className="h-9 w-9 shrink-0 rounded-full"
+                        >
+                          <Image
+                            width={36}
+                            height={36}
+                            src={getSafeImageUrl(
+                              comment.Author.avatar_url,
+                              "/avatar.jpg"
+                            )}
+                            alt="avatar"
+                            className="h-9 w-9 rounded-full object-cover"
+                          />
+                        </Link>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <Link
+                              href={`/users/${comment.Author.id}`}
+                              className="min-w-0 truncate font-inter text-sm font-semibold text-umami-dark-gray hover:underline"
+                            >
+                              {comment.Author.username}
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => void handleToggleCommentLike(comment)}
+                              disabled={Boolean(commentLikeBusy[comment.id])}
+                              className="inline-flex shrink-0 items-center gap-1 disabled:opacity-60"
+                            >
+                              <Image
+                                width={20}
+                                height={20}
+                                src={
+                                  isCommentLikedByCurrentUser(comment)
+                                    ? "/RedHeart.svg"
+                                    : "/HeartGray.svg"
+                                }
+                                alt="comment-like"
+                              />
+                              <span className="font-nunito text-sm text-umami-gray">
+                                {getCommentLikesCount(comment)}
+                              </span>
+                            </button>
+                          </div>
                           <p className="font-inter text-sm text-umami-gray">
                             {comment.content}
                           </p>
@@ -1193,7 +1223,7 @@ export default function RecipeDetailsPage() {
                               ? `Умами ${comment.taste_umami}`
                               : null,
                           ].filter(Boolean).length > 0 && (
-                            <p className="mt-1 font-inter text-xs text-umami-light-gray">
+                            <p className="text-wrap-safe mt-1 font-inter text-xs text-umami-light-gray">
                               {[
                                 comment.rating
                                   ? `Рейтинг: ${comment.rating}/5`
@@ -1225,26 +1255,6 @@ export default function RecipeDetailsPage() {
                           >
                             Ответить
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => void handleToggleCommentLike(comment)}
-                            disabled={Boolean(commentLikeBusy[comment.id])}
-                            className="ml-2 mt-2 inline-flex items-center gap-1 disabled:opacity-60"
-                          >
-                            <Image
-                              width={20}
-                              height={20}
-                              src={
-                                isCommentLikedByCurrentUser(comment)
-                                  ? "/RedHeart.svg"
-                                  : "/HeartGray.svg"
-                              }
-                              alt="comment-like"
-                            />
-                            <span className="font-nunito text-sm text-umami-gray">
-                              {getCommentLikesCount(comment)}
-                            </span>
-                          </button>
                         </div>
                       </div>
 
@@ -1257,43 +1267,53 @@ export default function RecipeDetailsPage() {
                           {(groupedComments.children.get(comment.id) || []).map(
                             (reply) => (
                               <div key={reply.id} className="flex gap-3">
-                                <Image
-                                  width={30}
-                                  height={30}
-                                  src={getSafeImageUrl(
-                                    reply.Author.avatar_url,
-                                    "/avatar.jpg"
-                                  )}
-                                  alt="avatar"
-                                  className="h-7.5 w-7.5 rounded-full object-cover"
-                                />
-                                <div>
-                                  <p className="font-inter text-xs font-semibold text-umami-dark-gray">
-                                    @{reply.Author.username}
-                                  </p>
+                                <Link
+                                  href={`/users/${reply.Author.id}`}
+                                  className="h-7.5 w-7.5 shrink-0 rounded-full"
+                                >
+                                  <Image
+                                    width={30}
+                                    height={30}
+                                    src={getSafeImageUrl(
+                                      reply.Author.avatar_url,
+                                      "/avatar.jpg"
+                                    )}
+                                    alt="avatar"
+                                    className="h-7.5 w-7.5 rounded-full object-cover"
+                                  />
+                                </Link>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <Link
+                                      href={`/users/${reply.Author.id}`}
+                                      className="min-w-0 truncate font-inter text-xs font-semibold text-umami-dark-gray hover:underline"
+                                    >
+                                      {reply.Author.username}
+                                    </Link>
+                                    <button
+                                      type="button"
+                                      onClick={() => void handleToggleCommentLike(reply)}
+                                      disabled={Boolean(commentLikeBusy[reply.id])}
+                                      className="inline-flex shrink-0 items-center gap-1 disabled:opacity-60"
+                                    >
+                                      <Image
+                                        width={18}
+                                        height={18}
+                                        src={
+                                          isCommentLikedByCurrentUser(reply)
+                                            ? "/RedHeart.svg"
+                                            : "/HeartGray.svg"
+                                        }
+                                        alt="reply-like"
+                                      />
+                                      <span className="font-nunito text-xs text-umami-gray">
+                                        {getCommentLikesCount(reply)}
+                                      </span>
+                                    </button>
+                                  </div>
                                   <p className="font-inter text-sm text-umami-gray">
                                     {reply.content}
                                   </p>
-                                  <button
-                                    type="button"
-                                    onClick={() => void handleToggleCommentLike(reply)}
-                                    disabled={Boolean(commentLikeBusy[reply.id])}
-                                    className="mt-1 inline-flex items-center gap-1 disabled:opacity-60"
-                                  >
-                                    <Image
-                                      width={18}
-                                      height={18}
-                                      src={
-                                        isCommentLikedByCurrentUser(reply)
-                                          ? "/RedHeart.svg"
-                                          : "/HeartGray.svg"
-                                      }
-                                      alt="reply-like"
-                                    />
-                                    <span className="font-nunito text-xs text-umami-gray">
-                                      {getCommentLikesCount(reply)}
-                                    </span>
-                                  </button>
                                 </div>
                               </div>
                             )
