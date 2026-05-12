@@ -27,6 +27,11 @@ class UserService {
   async getById(userId: string): Promise<User> {
     return apiClient.get<User>(`/users/${userId}`);
   }
+
+  async search(query: string): Promise<User[]> {
+    return apiClient.get<User[]>(`/users/search?q=${encodeURIComponent(query)}`);
+  }
 }
+
 
 export const userService = new UserService();

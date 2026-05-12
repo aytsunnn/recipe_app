@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -66,8 +66,8 @@ const toRecipeDraft = (value: unknown): RecipeDraft | null => {
     root.suggestion && typeof root.suggestion === "object"
       ? root.suggestion
       : root.recipe && typeof root.recipe === "object"
-      ? root.recipe
-      : root
+        ? root.recipe
+        : root
   ) as Record<string, unknown>;
 
   const title = typeof source.title === "string" ? source.title.trim() : "";
@@ -113,8 +113,8 @@ const toRecipeCard = (value: unknown): Recipe | null => {
     root.suggestion && typeof root.suggestion === "object"
       ? root.suggestion
       : root.recipe && typeof root.recipe === "object"
-      ? root.recipe
-      : root
+        ? root.recipe
+        : root
   ) as Record<string, unknown>;
 
   const title = typeof source.title === "string" ? source.title : "";
@@ -491,11 +491,10 @@ export default function RightPart() {
                           event.preventDefault();
                           void handleToggleFollow(author.id);
                         }}
-                        className={`mt-2 w-full rounded-full px-3 py-1.5 font-nunito text-xs font-bold ${
-                          isFollowing
+                        className={`mt-2 w-full rounded-full px-3 py-1.5 font-nunito text-xs font-bold ${isFollowing
                             ? "bg-[#f1ebdb] text-umami-dark-gray"
                             : "bg-umami-green text-white"
-                        }`}
+                          }`}
                       >
                         {isFollowing ? "Вы подписаны" : "Подписаться"}
                       </button>
@@ -529,9 +528,8 @@ export default function RightPart() {
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`${
-                      message.role === "user" ? "ml-auto" : ""
-                    } max-w-[85%]`}
+                    className={`${message.role === "user" ? "ml-auto" : ""
+                      } max-w-[85%]`}
                   >
                     {message.recipeCard ? (
                       <div className="max-w-[560px]">
@@ -592,11 +590,10 @@ export default function RightPart() {
                       </div>
                     ) : (
                       <div
-                        className={`whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${
-                          message.role === "user"
+                        className={`whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${message.role === "user"
                             ? "bg-umami-orange text-white"
                             : "bg-white text-umami-dark-gray"
-                        }`}
+                          }`}
                       >
                         {message.text}
                       </div>

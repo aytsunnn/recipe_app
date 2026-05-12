@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { authService, RegisterData } from "../services/authService";
@@ -325,8 +325,8 @@ export default function RegisterModal({
                 {isLoading
                   ? "Загрузка..."
                   : isVerifyStep
-                  ? "Подтвердить email"
-                  : "Зарегистрироваться"}
+                    ? "Подтвердить email"
+                    : "Зарегистрироваться"}
               </button>
             </form>
           </div>

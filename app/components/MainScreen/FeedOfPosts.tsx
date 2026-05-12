@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -7,7 +7,12 @@ import FiltersPanel, { FilterValues } from "./FiltersPanel";
 import { useRecipes } from "../../hooks/useRecipes";
 import { authService } from "../../services/authService";
 import { followService } from "../../services/followService";
+import { userService, User } from "../../services/userService";
+import { normalizeImageUrl } from "../../utils/imageUrl";
 import ScrollToTopButton from "../ScrollToTopButton";
+import Link from "next/link";
+import Image from "next/image";
+
 
 const firstFromCsv = (csvValue: string | null) =>
   csvValue ? csvValue.split(",").filter(Boolean)[0] : undefined;
@@ -43,6 +48,9 @@ export default function FeedOfPosts() {
     },
     useRecommendations,
   });
+ 
+  const [foundUsers, setFoundUsers] = useState<User[]>([]);
+  const [isUsersLoading, setIsUsersLoading] = useState(false);
 
   useEffect(() => {
     updateParams({
@@ -53,6 +61,16 @@ export default function FeedOfPosts() {
       cooking_id: cookingId,
       difficulty,
     });
+
+    if (searchQuery) {
+      setIsUsersLoading(true);
+      userService.search(searchQuery)
+        .then(setFoundUsers)
+        .catch(console.error)
+        .finally(() => setIsUsersLoading(false));
+    } else {
+      setFoundUsers([]);
+    }
   }, [
     updateParams,
     searchQuery,
@@ -62,6 +80,7 @@ export default function FeedOfPosts() {
     cookingId,
     difficulty,
   ]);
+
 
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
@@ -135,6 +154,41 @@ export default function FeedOfPosts() {
       {showFilters && (
         <FiltersPanel onApplyFilters={handleApplyFilters} resultsCount={recipes.length} />
       )}
+
+      {/* Результаты поиска пользователей */}
+      {searchQuery && (foundUsers.length > 0 || isUsersLoading) && (
+        <div className="bg-white rounded-[20px] border border-umami-light-gray/50 p-5 mb-2 flex flex-col gap-4">
+          <h3 className="font-nunito font-bold text-lg text-umami-dark-gray flex items-center gap-2">
+            Пользователи
+            {isUsersLoading && <span className="text-xs font-normal text-umami-gray animate-pulse">(ищем...)</span>}
+          </h3>
+          <div className="flex flex-wrap gap-4">
+            {foundUsers.map((user) => (
+              <Link 
+                href={`/users/${user.id}`} 
+                key={user.id} 
+                className="flex flex-col items-center gap-2 w-24 group"
+              >
+                <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-transparent group-hover:border-umami-green transition-all">
+                  <Image 
+                    src={normalizeImageUrl(user.avatar_url, '/avatar.jpg')} 
+                    alt={user.name} 
+                    fill 
+                    className="object-cover"
+                  />
+                </div>
+                <p className="font-nunito text-xs font-bold text-umami-dark-gray truncate w-full text-center group-hover:text-umami-green">
+                  {user.name}
+                </p>
+                <p className="font-inter text-[10px] text-umami-gray truncate w-full text-center">
+                  @{user.username}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
 
       {recipes.length === 0 && !loading && (
         <div className="bg-white rounded-lg border border-umami-light-gray/50 p-8 text-center">

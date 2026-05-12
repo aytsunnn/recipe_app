@@ -1,4 +1,4 @@
-﻿// app/services/recipeService.ts
+// app/services/recipeService.ts
 import { apiClient } from './api';
 
 export interface Recipe {

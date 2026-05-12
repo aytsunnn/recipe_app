@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -159,8 +159,8 @@ export default function FiltersPanel({
         key === "difficulty"
           ? values
           : values
-              .map((item) => Number(item))
-              .filter((item) => !Number.isNaN(item)),
+            .map((item) => Number(item))
+            .filter((item) => !Number.isNaN(item)),
     };
 
     setFilters(updatedFilters);
@@ -243,11 +243,10 @@ export default function FiltersPanel({
     <div className="mb-2">
       <div
         ref={chipsRowRef}
-        className={`flex gap-2 ${
-          !openFilter
+        className={`flex gap-2 ${!openFilter
             ? "flex-nowrap overflow-x-auto pb-1 cursor-grab active:cursor-grabbing select-none"
             : "flex-wrap"
-        }`}
+          }`}
         onWheel={handleWheelScroll}
         onMouseDown={handleDragStart}
         onMouseMove={handleDragMove}
@@ -274,11 +273,10 @@ export default function FiltersPanel({
               onClick={() =>
                 setOpenFilter((prev) => (prev === key ? null : key))
               }
-              className={`flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 font-nunito transition-colors ${
-                isOpen
+              className={`flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 font-nunito transition-colors ${isOpen
                   ? "border-umami-orange bg-[#fff8ef] text-umami-dark-gray"
                   : "border-umami-dark-gray text-umami-dark-gray"
-              }`}
+                }`}
             >
               <span className="text-sm font-bold">{fieldLabels[key]}</span>
               {selectedCount > 0 && (
@@ -333,11 +331,10 @@ export default function FiltersPanel({
                   }
                   setSelected(openFilter, [...activeSelected, option.value]);
                 }}
-                className={`h-9 rounded-full border px-4 font-nunito text-sm font-bold transition-colors ${
-                  isSelected
+                className={`h-9 rounded-full border px-4 font-nunito text-sm font-bold transition-colors ${isSelected
                     ? "border-umami-orange bg-[#fff8ef] text-umami-orange"
                     : "border-umami-dark-gray text-umami-dark-gray"
-                }`}
+                  }`}
               >
                 {option.label}
               </button>

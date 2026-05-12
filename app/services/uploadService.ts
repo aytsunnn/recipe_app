@@ -1,4 +1,6 @@
 import { apiClient } from "./api";
+import { normalizeImageUrl } from "../utils/imageUrl";
+
 
 interface UploadResponse {
   fileName?: string;
@@ -10,33 +12,12 @@ interface UploadResponse {
 }
 
 class UploadService {
-  private readonly storageBaseUrl =
-    process.env.NEXT_PUBLIC_STORAGE_URL || "/storage";
-
-  private toPublicUrl(value: string): string {
-    const normalized = value.trim();
-    if (!normalized) return normalized;
-
-    const withPublicHost = normalized
-      .replace("http://127.0.0.1:9000", this.storageBaseUrl)
-      .replace("http://localhost:9000", this.storageBaseUrl)
-      .replace("http://127.0.0.1:9001", this.storageBaseUrl)
-      .replace("http://localhost:9001", this.storageBaseUrl);
-
-    if (withPublicHost.startsWith("http://") || withPublicHost.startsWith("https://")) {
-      return withPublicHost;
-    }
-
-    const base = this.storageBaseUrl.replace(/\/+$/, "");
-    const path = withPublicHost.replace(/^\/+/, "");
-    return `${base}/${path}`;
-  }
-
   async uploadImage(file: File, folder: "recipes" | "steps" | "avatars"): Promise<string> {
+
     const formData = new FormData();
     formData.append("image", file);
     formData.append("folder", folder);
-
+ 
     const response = await apiClient.postForm<UploadResponse>("/upload", formData);
     const rawValue =
       response?.url ||
@@ -45,13 +26,14 @@ class UploadService {
       response?.path ||
       response?.fileName ||
       response?.file_name;
-
+ 
     if (!rawValue) {
       throw new Error("Сервер не вернул путь к загруженному изображению");
     }
-
-    return this.toPublicUrl(rawValue);
+ 
+    return normalizeImageUrl(rawValue, "");
   }
 }
+
 
 export const uploadService = new UploadService();

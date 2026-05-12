@@ -1,6 +1,6 @@
 const nextConfig = {
-  output: 'standalone',
-  allowedDevOrigins: ['188.233.238.70'],
+  // output: 'standalone', // Disabled to simplify deployment for now
+  allowedDevOrigins: ['umami-recipes.ru'],
   async rewrites() {
     return [
       {
@@ -14,6 +14,7 @@ const nextConfig = {
     ];
   },
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -25,33 +26,33 @@ const nextConfig = {
       },
       {
         protocol: 'http',
-        hostname: '188.233.238.70',
+        hostname: 'umami-recipes.ru',
       },
       {
         protocol: 'https',
-        hostname: '188.233.238.70',
+        hostname: 'umami-recipes.ru',
       },
       {
         protocol: 'http',
-        hostname: '188.233.238.70',
+        hostname: 'umami-recipes.ru',
         port: '9001',
         pathname: '/**',
       },
       {
         protocol: 'http',
-        hostname: '188.233.238.70',
+        hostname: 'umami-recipes.ru',
         port: '9000',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: '188.233.238.70',
+        hostname: 'umami-recipes.ru',
         port: '9001',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: '188.233.238.70',
+        hostname: 'umami-recipes.ru',
         port: '9000',
         pathname: '/**',
       },
@@ -77,6 +78,7 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
 };
+
 
 module.exports = nextConfig;
 

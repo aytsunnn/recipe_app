@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -166,6 +166,7 @@ export default function ProfilePage() {
   const [recipeForm, setRecipeForm] = useState<RecipeFormData>(emptyRecipeForm);
   const [recipeActionLoading, setRecipeActionLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [recipeFilter, setRecipeFilter] = useState<'all' | 'public' | 'private'>('all');
   const [followModalType, setFollowModalType] = useState<
     "following" | "followers" | null
   >(null);
@@ -182,8 +183,16 @@ export default function ProfilePage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
+  const filteredRecipes = useMemo(() => {
+
+    if (recipeFilter === 'public') return recipes.filter(r => !r.is_private);
+    if (recipeFilter === 'private') return recipes.filter(r => r.is_private);
+    return recipes;
+  }, [recipes, recipeFilter]);
+
   const visibleFriends = useMemo(() => friends.slice(0, 6), [friends]);
   const feedColumnRef = useRef<HTMLDivElement | null>(null);
+
   const getSafeImageUrl = (url: string | null) => {
     return normalizeImageUrl(url, "/avatar.jpg");
   };
@@ -205,11 +214,11 @@ export default function ProfilePage() {
   const loadProfile = async (currentUser: User) => {
     const [following, followers, userRecipesFromProfile, userRecipesFromFeed] =
       await Promise.all([
-      followService.getFollowing(currentUser.id),
-      followService.getFollowers(currentUser.id),
-      userService.getRecipes(currentUser.id),
-      recipeService.getAll({ user_id: currentUser.id, limit: 200 }),
-    ]);
+        followService.getFollowing(currentUser.id),
+        followService.getFollowers(currentUser.id),
+        userService.getRecipes(currentUser.id),
+        recipeService.getAll({ user_id: currentUser.id, limit: 200 }),
+      ]);
 
     const followingIds = new Set(following.map((follow) => follow.id));
     const mutualFriends = followers.filter((follower) =>
@@ -452,41 +461,41 @@ export default function ProfilePage() {
       ingredients:
         (fullRecipe.Ingredients || []).length > 0
           ? (fullRecipe.Ingredients || []).map((ingredient) => ({
-              ingredient_id: Number(ingredient.id),
-              ingredient_name: ingredient.name || "",
-              quantity: Number(ingredient.RecipeIngredient?.quantity) || 1,
-              unit_of_measurement:
-                ingredient.Unit?.short_name ||
-                ingredient.Unit?.name ||
-                ingredient.unit_of_measurement ||
-                "",
-              note: ingredient.RecipeIngredient?.note || "",
-            }))
+            ingredient_id: Number(ingredient.id),
+            ingredient_name: ingredient.name || "",
+            quantity: Number(ingredient.RecipeIngredient?.quantity) || 1,
+            unit_of_measurement:
+              ingredient.Unit?.short_name ||
+              ingredient.Unit?.name ||
+              ingredient.unit_of_measurement ||
+              "",
+            note: ingredient.RecipeIngredient?.note || "",
+          }))
           : [
-              {
-                ingredient_id: null,
-                ingredient_name: "",
-                quantity: 1,
-                unit_of_measurement: "",
-                note: "",
-              },
-            ],
+            {
+              ingredient_id: null,
+              ingredient_name: "",
+              quantity: 1,
+              unit_of_measurement: "",
+              note: "",
+            },
+          ],
       steps:
         sortedSteps.length > 0
           ? sortedSteps.map((step) => ({
-              description: step.description || "",
-              image_url: step.image_url || "",
-              image_file: null,
-              image_preview: step.image_url || "",
-            }))
+            description: step.description || "",
+            image_url: step.image_url || "",
+            image_file: null,
+            image_preview: step.image_url || "",
+          }))
           : [
-              {
-                description: "",
-                image_url: "",
-                image_file: null,
-                image_preview: "",
-              },
-            ],
+            {
+              description: "",
+              image_url: "",
+              image_file: null,
+              image_preview: "",
+            },
+          ],
     });
     setIsRecipeEditorOpen(true);
   };
@@ -558,8 +567,8 @@ export default function ProfilePage() {
     const ingredientId = ingredientIdValue ? Number(ingredientIdValue) : null;
     const selected = ingredientId
       ? ingredientsCatalog.find(
-          (ingredient) => Number(ingredient.id) === ingredientId
-        )
+        (ingredient) => Number(ingredient.id) === ingredientId
+      )
       : null;
 
     setIngredient(index, {
@@ -633,15 +642,15 @@ export default function ProfilePage() {
         carbohydrates: Number(recipeForm.carbohydrates) || 0,
         is_private: recipeForm.is_private,
         ...(Number.isFinite(Number(recipeForm.kitchen_id)) &&
-        recipeForm.kitchen_id
+          recipeForm.kitchen_id
           ? { kitchen_id: Number(recipeForm.kitchen_id) }
           : {}),
         ...(Number.isFinite(Number(recipeForm.celebration_id)) &&
-        recipeForm.celebration_id
+          recipeForm.celebration_id
           ? { celebration_id: Number(recipeForm.celebration_id) }
           : {}),
         ...(Number.isFinite(Number(recipeForm.cooking_id)) &&
-        recipeForm.cooking_id
+          recipeForm.cooking_id
           ? { cooking_id: Number(recipeForm.cooking_id) }
           : {}),
         ...(recipeForm.categories.length > 0
@@ -701,10 +710,10 @@ export default function ProfilePage() {
       setUser((prev) =>
         prev
           ? {
-              ...prev,
-              ...updatedUser,
-              avatar_url: updatedUser.avatar_url ?? avatarUrl,
-            }
+            ...prev,
+            ...updatedUser,
+            avatar_url: updatedUser.avatar_url ?? avatarUrl,
+          }
           : prev
       );
       authService.dispatchAuthChange();
@@ -725,10 +734,10 @@ export default function ProfilePage() {
       setUser((prev) =>
         prev
           ? {
-              ...prev,
-              ...updatedUser,
-              avatar_url: null,
-            }
+            ...prev,
+            ...updatedUser,
+            avatar_url: null,
+          }
           : prev
       );
       authService.dispatchAuthChange();
@@ -758,9 +767,8 @@ export default function ProfilePage() {
             <Link
               key={item.label}
               href={item.href}
-              className={`flex h-[30px] items-center gap-2.5 rounded-[7px] px-[5px] font-nunito text-xs font-bold text-umami-dark-gray transition-colors ${
-                item.active ? "bg-[#f1ebdb]" : "hover:bg-[#f1ebdb]/70"
-              }`}
+              className={`flex h-[30px] items-center gap-2.5 rounded-[7px] px-[5px] font-nunito text-xs font-bold text-umami-dark-gray transition-colors ${item.active ? "bg-[#f1ebdb]" : "hover:bg-[#f1ebdb]/70"
+                }`}
             >
               <Image width={20} height={20} src={item.icon} alt="" />
               <span>{item.label}</span>
@@ -990,8 +998,8 @@ export default function ProfilePage() {
                         {isEditProfileLoading
                           ? "Сохраняем..."
                           : isEditVerificationStep
-                          ? "Подтвердить и сохранить"
-                          : "Сохранить"}
+                            ? "Подтвердить и сохранить"
+                            : "Сохранить"}
                       </button>
                       <button
                         type="button"
@@ -1008,42 +1016,82 @@ export default function ProfilePage() {
                   </div>
                 ) : recipes.length > 0 ? (
                   <div ref={feedColumnRef} className="flex flex-col gap-2.5">
-                    {recipes.map((recipe) => (
-                      <div key={recipe.id} className="relative">
-                        {recipe.is_private && (
-                          <span className="absolute left-3 top-3 z-10 rounded-full bg-[#333]/90 px-3 py-1 font-nunito text-xs font-bold text-white">
-                            Приватный
-                          </span>
-                        )}
-                        <FeedCard
-                          recipe={recipe}
-                          currentUserId={user.id}
-                          isFollowing={false}
-                          showAuthorHeader={false}
-                          detailsQuery="from=profile"
-                          footerRightSlot={
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => void openEditRecipeEditor(recipe)}
-                                className="rounded-full bg-white px-3 py-1 font-nunito text-xs font-bold text-umami-dark-gray border border-umami-light-gray/70"
-                              >
-                                Редактировать
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteRecipe(recipe.id)}
-                                className="rounded-full bg-red-500 px-3 py-1 font-nunito text-xs font-bold text-white"
-                              >
-                                Удалить
-                              </button>
-                            </>
-                          }
-                        />
+                    {/* Фильтры рецептов */}
+                    <div className="flex gap-2.5 mb-2.5">
+                      <button
+                        onClick={() => setRecipeFilter('all')}
+                        className={`px-4 py-1.5 rounded-full font-nunito text-xs font-bold transition-colors ${recipeFilter === 'all'
+                            ? "bg-umami-green text-white"
+                            : "bg-white border border-[#eaeaea] text-umami-gray hover:bg-gray-50"
+                          }`}
+                      >
+                        Все ({recipes.length})
+                      </button>
+                      <button
+                        onClick={() => setRecipeFilter('public')}
+                        className={`px-4 py-1.5 rounded-full font-nunito text-xs font-bold transition-colors ${recipeFilter === 'public'
+                            ? "bg-umami-green text-white"
+                            : "bg-white border border-[#eaeaea] text-umami-gray hover:bg-gray-50"
+                          }`}
+                      >
+                        Публичные ({recipes.filter(r => !r.is_private).length})
+                      </button>
+                      <button
+                        onClick={() => setRecipeFilter('private')}
+                        className={`px-4 py-1.5 rounded-full font-nunito text-xs font-bold transition-colors ${recipeFilter === 'private'
+                            ? "bg-umami-green text-white"
+                            : "bg-white border border-[#eaeaea] text-umami-gray hover:bg-gray-50"
+                          }`}
+                      >
+                        Приватные ({recipes.filter(r => r.is_private).length})
+                      </button>
+                    </div>
+
+                    {filteredRecipes.length > 0 ? (
+                      filteredRecipes.map((recipe) => (
+                        <div key={recipe.id} className="relative">
+                          {recipe.is_private && (
+                            <span className="absolute left-3 top-3 z-10 rounded-full bg-[#333]/90 px-3 py-1 font-nunito text-xs font-bold text-white">
+                              Приватный
+                            </span>
+                          )}
+                          <FeedCard
+                            recipe={recipe}
+                            currentUserId={user.id}
+                            isFollowing={false}
+                            showAuthorHeader={false}
+                            detailsQuery="from=profile"
+                            footerRightSlot={
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => void openEditRecipeEditor(recipe)}
+                                  className="rounded-full bg-white px-3 py-1 font-nunito text-xs font-bold text-umami-dark-gray border border-umami-light-gray/70"
+                                >
+                                  Редактировать
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteRecipe(recipe.id)}
+                                  className="rounded-full bg-red-500 px-3 py-1 font-nunito text-xs font-bold text-white"
+                                >
+                                  Удалить
+                                </button>
+                              </>
+                            }
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-[15px] border border-[#eaeaea] bg-white p-8 text-center">
+                        <p className="font-nunito text-base font-bold text-umami-gray">
+                          Нет рецептов в этой категории
+                        </p>
                       </div>
-                    ))}
+                    )}
                     <ScrollToTopButton anchorRef={feedColumnRef} />
                   </div>
+
                 ) : (
                   <div className="rounded-[15px] border border-[#eaeaea] bg-white p-8 text-center">
                     <p className="font-nunito text-lg font-bold text-umami-gray">
@@ -1388,16 +1436,15 @@ export default function ProfilePage() {
                               ...prev,
                               categories: selected
                                 ? prev.categories.filter(
-                                    (id) => id !== Number(item.id)
-                                  )
+                                  (id) => id !== Number(item.id)
+                                )
                                 : [...prev.categories, Number(item.id)],
                             }))
                           }
-                          className={`rounded-full px-3 py-1 text-sm font-nunito ${
-                            selected
+                          className={`rounded-full px-3 py-1 text-sm font-nunito ${selected
                               ? "bg-umami-orange text-white"
                               : "bg-gray-100 text-umami-gray"
-                          }`}
+                            }`}
                         >
                           {item.name}
                         </button>
@@ -1588,11 +1635,10 @@ export default function ProfilePage() {
                     onClick={() =>
                       setRecipeForm({ ...recipeForm, is_private: false })
                     }
-                    className={`rounded-full px-4 py-1.5 font-nunito text-sm ${
-                      !recipeForm.is_private
+                    className={`rounded-full px-4 py-1.5 font-nunito text-sm ${!recipeForm.is_private
                         ? "bg-umami-green text-white"
                         : "bg-gray-100 text-umami-gray"
-                    }`}
+                      }`}
                   >
                     Публичный
                   </button>
@@ -1601,11 +1647,10 @@ export default function ProfilePage() {
                     onClick={() =>
                       setRecipeForm({ ...recipeForm, is_private: true })
                     }
-                    className={`rounded-full px-4 py-1.5 font-nunito text-sm ${
-                      recipeForm.is_private
+                    className={`rounded-full px-4 py-1.5 font-nunito text-sm ${recipeForm.is_private
                         ? "bg-umami-orange text-white"
                         : "bg-gray-100 text-umami-gray"
-                    }`}
+                      }`}
                   >
                     Приватный
                   </button>

@@ -117,7 +117,7 @@ class MetaService {
       this.getIngredients(),
       this.getUnits(),
     ]);
-    
+
     return {
       kitchens,
       categories,

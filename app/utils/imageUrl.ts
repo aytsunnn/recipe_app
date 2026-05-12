@@ -11,11 +11,12 @@ export function normalizeImageUrl(
     return fallback;
   }
 
-  const withPublicHost = trimmed
-    .replace("http://127.0.0.1:9000", STORAGE_BASE_URL)
-    .replace("http://localhost:9000", STORAGE_BASE_URL)
-    .replace("http://127.0.0.1:9001", STORAGE_BASE_URL)
-    .replace("http://localhost:9001", STORAGE_BASE_URL);
+  // Replace any http(s)://hostname:9000/ with STORAGE_BASE_URL/
+  // Handle 127.0.0.1, localhost, 10.8.0.40, 188.233.238.70, umami-recipes.ru
+  const withPublicHost = trimmed.replace(
+    /^https?:\/\/[^/]+:9000\//i,
+    STORAGE_BASE_URL + "/"
+  );
 
   if (
     withPublicHost.startsWith("http://") ||
@@ -25,25 +26,36 @@ export function normalizeImageUrl(
     return withPublicHost;
   }
 
-  if (withPublicHost.startsWith("/vkusno/")) {
-    return `${STORAGE_BASE_URL}${withPublicHost}`;
+  // Prevent double /storage
+  let cleanPath = withPublicHost;
+  if (cleanPath.startsWith(STORAGE_BASE_URL + "/")) {
+    cleanPath = cleanPath.substring(STORAGE_BASE_URL.length);
   }
 
-  if (withPublicHost.startsWith("vkusno/")) {
-    return `${STORAGE_BASE_URL}/${withPublicHost}`;
+  // At this point cleanPath might be /vkusno/... or vkusno/... or avatars/...
+  if (cleanPath.startsWith("/vkusno/")) {
+    return `${STORAGE_BASE_URL}${cleanPath}`;
+  }
+
+  if (cleanPath.startsWith("vkusno/")) {
+    return `${STORAGE_BASE_URL}/${cleanPath}`;
   }
 
   if (
-    /^(avatars|recipes|steps|categories|kitchens|celebrations)\//.test(
-      withPublicHost
+    /^\/?(avatars|recipes|steps|categories|kitchens|celebrations)\//.test(
+      cleanPath
     )
   ) {
-    return `${STORAGE_BASE_URL}/vkusno/${withPublicHost}`;
+    // Ensure leading slash for the regex match if needed, but here we just prepend
+    const pathWithoutLeadingSlash = cleanPath.startsWith("/") ? cleanPath.substring(1) : cleanPath;
+    return `${STORAGE_BASE_URL}/vkusno/${pathWithoutLeadingSlash}`;
   }
 
   if (withPublicHost.startsWith("/")) {
     return withPublicHost;
   }
+
+
 
   return fallback;
 }
