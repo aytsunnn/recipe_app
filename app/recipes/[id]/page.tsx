@@ -16,7 +16,6 @@ import RightPart from "../../components/MainScreen/NewsRightPart";
 
 const RECIPE_LIKE_OVERRIDES_KEY = "recipe_like_overrides";
 const RECIPE_COMMENTS_OVERRIDES_KEY = "recipe_comments_overrides";
-const COMMENT_LIKE_OVERRIDES_KEY = "comment_like_overrides";
 
 function normalizeCategoryName(category: unknown): string | null {
   if (typeof category === "string") return category;
@@ -195,46 +194,8 @@ export default function RecipeDetailsPage() {
     try {
       setCommentsLoading(true);
       const data = await commentService.getByRecipe(recipeId);
-
-      const withOverrides = (() => {
-        if (typeof window === "undefined") return data;
-        try {
-          const raw = localStorage.getItem(COMMENT_LIKE_OVERRIDES_KEY);
-          if (!raw) return data;
-          const map = JSON.parse(raw) as Record<
-            string,
-            { isLiked: boolean; likesCount: number }
-          >;
-
-          const patch = (item: Comment): Comment => {
-            const current = item as Comment & { Replies?: Comment[] };
-            const override = map[String(current.id)];
-            const next: Comment & { Replies?: Comment[] } = { ...current };
-
-            if (override) {
-              next.is_liked = override.isLiked;
-              next.likes_count = Math.max(0, override.likesCount);
-              next._count = {
-                ...(next._count || {}),
-                Likes: Math.max(0, override.likesCount),
-              };
-            }
-
-            if (Array.isArray(current.Replies)) {
-              next.Replies = current.Replies.map((reply) => patch(reply));
-            }
-
-            return next;
-          };
-
-          return data.map((comment) => patch(comment));
-        } catch {
-          return data;
-        }
-      })();
-
-      setComments(withOverrides);
-      setCommentsCountState(withOverrides.length);
+      setComments(data);
+      setCommentsCountState(data.length);
     } catch (loadError) {
       console.error("Ошибка загрузки комментариев:", loadError);
       alert("Не удалось загрузить комментарии");
@@ -403,18 +364,63 @@ export default function RecipeDetailsPage() {
   };
 
   const getCommentLikesCount = (comment: Comment): number => {
-    if (typeof comment.likes_count === "number") return comment.likes_count;
-    if (typeof comment._count?.Likes === "number") return comment._count.Likes;
-    if (Array.isArray(comment.Likes)) return comment.Likes.length;
+    const commentAny = comment as unknown as Record<string, unknown>;
+    const toNumber = (value: unknown): number | null => {
+      if (typeof value === "number" && Number.isFinite(value)) return value;
+      if (typeof value === "string") {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) return parsed;
+      }
+      return null;
+    };
+
+    const direct =
+      toNumber(comment.likes_count) ??
+      toNumber(commentAny.likes_count) ??
+      toNumber(commentAny.likesCount) ??
+      toNumber(commentAny.likeCount) ??
+      toNumber(commentAny.total_likes) ??
+      toNumber(commentAny.totalLikes) ??
+      toNumber(commentAny.count_likes) ??
+      toNumber(commentAny.countLikes);
+    if (direct !== null) return Math.max(0, direct);
+
+    const nested =
+      commentAny._count && typeof commentAny._count === "object"
+        ? (commentAny._count as Record<string, unknown>)
+        : null;
+    const nestedCount =
+      toNumber(comment._count?.Likes) ??
+      toNumber(nested?.Likes) ??
+      toNumber(nested?.likes) ??
+      toNumber(nested?.likes_count) ??
+      toNumber(nested?.likesCount) ??
+      toNumber(nested?.total_likes) ??
+      toNumber(nested?.totalLikes);
+    if (nestedCount !== null) return Math.max(0, nestedCount);
+
     return 0;
   };
 
   const isCommentLikedByCurrentUser = (comment: Comment): boolean => {
     if (typeof comment.is_liked === "boolean") return comment.is_liked;
+    const commentAny = comment as unknown as Record<string, unknown>;
+    if (typeof commentAny.isLiked === "boolean") return commentAny.isLiked;
+    if (typeof commentAny.liked_by_me === "boolean") return commentAny.liked_by_me;
     if (!currentUserId) return false;
-    return Array.isArray(comment.Likes)
-      ? comment.Likes.some((like) => String(like.user_id) === String(currentUserId))
-      : false;
+
+    if (Array.isArray(comment.Likes)) {
+      return comment.Likes.some((like) => String(like.user_id) === String(currentUserId));
+    }
+
+    if (Array.isArray(commentAny.likes)) {
+      return (commentAny.likes as Array<Record<string, unknown>>).some((like) => {
+        const likeUserId = like.user_id ?? like.userId ?? like.author_id;
+        return String(likeUserId) === String(currentUserId);
+      });
+    }
+
+    return false;
   };
 
   const patchCommentLikeState = (
@@ -463,30 +469,9 @@ export default function RecipeDetailsPage() {
       setCommentLikeBusy((prev) => ({ ...prev, [commentId]: true }));
       patchCommentLikeState(commentId, nextLiked, nextCount);
       await commentService.toggleLike(commentId);
-      if (typeof window !== "undefined") {
-        const raw = localStorage.getItem(COMMENT_LIKE_OVERRIDES_KEY);
-        const map = raw
-          ? (JSON.parse(raw) as Record<
-              string,
-              { isLiked: boolean; likesCount: number }
-            >)
-          : {};
-        map[commentId] = { isLiked: nextLiked, likesCount: nextCount };
-        localStorage.setItem(COMMENT_LIKE_OVERRIDES_KEY, JSON.stringify(map));
-      }
+      await loadComments();
     } catch (error) {
       patchCommentLikeState(commentId, prevLiked, prevCount);
-      if (typeof window !== "undefined") {
-        const raw = localStorage.getItem(COMMENT_LIKE_OVERRIDES_KEY);
-        const map = raw
-          ? (JSON.parse(raw) as Record<
-              string,
-              { isLiked: boolean; likesCount: number }
-            >)
-          : {};
-        map[commentId] = { isLiked: prevLiked, likesCount: prevCount };
-        localStorage.setItem(COMMENT_LIKE_OVERRIDES_KEY, JSON.stringify(map));
-      }
       console.error("Ошибка лайка комментария:", error);
       alert("Не удалось поставить лайк на комментарий");
     } finally {
