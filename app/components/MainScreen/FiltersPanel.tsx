@@ -244,7 +244,7 @@ export default function FiltersPanel({
       <div
         ref={chipsRowRef}
         className={`flex gap-2 ${!openFilter
-            ? "flex-nowrap overflow-x-auto pb-1 cursor-grab active:cursor-grabbing select-none"
+            ? "no-scrollbar flex-nowrap overflow-x-auto pb-1 cursor-grab active:cursor-grabbing select-none"
             : "flex-wrap"
           }`}
         onWheel={handleWheelScroll}

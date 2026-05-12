@@ -1,54 +1,84 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 @theme {
-  /* Кастомные цвета */
-  --color-umami-green: #7B906F;
+  --color-umami-green: #7b906f;
   --color-umami-dark-gray: #333333;
   --color-umami-gray: #666666;
   --color-umami-light-gray: #999999;
-  --color-umami-orange: #EE9B51;
-  --color-umami-light-yellow: #FCFBF3;
-  
-  /* Шрифты */
+  --color-umami-orange: #ee9b51;
+  --color-umami-light-yellow: #fcfbf3;
+
   --font-nunito: var(--font-nunito), sans-serif;
   --font-inter: var(--font-inter), sans-serif;
 }
 
 @layer base {
   html {
-    scrollbar-gutter: stable;
+    scrollbar-gutter: stable both-edges;
     overflow-y: scroll;
-    scrollbar-width: none !important; /* Firefox */
-    -ms-overflow-style: none !important; /* IE и Edge */
-  }
-
-  html::-webkit-scrollbar {
-    display: none !important; /* Chrome, Safari и Opera */
-    width: 0 !important;
-    height: 0 !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
   body {
     font-family: Arial, Helvetica, sans-serif;
-    background-color: #FCFBF3;
+    background-color: #fcfbf3;
     overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
-  /* Скрываем скроллбар для всех элементов */
-  *::-webkit-scrollbar {
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-  }
-
-  * {
-    scrollbar-width: none !important; /* Firefox */
-    -ms-overflow-style: none !important; /* IE и Edge */
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
 }
 
-@layer components{
-  .custom-button{
+@layer components {
+  .custom-button {
     @apply rounded-full px-5 py-1.5 text-sm text-white cursor-pointer;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .modal-thin-scroll {
+    scrollbar-gutter: stable both-edges;
+    scrollbar-width: thin !important;
+    scrollbar-color: #b8b8b8 #f3f3f3 !important;
+  }
+
+  .modal-thin-scroll::-webkit-scrollbar {
+    display: block !important;
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  .modal-thin-scroll::-webkit-scrollbar-track {
+    background: #f3f3f3 !important;
+    border-radius: 9999px !important;
+  }
+
+  .modal-thin-scroll::-webkit-scrollbar-thumb {
+    background: #b8b8b8 !important;
+    border-radius: 9999px !important;
+    border: 2px solid #f3f3f3 !important;
+    min-height: 28px !important;
+  }
+
+  .modal-thin-scroll:hover::-webkit-scrollbar-thumb {
+    background: #969696 !important;
   }
 }

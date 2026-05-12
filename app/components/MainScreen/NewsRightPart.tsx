@@ -249,6 +249,31 @@ export default function RightPart() {
   }, []);
 
   useEffect(() => {
+    if (typeof document === "undefined") return;
+    const isAnyModalOpen = isChatOpen || Boolean(openedDraftId);
+    if (!isAnyModalOpen) return;
+
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    const prevBodyPaddingRight = body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - html.clientWidth;
+
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
+      body.style.paddingRight = prevBodyPaddingRight;
+    };
+  }, [isChatOpen, openedDraftId]);
+
+  useEffect(() => {
     const loadPopularAuthors = async () => {
       try {
         setIsLoadingAuthors(true);
@@ -510,7 +535,7 @@ export default function RightPart() {
       {isChatOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 py-10">
           <div className="grid h-[80vh] w-full max-w-[1080px] grid-cols-[minmax(0,1fr)_320px] gap-5">
-            <div className="flex h-full flex-col rounded-[20px] border border-[#eaeaea] bg-white p-4">
+            <div className="flex h-full flex-col overflow-hidden rounded-[20px] border border-[#eaeaea] bg-white p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="font-nunito text-xl font-bold text-umami-dark-gray">
                   Чат с микро-шефом
@@ -524,7 +549,7 @@ export default function RightPart() {
                 </button>
               </div>
 
-              <div className="flex-1 space-y-2 overflow-y-auto rounded-2xl border border-[#efefef] bg-[#faf9f6] p-3">
+              <div className="modal-thin-scroll flex-1 space-y-2 overflow-y-auto rounded-2xl border border-[#efefef] bg-[#faf9f6] p-3">
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -641,7 +666,7 @@ export default function RightPart() {
 
       {openedDraftId && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
-          <div className="max-h-[85vh] w-full max-w-[760px] overflow-y-auto rounded-[20px] bg-white p-5">
+          <div className="modal-thin-scroll max-h-[85vh] w-full max-w-[760px] overflow-y-auto rounded-[20px] bg-white p-5">
             {(() => {
               const openedMessage = messages.find((item) => item.id === openedDraftId);
               const draft = openedMessage?.recipeDraft;
