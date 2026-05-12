@@ -729,6 +729,15 @@ export default function ProfilePage() {
 
       const title = toStringValue(raw.title);
       const description = toStringValue(raw.description);
+      const parsedSiteLabel = (() => {
+        try {
+          const host = new URL(sourceUrl).hostname.replace(/^www\./i, "").trim();
+          return host || "сайта";
+        } catch {
+          return "сайта";
+        }
+      })();
+      const descriptionFromSite = `Рецепт с сайта ${parsedSiteLabel}`;
       const difficultyRaw =
         toStringValue(raw.difficulty) ||
         toStringValue(raw.level) ||
@@ -737,7 +746,7 @@ export default function ProfilePage() {
       const nextWarnings: string[] = [];
 
       if (!title) nextWarnings.push("Название не найдено");
-      if (!description) nextWarnings.push("Описание не найдено");
+      if (!description) nextWarnings.push("Описание из статьи не найдено, подставлено имя сайта");
       if (parsedIngredients.length === 0) nextWarnings.push("Ингредиенты не найдены");
       if (parsedSteps.length === 0) nextWarnings.push("Шаги не найдены");
       const parsedImageUrl =
@@ -752,7 +761,7 @@ export default function ProfilePage() {
       setRecipeForm((prev) => ({
         ...prev,
         title: title || prev.title,
-        description: description || prev.description,
+        description: descriptionFromSite,
         difficulty,
         image_url: parsedImageUrl || prev.image_url,
         image_preview: parsedImageUrl || prev.image_preview,

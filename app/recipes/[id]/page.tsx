@@ -16,6 +16,7 @@ import RightPart from "../../components/MainScreen/NewsRightPart";
 
 const RECIPE_LIKE_OVERRIDES_KEY = "recipe_like_overrides";
 const RECIPE_COMMENTS_OVERRIDES_KEY = "recipe_comments_overrides";
+const COMMENT_LIKE_OVERRIDES_KEY = "comment_like_overrides";
 
 function normalizeCategoryName(category: unknown): string | null {
   if (typeof category === "string") return category;
@@ -194,8 +195,46 @@ export default function RecipeDetailsPage() {
     try {
       setCommentsLoading(true);
       const data = await commentService.getByRecipe(recipeId);
-      setComments(data);
-      setCommentsCountState(data.length);
+
+      const withOverrides = (() => {
+        if (typeof window === "undefined") return data;
+        try {
+          const raw = localStorage.getItem(COMMENT_LIKE_OVERRIDES_KEY);
+          if (!raw) return data;
+          const map = JSON.parse(raw) as Record<
+            string,
+            { isLiked: boolean; likesCount: number }
+          >;
+
+          const patch = (item: Comment): Comment => {
+            const current = item as Comment & { Replies?: Comment[] };
+            const override = map[String(current.id)];
+            const next: Comment & { Replies?: Comment[] } = { ...current };
+
+            if (override) {
+              next.is_liked = override.isLiked;
+              next.likes_count = Math.max(0, override.likesCount);
+              next._count = {
+                ...(next._count || {}),
+                Likes: Math.max(0, override.likesCount),
+              };
+            }
+
+            if (Array.isArray(current.Replies)) {
+              next.Replies = current.Replies.map((reply) => patch(reply));
+            }
+
+            return next;
+          };
+
+          return data.map((comment) => patch(comment));
+        } catch {
+          return data;
+        }
+      })();
+
+      setComments(withOverrides);
+      setCommentsCountState(withOverrides.length);
     } catch (loadError) {
       console.error("Ошибка загрузки комментариев:", loadError);
       alert("Не удалось загрузить комментарии");
@@ -424,8 +463,30 @@ export default function RecipeDetailsPage() {
       setCommentLikeBusy((prev) => ({ ...prev, [commentId]: true }));
       patchCommentLikeState(commentId, nextLiked, nextCount);
       await commentService.toggleLike(commentId);
+      if (typeof window !== "undefined") {
+        const raw = localStorage.getItem(COMMENT_LIKE_OVERRIDES_KEY);
+        const map = raw
+          ? (JSON.parse(raw) as Record<
+              string,
+              { isLiked: boolean; likesCount: number }
+            >)
+          : {};
+        map[commentId] = { isLiked: nextLiked, likesCount: nextCount };
+        localStorage.setItem(COMMENT_LIKE_OVERRIDES_KEY, JSON.stringify(map));
+      }
     } catch (error) {
       patchCommentLikeState(commentId, prevLiked, prevCount);
+      if (typeof window !== "undefined") {
+        const raw = localStorage.getItem(COMMENT_LIKE_OVERRIDES_KEY);
+        const map = raw
+          ? (JSON.parse(raw) as Record<
+              string,
+              { isLiked: boolean; likesCount: number }
+            >)
+          : {};
+        map[commentId] = { isLiked: prevLiked, likesCount: prevCount };
+        localStorage.setItem(COMMENT_LIKE_OVERRIDES_KEY, JSON.stringify(map));
+      }
       console.error("Ошибка лайка комментария:", error);
       alert("Не удалось поставить лайк на комментарий");
     } finally {
