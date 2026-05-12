@@ -633,7 +633,7 @@ export default function RecipeDetailsPage() {
               <Image width={22} height={22} src="/ArrowLeft.svg" alt="back" />
               Назад
             </Link>
-            <h1 className="font-nunito text-2xl font-bold leading-none text-umami-orange">
+            <h1 className="min-w-0 flex-1 truncate font-nunito text-2xl font-bold leading-none text-umami-orange">
               {recipe.title}
             </h1>
             <button
