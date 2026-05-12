@@ -19,7 +19,9 @@ interface User {
 
 export default function Header() {
   return (
-    <Suspense fallback={<div className="h-20 w-full animate-pulse bg-gray-100" />}>
+    <Suspense
+      fallback={<div className="h-20 w-full animate-pulse bg-gray-100" />}
+    >
       <HeaderContent />
     </Suspense>
   );
@@ -32,7 +34,9 @@ function HeaderContent() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(searchParams?.get("search") || "");
+  const [searchQuery, setSearchQuery] = useState(
+    searchParams?.get("search") || ""
+  );
 
   useEffect(() => {
     setSearchQuery(searchParams?.get("search") || "");
@@ -52,9 +56,9 @@ function HeaderContent() {
     loadUser();
 
     // Слушаем изменения авторизации
-    window.addEventListener('auth-change', loadUser);
+    window.addEventListener("auth-change", loadUser);
     return () => {
-      window.removeEventListener('auth-change', loadUser);
+      window.removeEventListener("auth-change", loadUser);
     };
   }, []);
 
@@ -84,25 +88,25 @@ function HeaderContent() {
     if (e) e.preventDefault();
     const params = new URLSearchParams(searchParams?.toString() || "");
     if (searchQuery.trim()) {
-      params.set('search', searchQuery.trim());
+      params.set("search", searchQuery.trim());
     } else {
-      params.delete('search');
+      params.delete("search");
     }
     router.push(`/?${params.toString()}`, { scroll: false });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSearch();
     }
   };
 
   const handleToggleFilters = () => {
     const params = new URLSearchParams(searchParams?.toString() || "");
-    if (params.get('filters') === 'true') {
-      params.delete('filters');
+    if (params.get("filters") === "true") {
+      params.delete("filters");
     } else {
-      params.set('filters', 'true');
+      params.set("filters", "true");
     }
     router.push(`/?${params.toString()}`, { scroll: false });
   };
@@ -217,7 +221,7 @@ function HeaderContent() {
                 height={36}
                 src={getSafeAvatarUrl(user.avatar_url)}
                 alt="avatar"
-                className="w-10.25 h-10.25 right-0 top-0 border border-white rounded-full"
+                className="w-10.25 h-10.25 right-0 top-0 border border-white rounded-full object-cover"
               />
             </Link>
           </div>
