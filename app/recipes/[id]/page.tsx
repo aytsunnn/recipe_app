@@ -15,6 +15,7 @@ import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
 
 const RECIPE_LIKE_OVERRIDES_KEY = "recipe_like_overrides";
+const RECIPE_COMMENTS_OVERRIDES_KEY = "recipe_comments_overrides";
 
 function normalizeCategoryName(category: unknown): string | null {
   if (typeof category === "string") return category;
@@ -168,13 +169,23 @@ export default function RecipeDetailsPage() {
   const isNutritionGenerated = useMemo(() => {
     if (!recipe) return false;
     const recipeAny = recipe as unknown as Record<string, unknown>;
+    const normalizeFlag = (value: unknown): boolean => {
+      if (typeof value === "boolean") return value;
+      if (typeof value === "number") return value === 1;
+      if (typeof value === "string") {
+        const lowered = value.trim().toLowerCase();
+        return lowered === "true" || lowered === "1" || lowered === "yes";
+      }
+      return false;
+    };
     return Boolean(
-      recipeAny.is_ai_nutrition_generated ??
-        recipeAny.is_ai_pfc ??
-        recipeAny.ai_nutrition_generated ??
-        recipeAny.nutrition_generated ??
-        recipeAny.is_nutrition_generated ??
-        recipeAny.is_generated_nutrition
+      normalizeFlag(recipeAny.is_ai_nutrition_generated) ||
+        normalizeFlag(recipeAny.is_ai_pfc) ||
+        normalizeFlag(recipeAny.ai_nutrition_generated) ||
+        normalizeFlag(recipeAny.nutrition_generated) ||
+        normalizeFlag(recipeAny.is_nutrition_generated) ||
+        normalizeFlag(recipeAny.is_generated_nutrition) ||
+        normalizeFlag(recipeAny.is_generated)
     );
   }, [recipe]);
 
@@ -467,6 +478,21 @@ export default function RecipeDetailsPage() {
       }
 
       await commentService.create(recipeId, payload);
+      const nextCommentsCount = commentsCountState + 1;
+      if (typeof window !== "undefined") {
+        const raw = localStorage.getItem(RECIPE_COMMENTS_OVERRIDES_KEY);
+        const map = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+        map[recipeId] = Math.max(map[recipeId] ?? 0, nextCommentsCount);
+        localStorage.setItem(RECIPE_COMMENTS_OVERRIDES_KEY, JSON.stringify(map));
+      }
+      window.dispatchEvent(
+        new CustomEvent("recipe-comments-updated", {
+          detail: {
+            recipeId,
+            commentsCount: nextCommentsCount,
+          },
+        })
+      );
       setCommentForm({
         content: "",
         rating: null,
@@ -476,7 +502,7 @@ export default function RecipeDetailsPage() {
         taste_spicy: null,
         taste_umami: null,
       });
-      setCommentsCountState((prev) => prev + 1);
+      setCommentsCountState(nextCommentsCount);
       setReplyToCommentId(null);
       await loadComments();
     } catch (submitError) {

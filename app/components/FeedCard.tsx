@@ -40,6 +40,8 @@ interface Recipe {
     Likes: number;
     Comments: number;
   };
+  total_reviews?: number | string | null;
+  comments_count?: number | string | null;
 }
 
 interface FeedCardProps {
@@ -82,7 +84,35 @@ export default function FeedCard({
   const [likesCount, setLikesCount] = useState(
     recipe._count?.Likes ?? recipe.Likes?.length ?? 0
   );
-  const commentsCount = recipe._count?.Comments ?? recipe.Comments?.length ?? 0;
+  const resolveCommentsCount = () => {
+    const fromCount = recipe._count?.Comments;
+    if (typeof fromCount === "number") return fromCount;
+
+    const totalReviews =
+      typeof recipe.total_reviews === "string"
+        ? Number(recipe.total_reviews)
+        : recipe.total_reviews;
+    if (typeof totalReviews === "number" && Number.isFinite(totalReviews)) {
+      return totalReviews;
+    }
+
+    const commentsCountRaw =
+      typeof recipe.comments_count === "string"
+        ? Number(recipe.comments_count)
+        : recipe.comments_count;
+    if (
+      typeof commentsCountRaw === "number" &&
+      Number.isFinite(commentsCountRaw)
+    ) {
+      return commentsCountRaw;
+    }
+
+    return recipe.Comments?.length ?? 0;
+  };
+  const [commentsCountState, setCommentsCountState] = useState(
+    resolveCommentsCount()
+  );
+  const commentsCount = commentsCountState;
 
   // Синхронизируем состояние following с пропсом isFollowing
   useEffect(() => {
@@ -96,6 +126,42 @@ export default function FeedCard({
       : false;
     setIsLiked(liked);
   }, [currentUserId, recipe.Likes]);
+
+  useEffect(() => {
+    const next = resolveCommentsCount();
+    setCommentsCountState(next);
+  }, [recipe._count?.Comments, recipe.total_reviews, recipe.comments_count, recipe.Comments?.length]);
+
+  useEffect(() => {
+    const raw = localStorage.getItem("recipe_comments_overrides");
+    if (!raw) return;
+    try {
+      const map = JSON.parse(raw) as Record<string, number>;
+      const override = map[recipe.id];
+      if (Number.isFinite(override)) {
+        setCommentsCountState((prev) => Math.max(prev, Number(override)));
+      }
+    } catch {
+      // ignore broken localStorage
+    }
+  }, [recipe.id]);
+
+  useEffect(() => {
+    const handleRecipeCommentsUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        recipeId: string;
+        commentsCount: number;
+      }>;
+      if (!customEvent.detail) return;
+      if (customEvent.detail.recipeId !== recipe.id) return;
+      setCommentsCountState(Math.max(0, customEvent.detail.commentsCount));
+    };
+
+    window.addEventListener("recipe-comments-updated", handleRecipeCommentsUpdated);
+    return () => {
+      window.removeEventListener("recipe-comments-updated", handleRecipeCommentsUpdated);
+    };
+  }, [recipe.id]);
 
   useEffect(() => {
     let cancelled = false;

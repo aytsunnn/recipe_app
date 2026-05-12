@@ -25,6 +25,7 @@ type RecipeLikeUpdatedEventDetail = {
 };
 
 const RECIPE_LIKE_OVERRIDES_KEY = 'recipe_like_overrides';
+const RECIPE_COMMENTS_OVERRIDES_KEY = 'recipe_comments_overrides';
 
 const applyLikeUpdateToRecipes = (
   list: Recipe[],
@@ -85,6 +86,33 @@ const applyLikeOverridesFromStorage = (list: Recipe[]): Recipe[] => {
   }
 };
 
+const applyCommentOverridesFromStorage = (list: Recipe[]): Recipe[] => {
+  if (typeof window === 'undefined') return list;
+
+  try {
+    const raw = localStorage.getItem(RECIPE_COMMENTS_OVERRIDES_KEY);
+    if (!raw) return list;
+    const parsed = JSON.parse(raw) as Record<string, number>;
+
+    return list.map((recipe) => {
+      const overrideCount = parsed[recipe.id];
+      if (!Number.isFinite(overrideCount)) return recipe;
+
+      const currentCount = recipe._count?.Comments ?? recipe.Comments?.length ?? 0;
+      const nextCount = Math.max(currentCount, Number(overrideCount));
+      return {
+        ...recipe,
+        _count: {
+          Likes: recipe._count?.Likes ?? recipe.Likes?.length ?? 0,
+          Comments: nextCount,
+        },
+      };
+    });
+  } catch {
+    return list;
+  }
+};
+
 const hasActiveParams = (params: GetRecipesParams) =>
   Object.values(params).some((value) => value !== undefined && value !== null && value !== '');
 
@@ -119,7 +147,11 @@ export function useRecipes(options: UseRecipesOptions = {}) {
       if (shouldUseRecommendations) {
         if (replace && recommendationsCache && recommendationsCache.recipes.length > 0) {
           if (isMounted.current) {
-            setRecipes(applyLikeOverridesFromStorage(recommendationsCache.recipes));
+            setRecipes(
+              applyCommentOverridesFromStorage(
+                applyLikeOverridesFromStorage(recommendationsCache.recipes)
+              )
+            );
             setPage(recommendationsCache.loadedPage);
             setHasMore(recommendationsCache.hasMore);
             setLoading(false);
@@ -146,7 +178,9 @@ export function useRecipes(options: UseRecipesOptions = {}) {
                 const nextChunk = data.filter((item) => !existingIds.has(item.id));
                 return [...prev, ...nextChunk];
               })();
-          return applyLikeOverridesFromStorage(resolvedRecipes);
+          return applyCommentOverridesFromStorage(
+            applyLikeOverridesFromStorage(resolvedRecipes)
+          );
         });
         const nextHasMore = data.length === pageSize;
         setHasMore(nextHasMore);
@@ -242,6 +276,44 @@ export function useRecipes(options: UseRecipesOptions = {}) {
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('recipe-like-updated', handleRecipeLikeUpdated);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleRecipeCommentsUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ recipeId: string; commentsCount: number }>;
+      if (!customEvent.detail) return;
+      const { recipeId, commentsCount } = customEvent.detail;
+
+      const applyCommentsUpdate = (list: Recipe[]) =>
+        list.map((recipe) => {
+          if (recipe.id !== recipeId) return recipe;
+          return {
+            ...recipe,
+            _count: {
+              Likes: recipe._count?.Likes ?? recipe.Likes?.length ?? 0,
+              Comments: Math.max(0, commentsCount),
+            },
+          };
+        });
+
+      setRecipes((prev) => applyCommentsUpdate(prev));
+      if (recommendationsCache) {
+        recommendationsCache = {
+          ...recommendationsCache,
+          recipes: applyCommentsUpdate(recommendationsCache.recipes),
+        };
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('recipe-comments-updated', handleRecipeCommentsUpdated);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('recipe-comments-updated', handleRecipeCommentsUpdated);
       }
     };
   }, []);
