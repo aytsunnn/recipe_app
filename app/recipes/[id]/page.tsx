@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useRecipe } from "../../hooks/useRecipe";
 import { authService } from "../../services/authService";
 import { commentService, Comment } from "../../services/commentService";
@@ -28,6 +28,7 @@ function normalizeCategoryName(category: unknown): string | null {
 
 export default function RecipeDetailsPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const recipeId = params?.id || "";
   const { recipe, loading, error } = useRecipe(recipeId);
@@ -570,6 +571,17 @@ export default function RecipeDetailsPage() {
       : fromQuery === "profile"
       ? "/profile"
       : "/";
+  const handleGoBack = () => {
+    if (
+      typeof window !== "undefined" &&
+      window.history.length > 1 &&
+      document.referrer.startsWith(window.location.origin)
+    ) {
+      router.back();
+      return;
+    }
+    router.push(backHref);
+  };
 
   if (loading) {
     return (
@@ -626,13 +638,14 @@ export default function RecipeDetailsPage() {
       <div className="w-169.5">
         <div className="mx-auto w-full max-w-[980px] rounded-[20px] bg-[#fffadd] p-5">
           <div className="mb-5 flex items-center gap-2.5">
-            <Link
-              href={backHref}
+            <button
+              type="button"
+              onClick={handleGoBack}
               className="inline-flex items-center gap-2.5 rounded-full bg-umami-orange px-2.5 py-1.25 font-nunito text-base text-white"
             >
               <Image width={22} height={22} src="/ArrowLeft.svg" alt="back" />
               Назад
-            </Link>
+            </button>
             <h1 className="min-w-0 flex-1 truncate font-nunito text-2xl font-bold leading-none text-umami-orange">
               {recipe.title}
             </h1>
