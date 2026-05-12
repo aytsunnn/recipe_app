@@ -65,6 +65,7 @@ interface RecipeFormData {
   ingredients: IngredientRow[];
   steps: StepRow[];
   source_url: string;
+  parsed_from_url: boolean;
 }
 
 const DIFFICULTY_TO_API: Record<string, "1" | "2" | "3" | "4" | "5"> = {
@@ -136,6 +137,7 @@ const emptyRecipeForm: RecipeFormData = {
     { description: "", image_url: "", image_file: null, image_preview: "" },
   ],
   source_url: "",
+  parsed_from_url: false,
 };
 
 export default function ProfilePage() {
@@ -503,6 +505,7 @@ export default function ProfilePage() {
             },
           ],
       source_url: "",
+      parsed_from_url: false,
     });
     setParseWarnings([]);
     setIsRecipeEditorOpen(true);
@@ -773,6 +776,8 @@ export default function ProfilePage() {
             : prev.carbohydrates,
         ingredients: parsedIngredients.length > 0 ? parsedIngredients : prev.ingredients,
         steps: parsedSteps.length > 0 ? parsedSteps : prev.steps,
+        parsed_from_url: true,
+        is_private: true,
       }));
     } catch (error) {
       console.error("Ошибка парсинга рецепта:", error);
@@ -780,6 +785,15 @@ export default function ProfilePage() {
     } finally {
       setParseLoading(false);
     }
+  };
+
+  const handleResetParsedRecipe = () => {
+    setParseWarnings([]);
+    setRecipeForm({
+      ...emptyRecipeForm,
+      is_private: false,
+      parsed_from_url: false,
+    });
   };
 
   const handleSaveRecipe = async () => {
@@ -844,7 +858,7 @@ export default function ProfilePage() {
         proteins: Number(recipeForm.proteins) || 0,
         fats: Number(recipeForm.fats) || 0,
         carbohydrates: Number(recipeForm.carbohydrates) || 0,
-        is_private: recipeForm.is_private,
+        is_private: recipeForm.parsed_from_url ? true : recipeForm.is_private,
         ...(Number.isFinite(Number(recipeForm.kitchen_id)) &&
           recipeForm.kitchen_id
           ? { kitchen_id: Number(recipeForm.kitchen_id) }
@@ -1400,6 +1414,15 @@ export default function ProfilePage() {
                     >
                       {parseLoading ? "Парсинг..." : "Заполнить"}
                     </button>
+                    {recipeForm.parsed_from_url ? (
+                      <button
+                        type="button"
+                        onClick={handleResetParsedRecipe}
+                        className="whitespace-nowrap rounded-full bg-umami-gray px-4 py-2 font-nunito text-sm text-white"
+                      >
+                        Сбросить
+                      </button>
+                    ) : null}
                   </div>
                   {parseWarnings.length > 0 ? (
                     <div className="mt-2 rounded-2xl border border-umami-light-gray bg-[#fff8ea] p-3">
@@ -1869,27 +1892,31 @@ export default function ProfilePage() {
                   <span className="font-inter text-sm text-umami-gray">
                     Видимость рецепта:
                   </span>
+                  {!recipeForm.parsed_from_url ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRecipeForm({ ...recipeForm, is_private: false })
+                      }
+                      className={`rounded-full px-4 py-1.5 font-nunito text-sm ${!recipeForm.is_private
+                          ? "bg-umami-green text-white"
+                          : "bg-gray-100 text-umami-gray"
+                        }`}
+                    >
+                      Публичный
+                    </button>
+                  ) : null}
                   <button
                     type="button"
-                    onClick={() =>
-                      setRecipeForm({ ...recipeForm, is_private: false })
-                    }
-                    className={`rounded-full px-4 py-1.5 font-nunito text-sm ${!recipeForm.is_private
-                        ? "bg-umami-green text-white"
-                        : "bg-gray-100 text-umami-gray"
-                      }`}
-                  >
-                    Публичный
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setRecipeForm({ ...recipeForm, is_private: true })
-                    }
+                    onClick={() => {
+                      if (!recipeForm.parsed_from_url) {
+                        setRecipeForm({ ...recipeForm, is_private: true });
+                      }
+                    }}
                     className={`rounded-full px-4 py-1.5 font-nunito text-sm ${recipeForm.is_private
                         ? "bg-umami-orange text-white"
                         : "bg-gray-100 text-umami-gray"
-                      }`}
+                      } ${recipeForm.parsed_from_url ? "cursor-not-allowed opacity-85" : ""}`}
                   >
                     Приватный
                   </button>
