@@ -171,6 +171,7 @@ export default function ProfilePage() {
   const [recipeForm, setRecipeForm] = useState<RecipeFormData>(emptyRecipeForm);
   const [recipeActionLoading, setRecipeActionLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [isAvatarActionsOpen, setIsAvatarActionsOpen] = useState(false);
   const [recipeFilter, setRecipeFilter] = useState<'all' | 'public' | 'private'>('all');
   const [followModalType, setFollowModalType] = useState<
     "following" | "followers" | null
@@ -1021,6 +1022,38 @@ export default function ProfilePage() {
                   alt="avatar"
                   className="h-full w-full object-cover"
                 />
+                <button
+                  type="button"
+                  onClick={() => setIsAvatarActionsOpen((prev) => !prev)}
+                  className="absolute inset-0 z-10"
+                  aria-label="Открыть действия с аватаркой"
+                />
+                {isAvatarActionsOpen && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/55 p-2">
+                    <button
+                      type="button"
+                      disabled={avatarLoading}
+                      onClick={() => {
+                        avatarInputRef.current?.click();
+                        setIsAvatarActionsOpen(false);
+                      }}
+                      className="w-full max-w-[130px] rounded-full bg-white px-3 py-1.5 font-nunito text-xs text-umami-dark-gray transition-colors hover:bg-[#f4f4f4] disabled:opacity-60"
+                    >
+                      {avatarLoading ? "Загрузка..." : "Изменить фото"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={avatarLoading}
+                      onClick={() => {
+                        void handleDeleteAvatar();
+                        setIsAvatarActionsOpen(false);
+                      }}
+                      className="w-full max-w-[130px] rounded-full bg-red-500 px-3 py-1.5 font-nunito text-xs text-white transition-colors hover:bg-red-600 disabled:opacity-60"
+                    >
+                      Удалить фото
+                    </button>
+                  </div>
+                )}
               </div>
               <input
                 ref={avatarInputRef}
@@ -1067,22 +1100,6 @@ export default function ProfilePage() {
                     className="w-fit rounded-full bg-umami-green px-3 py-[5px] font-nunito text-xs text-white transition-colors hover:bg-[#6a805e]"
                   >
                     Редактировать профиль
-                  </button>
-                  <button
-                    type="button"
-                    disabled={avatarLoading}
-                    onClick={() => avatarInputRef.current?.click()}
-                    className="w-fit rounded-full bg-white border border-umami-light-gray px-3 py-[5px] font-nunito text-xs text-umami-dark-gray transition-colors hover:bg-[#f8f8f8] disabled:opacity-60"
-                  >
-                    {avatarLoading ? "Загрузка..." : "Изменить фото"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={avatarLoading}
-                    onClick={() => void handleDeleteAvatar()}
-                    className="w-fit rounded-full bg-red-500 px-3 py-[5px] font-nunito text-xs text-white transition-colors hover:bg-red-600 disabled:opacity-60"
-                  >
-                    Удалить фото
                   </button>
                   <button
                     type="button"
