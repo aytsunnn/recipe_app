@@ -14,6 +14,8 @@ import { normalizeImageUrl } from "../../utils/imageUrl";
 import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
 
+const RECIPE_LIKE_OVERRIDES_KEY = "recipe_like_overrides";
+
 function normalizeCategoryName(category: unknown): string | null {
   if (typeof category === "string") return category;
   if (category && typeof category === "object") {
@@ -55,6 +57,7 @@ export default function RecipeDetailsPage() {
   const [personalNote, setPersonalNote] = useState("");
   const [noteSaving, setNoteSaving] = useState(false);
   const [commentLikeBusy, setCommentLikeBusy] = useState<Record<string, boolean>>({});
+  const [desiredPortions, setDesiredPortions] = useState(1);
 
   const categories = useMemo(() => {
     if (!recipe?.Categories) return [];
@@ -140,6 +143,41 @@ export default function RecipeDetailsPage() {
     return normalizeImageUrl(url, fallback);
   };
 
+  const scaleIngredientQuantity = (
+    quantity: string | number | null | undefined
+  ): string | number => {
+    if (quantity === null || quantity === undefined) return "—";
+    const basePortions = recipe?.portion && recipe.portion > 0 ? recipe.portion : 1;
+    const ratio = desiredPortions > 0 ? desiredPortions / basePortions : 1;
+
+    if (typeof quantity === "number") {
+      const next = quantity * ratio;
+      return Math.max(1, Math.ceil(next));
+    }
+
+    const normalized = String(quantity).replace(",", ".").trim();
+    const numeric = Number(normalized);
+    if (Number.isFinite(numeric)) {
+      const next = numeric * ratio;
+      return Math.max(1, Math.ceil(next));
+    }
+
+    return quantity;
+  };
+
+  const isNutritionGenerated = useMemo(() => {
+    if (!recipe) return false;
+    const recipeAny = recipe as unknown as Record<string, unknown>;
+    return Boolean(
+      recipeAny.is_ai_nutrition_generated ??
+        recipeAny.is_ai_pfc ??
+        recipeAny.ai_nutrition_generated ??
+        recipeAny.nutrition_generated ??
+        recipeAny.is_nutrition_generated ??
+        recipeAny.is_generated_nutrition
+    );
+  }, [recipe]);
+
   const loadComments = async () => {
     if (!recipeId) return;
     try {
@@ -182,6 +220,7 @@ export default function RecipeDetailsPage() {
     setLikesCountState(recipe._count?.Likes ?? recipe.Likes?.length ?? 0);
     setCommentsCountState(recipe._count?.Comments ?? comments.length ?? 0);
     setPersonalNote(recipe.personal_note ?? "");
+    setDesiredPortions(recipe.portion > 0 ? recipe.portion : 1);
   }, [recipe]);
 
   useEffect(() => {
@@ -229,12 +268,42 @@ export default function RecipeDetailsPage() {
       setLikesCountState((count) =>
         prev ? Math.max(0, count - 1) : count + 1
       );
+      if (typeof window !== "undefined") {
+        const raw = localStorage.getItem(RECIPE_LIKE_OVERRIDES_KEY);
+        const map = raw ? (JSON.parse(raw) as Record<string, { userId: string; isLiked: boolean }>) : {};
+        map[recipeId] = { userId: currentUserId, isLiked: !prev };
+        localStorage.setItem(RECIPE_LIKE_OVERRIDES_KEY, JSON.stringify(map));
+      }
+      window.dispatchEvent(
+        new CustomEvent("recipe-like-updated", {
+          detail: {
+            recipeId,
+            userId: currentUserId,
+            isLiked: !prev,
+          },
+        })
+      );
       if (prev) await likeService.delete(recipeId);
       else await likeService.create(recipeId);
     } catch (error) {
       setIsLiked(prev);
       setLikesCountState((count) =>
         prev ? count + 1 : Math.max(0, count - 1)
+      );
+      if (typeof window !== "undefined") {
+        const raw = localStorage.getItem(RECIPE_LIKE_OVERRIDES_KEY);
+        const map = raw ? (JSON.parse(raw) as Record<string, { userId: string; isLiked: boolean }>) : {};
+        map[recipeId] = { userId: currentUserId, isLiked: prev };
+        localStorage.setItem(RECIPE_LIKE_OVERRIDES_KEY, JSON.stringify(map));
+      }
+      window.dispatchEvent(
+        new CustomEvent("recipe-like-updated", {
+          detail: {
+            recipeId,
+            userId: currentUserId,
+            isLiked: prev,
+          },
+        })
       );
       console.error("Ошибка при лайке рецепта:", error);
       alert("Не удалось поставить лайк");
@@ -734,6 +803,11 @@ export default function RecipeDetailsPage() {
                   </p>
                   <p className="font-nunito text-base text-umami-gray">
                     {recipe.proteins ?? "—"}
+                    {isNutritionGenerated ? (
+                      <span className="ml-2 font-inter text-xs text-umami-light-gray">
+                        (данные сгенерированы)
+                      </span>
+                    ) : null}
                   </p>
                 </div>
                 <div className="flex flex-col">
@@ -742,6 +816,11 @@ export default function RecipeDetailsPage() {
                   </p>
                   <p className="font-nunito text-base text-umami-gray">
                     {recipe.fats ?? "—"}
+                    {isNutritionGenerated ? (
+                      <span className="ml-2 font-inter text-xs text-umami-light-gray">
+                        (данные сгенерированы)
+                      </span>
+                    ) : null}
                   </p>
                 </div>
                 <div className="flex flex-col">
@@ -750,6 +829,11 @@ export default function RecipeDetailsPage() {
                   </p>
                   <p className="font-nunito text-base text-umami-gray">
                     {recipe.carbohydrates ?? "—"}
+                    {isNutritionGenerated ? (
+                      <span className="ml-2 font-inter text-xs text-umami-light-gray">
+                        (данные сгенерированы)
+                      </span>
+                    ) : null}
                   </p>
                 </div>
                 <div className="flex flex-col">
@@ -781,13 +865,34 @@ export default function RecipeDetailsPage() {
 
             {activeTab === "ingredients" && (
               <div className="space-y-2">
+                <div className="mb-2 flex items-center gap-2">
+                  <label
+                    htmlFor="desired-portions"
+                    className="font-inter text-sm text-umami-gray"
+                  >
+                    Порций:
+                  </label>
+                  <input
+                    id="desired-portions"
+                    type="number"
+                    min={1}
+                    value={desiredPortions}
+                    onChange={(e) => setDesiredPortions(Math.max(1, Number(e.target.value) || 1))}
+                    className="w-24 rounded-full border border-umami-light-gray px-3 py-1 text-sm text-umami-dark-gray"
+                  />
+                  <span className="font-inter text-xs text-umami-light-gray">
+                    Базовый рецепт: {recipe.portion}
+                  </span>
+                </div>
                 {(recipe.Ingredients || []).length === 0 && (
                   <p className="font-inter text-sm text-umami-gray">
                     Ингредиенты не указаны
                   </p>
                 )}
                 {(recipe.Ingredients || []).map((ingredient) => {
-                  const quantity = ingredient.RecipeIngredient?.quantity ?? "—";
+                  const quantity = scaleIngredientQuantity(
+                    ingredient.RecipeIngredient?.quantity ?? "—"
+                  );
                   const unit =
                     ingredient.Unit?.short_name ||
                     ingredient.Unit?.name ||

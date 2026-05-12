@@ -24,6 +24,8 @@ type RecipeLikeUpdatedEventDetail = {
   isLiked: boolean;
 };
 
+const RECIPE_LIKE_OVERRIDES_KEY = 'recipe_like_overrides';
+
 const applyLikeUpdateToRecipes = (
   list: Recipe[],
   { recipeId, userId, isLiked }: RecipeLikeUpdatedEventDetail
@@ -60,6 +62,29 @@ const applyLikeUpdateToRecipes = (
     };
   });
 
+const applyLikeOverridesFromStorage = (list: Recipe[]): Recipe[] => {
+  if (typeof window === 'undefined') return list;
+
+  try {
+    const raw = localStorage.getItem(RECIPE_LIKE_OVERRIDES_KEY);
+    if (!raw) return list;
+    const parsed = JSON.parse(raw) as Record<string, { userId: string; isLiked: boolean }>;
+
+    return list.map((recipe) => {
+      const override = parsed[recipe.id];
+      if (!override) return recipe;
+
+      return applyLikeUpdateToRecipes([recipe], {
+        recipeId: recipe.id,
+        userId: override.userId,
+        isLiked: override.isLiked,
+      })[0];
+    });
+  } catch {
+    return list;
+  }
+};
+
 const hasActiveParams = (params: GetRecipesParams) =>
   Object.values(params).some((value) => value !== undefined && value !== null && value !== '');
 
@@ -94,7 +119,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
       if (shouldUseRecommendations) {
         if (replace && recommendationsCache && recommendationsCache.recipes.length > 0) {
           if (isMounted.current) {
-            setRecipes(recommendationsCache.recipes);
+            setRecipes(applyLikeOverridesFromStorage(recommendationsCache.recipes));
             setPage(recommendationsCache.loadedPage);
             setHasMore(recommendationsCache.hasMore);
             setLoading(false);
@@ -121,7 +146,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
                 const nextChunk = data.filter((item) => !existingIds.has(item.id));
                 return [...prev, ...nextChunk];
               })();
-          return resolvedRecipes;
+          return applyLikeOverridesFromStorage(resolvedRecipes);
         });
         const nextHasMore = data.length === pageSize;
         setHasMore(nextHasMore);

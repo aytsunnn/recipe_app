@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { metaService, Category } from "../../services/metaService";
-import { authService } from "../../services/authService";
+import { authService, User } from "../../services/authService";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 
 const navItems = [
@@ -27,6 +27,7 @@ export default function LeftPart() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -57,16 +58,33 @@ export default function LeftPart() {
   }, [searchParams]);
 
   useEffect(() => {
-    const syncAuthState = () => {
-      setIsAuthenticated(authService.isAuthenticated());
+    const syncAuthState = async () => {
+      const isAuth = authService.isAuthenticated();
+      setIsAuthenticated(isAuth);
+      if (!isAuth) {
+        setCurrentUser(null);
+        return;
+      }
+      const user = await authService.getCurrentUser();
+      setCurrentUser(user);
     };
 
-    syncAuthState();
+    void syncAuthState();
     window.addEventListener("auth-change", syncAuthState);
     return () => {
       window.removeEventListener("auth-change", syncAuthState);
     };
   }, []);
+
+  const role = (currentUser?.role || "").toLowerCase();
+  const isAdmin = role === "admin";
+  const isModerator = role === "moderator";
+  const roleNavItem = isAdmin
+    ? { href: "/admin", label: "Панель администратора", icon: "/User.svg" }
+    : isModerator
+    ? { href: "/moderator", label: "Панель модератора", icon: "/User.svg" }
+    : null;
+  const resolvedNavItems = roleNavItem ? [...navItems, roleNavItem] : navItems;
 
   const handleCategoryClick = (categoryId: string) => {
     const newSelected = new Set(selectedCategories);
@@ -113,7 +131,7 @@ export default function LeftPart() {
       <div className="flex flex-col gap-1.25">
         {isAuthenticated && (
           <div className="mb-5 flex flex-col gap-1">
-            {navItems.map((item) => (
+            {resolvedNavItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}

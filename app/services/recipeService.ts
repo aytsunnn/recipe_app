@@ -70,6 +70,9 @@ export interface Recipe {
     Comments: number;
   };
   personal_note?: string | null;
+  total_reviews?: number | string | null;
+  comments_count?: number | string | null;
+  is_ai_pfc?: boolean | null;
 }
 
 export interface GetRecipesParams {
@@ -119,10 +122,30 @@ class RecipeService {
         image_url: this.fixImageUrl(step.image_url ?? null),
       })) ?? recipe.Steps;
 
+    const likesCountFromArray = Array.isArray(recipe.Likes)
+      ? recipe.Likes.length
+      : 0;
+    const commentsCountRaw =
+      recipe._count?.Comments ??
+      (typeof recipe.total_reviews === "string"
+        ? Number(recipe.total_reviews)
+        : recipe.total_reviews) ??
+      (typeof recipe.comments_count === "string"
+        ? Number(recipe.comments_count)
+        : recipe.comments_count) ??
+      (Array.isArray(recipe.Comments) ? recipe.Comments.length : 0);
+    const commentsCount = Number.isFinite(Number(commentsCountRaw))
+      ? Number(commentsCountRaw)
+      : 0;
+
     return {
       ...recipe,
       image_url: this.fixImageUrl(recipe.image_url),
       Steps: normalizedSteps,
+      _count: {
+        Likes: recipe._count?.Likes ?? likesCountFromArray,
+        Comments: commentsCount,
+      },
       User: {
         ...recipe.User,
         avatar_url: this.fixImageUrl(recipe.User.avatar_url),

@@ -219,17 +219,19 @@ export default function ProfilePage() {
   };
 
   const loadProfile = async (currentUser: User) => {
-    const [
-      following,
-      followers,
-      userRecipesFromProfile,
-      ownPrivateRecipes,
-    ] =
+    const [following, followers, ownRecipesFromFeed, ownPrivateRecipes] =
       await Promise.all([
         followService.getFollowing(currentUser.id),
         followService.getFollowers(currentUser.id),
-        userService.getRecipes(currentUser.id),
-        recipeService.getAll({ is_private: true, limit: 500 }),
+        recipeService.getAll({
+          user_id: currentUser.id,
+          limit: 500,
+        }),
+        recipeService.getAll({
+          user_id: currentUser.id,
+          is_private: true,
+          limit: 500,
+        }),
       ]);
 
     const followingIds = new Set(following.map((follow) => follow.id));
@@ -239,7 +241,7 @@ export default function ProfilePage() {
 
     setFriends(mutualFriends);
     const allById = new Map<string, Recipe>();
-    [...userRecipesFromProfile, ...ownPrivateRecipes].forEach((recipe) => {
+    [...ownRecipesFromFeed, ...ownPrivateRecipes].forEach((recipe) => {
       if (String(recipe.user_id) === String(currentUser.id)) {
         allById.set(recipe.id, recipe);
       }
