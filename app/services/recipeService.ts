@@ -1,5 +1,6 @@
-// app/services/recipeService.ts
+﻿// app/services/recipeService.ts
 import { apiClient } from './api';
+import { normalizeImageUrl } from '../utils/imageUrl';
 
 export interface Recipe {
   id: string;
@@ -104,41 +105,10 @@ export interface RecipeMutationData {
 }
 
 class RecipeService {
-  private readonly storageBaseUrl = process.env.NEXT_PUBLIC_STORAGE_URL || '/storage';
-
   private fixImageUrl(url: string | null): string | null {
     if (!url) return null;
-
-    const trimmed = url.trim();
-    if (!trimmed) return null;
-
-    const withPublicHost = trimmed
-      .replace('http://127.0.0.1:9000', this.storageBaseUrl)
-      .replace('http://localhost:9000', this.storageBaseUrl)
-      .replace('http://127.0.0.1:9001', this.storageBaseUrl)
-      .replace('http://localhost:9001', this.storageBaseUrl);
-
-    if (withPublicHost.startsWith('http://') || withPublicHost.startsWith('https://')) {
-      return withPublicHost;
-    }
-
-    if (withPublicHost.startsWith('/vkusno/')) {
-      return `${this.storageBaseUrl}${withPublicHost}`;
-    }
-
-    if (withPublicHost.startsWith('vkusno/')) {
-      return `${this.storageBaseUrl}/${withPublicHost}`;
-    }
-
-    if (/^(avatars|recipes|steps|categories|kitchens|celebrations)\//.test(withPublicHost)) {
-      return `${this.storageBaseUrl}/vkusno/${withPublicHost}`;
-    }
-
-    if (withPublicHost.startsWith('/')) {
-      return withPublicHost;
-    }
-
-    return null;
+    const normalized = normalizeImageUrl(url, "");
+    return normalized || null;
   }
 
   private fixRecipeImages(recipe: Recipe): Recipe {
@@ -202,7 +172,7 @@ class RecipeService {
       const recipes = await apiClient.get<Recipe[]>(`/recipes/recommendations?${queryParams.toString()}`);
       return recipes.map(recipe => this.fixRecipeImages(recipe));
     } catch (error) {
-      console.error('Ошибка загрузки рекомендаций, показываем общую ленту:', error);
+      console.error('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё СЂРµРєРѕРјРµРЅРґР°С†РёР№, РїРѕРєР°Р·С‹РІР°РµРј РѕР±С‰СѓСЋ Р»РµРЅС‚Сѓ:', error);
       return this.getAll({ page, limit });
     }
   }
@@ -214,7 +184,7 @@ class RecipeService {
     } catch {
       const recipes = await this.getAll({ page: 1, limit: 50 });
       if (!recipes.length) {
-        throw new Error('Не удалось получить случайный рецепт');
+        throw new Error('РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ СЃР»СѓС‡Р°Р№РЅС‹Р№ СЂРµС†РµРїС‚');
       }
       const randomIndex = Math.floor(Math.random() * recipes.length);
       return recipes[randomIndex];
@@ -223,4 +193,6 @@ class RecipeService {
 }
 
 export const recipeService = new RecipeService();
+
+
 

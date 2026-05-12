@@ -1,4 +1,4 @@
-const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_STORAGE_URL || "/storage";
+﻿const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_STORAGE_URL || "https://umami-recipes.ru/storage";
 
 export function normalizeImageUrl(
   url: string | null | undefined,
@@ -31,6 +31,15 @@ export function normalizeImageUrl(
   if (cleanPath.startsWith(STORAGE_BASE_URL + "/")) {
     cleanPath = cleanPath.substring(STORAGE_BASE_URL.length);
   }
+  if (cleanPath === "/storage") {
+    cleanPath = "/";
+  }
+  if (cleanPath.startsWith("/storage/")) {
+    cleanPath = cleanPath.substring("/storage".length);
+  }
+  if (cleanPath.startsWith("storage/")) {
+    cleanPath = cleanPath.substring("storage".length);
+  }
 
   // At this point cleanPath might be /vkusno/... or vkusno/... or avatars/...
   if (cleanPath.startsWith("/vkusno/")) {
@@ -51,11 +60,15 @@ export function normalizeImageUrl(
     return `${STORAGE_BASE_URL}/vkusno/${pathWithoutLeadingSlash}`;
   }
 
-  if (withPublicHost.startsWith("/")) {
-    return withPublicHost;
+  if (cleanPath.startsWith("/")) {
+    return `${STORAGE_BASE_URL}${cleanPath}`;
   }
 
-
+  if (/^[^/]+\.(jpg|jpeg|png|webp|gif|avif|svg)$/i.test(cleanPath)) {
+    return `${STORAGE_BASE_URL}/vkusno/${cleanPath}`;
+  }
 
   return fallback;
 }
+
+

@@ -1,5 +1,6 @@
 ﻿// app/services/commentService.ts
 import { apiClient } from './api';
+import { normalizeImageUrl } from '../utils/imageUrl';
 
 export interface Comment {
   id: string;
@@ -34,41 +35,10 @@ export interface CreateCommentData {
 }
 
 class CommentService {
-  private readonly storageBaseUrl = process.env.NEXT_PUBLIC_STORAGE_URL || '/storage';
-
   private fixImageUrl(url: string | null): string | null {
     if (!url) return null;
-
-    const trimmed = url.trim();
-    if (!trimmed) return null;
-
-    const withPublicHost = trimmed
-      .replace('http://127.0.0.1:9000', this.storageBaseUrl)
-      .replace('http://localhost:9000', this.storageBaseUrl)
-      .replace('http://127.0.0.1:9001', this.storageBaseUrl)
-      .replace('http://localhost:9001', this.storageBaseUrl);
-
-    if (withPublicHost.startsWith('http://') || withPublicHost.startsWith('https://')) {
-      return withPublicHost;
-    }
-
-    if (withPublicHost.startsWith('/vkusno/')) {
-      return `${this.storageBaseUrl}${withPublicHost}`;
-    }
-
-    if (withPublicHost.startsWith('vkusno/')) {
-      return `${this.storageBaseUrl}/${withPublicHost}`;
-    }
-
-    if (/^(avatars|recipes|steps)\//.test(withPublicHost)) {
-      return `${this.storageBaseUrl}/vkusno/${withPublicHost}`;
-    }
-
-    if (withPublicHost.startsWith('/')) {
-      return withPublicHost;
-    }
-
-    return null;
+    const normalized = normalizeImageUrl(url, "");
+    return normalized || null;
   }
 
   private fixCommentImages(comment: Comment): Comment {
@@ -102,3 +72,5 @@ class CommentService {
 }
 
 export const commentService = new CommentService();
+
+

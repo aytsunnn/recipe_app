@@ -1,5 +1,6 @@
-// app/services/authService.ts
+﻿// app/services/authService.ts
 import { apiClient } from './api';
+import { normalizeImageUrl } from '../utils/imageUrl';
 
 export interface LoginData {
   email: string;
@@ -49,82 +50,51 @@ export interface User {
 }
 
 class AuthService {
-  private readonly storageBaseUrl = process.env.NEXT_PUBLIC_STORAGE_URL || '/storage';
-
-  // Заменяет localhost URL на публичный адрес
+  // Р—Р°РјРµРЅСЏРµС‚ localhost URL РЅР° РїСѓР±Р»РёС‡РЅС‹Р№ Р°РґСЂРµСЃ
   private fixImageUrl(url: string | null): string | null {
     if (!url) return null;
-
-    const trimmed = url.trim();
-    if (!trimmed) return null;
-
-    const withPublicHost = trimmed
-      .replace('http://127.0.0.1:9000', this.storageBaseUrl)
-      .replace('http://localhost:9000', this.storageBaseUrl)
-      .replace('http://127.0.0.1:9001', this.storageBaseUrl)
-      .replace('http://localhost:9001', this.storageBaseUrl);
-
-    if (withPublicHost.startsWith('http://') || withPublicHost.startsWith('https://')) {
-      return withPublicHost;
-    }
-
-    if (withPublicHost.startsWith('/vkusno/')) {
-      return `${this.storageBaseUrl}${withPublicHost}`;
-    }
-
-    if (withPublicHost.startsWith('vkusno/')) {
-      return `${this.storageBaseUrl}/${withPublicHost}`;
-    }
-
-    if (/^(avatars|recipes|steps)\//.test(withPublicHost)) {
-      return `${this.storageBaseUrl}/vkusno/${withPublicHost}`;
-    }
-
-    if (withPublicHost.startsWith('/')) {
-      return withPublicHost;
-    }
-
-    return null;
+    const normalized = normalizeImageUrl(url, "");
+    return normalized || null;
   }
 
-  // Вход
+  // Р’С…РѕРґ
   async login(data: LoginData): Promise<AuthResponse> {
     return apiClient.post<AuthResponse>('/auth/login', data);
   }
 
-  // Регистрация
+  // Р РµРіРёСЃС‚СЂР°С†РёСЏ
   async register(data: RegisterData): Promise<RegisterResponse> {
     return apiClient.post<RegisterResponse>('/auth/register', data);
   }
 
-  // Подтверждение email
+  // РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ email
   async verifyEmail(data: VerifyEmailData): Promise<{ message: string }> {
     return apiClient.post<{ message: string }>('/auth/verify-email', data);
   }
 
-  // Повторная отправка кода подтверждения
+  // РџРѕРІС‚РѕСЂРЅР°СЏ РѕС‚РїСЂР°РІРєР° РєРѕРґР° РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ
   async requestEmailCode(email: string): Promise<{ message: string }> {
     return apiClient.post<{ message: string }>('/auth/password-recovery', { email });
   }
 
-  // Обновление пароля по коду
+  // РћР±РЅРѕРІР»РµРЅРёРµ РїР°СЂРѕР»СЏ РїРѕ РєРѕРґСѓ
   async resetPassword(data: ResetPasswordData): Promise<{ message: string }> {
     return apiClient.post<{ message: string }>('/auth/reset-password', data);
   }
 
-  // Выход
+  // Р’С‹С…РѕРґ
   async logout(): Promise<void> {
     return apiClient.post('/auth/logout');
   }
 
-  // Сохранение токена
+  // РЎРѕС…СЂР°РЅРµРЅРёРµ С‚РѕРєРµРЅР°
   saveToken(token: string): void {
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', token);
     }
   }
 
-  // Получение токена
+  // РџРѕР»СѓС‡РµРЅРёРµ С‚РѕРєРµРЅР°
   getToken(): string | null {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('auth_token');
@@ -132,26 +102,26 @@ class AuthService {
     return null;
   }
 
-  // Удаление токена
+  // РЈРґР°Р»РµРЅРёРµ С‚РѕРєРµРЅР°
   removeToken(): void {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
     }
   }
 
-  // Проверка авторизации
+  // РџСЂРѕРІРµСЂРєР° Р°РІС‚РѕСЂРёР·Р°С†РёРё
   isAuthenticated(): boolean {
     return !!this.getToken();
   }
 
-  // Получение данных текущего пользователя
+  // РџРѕР»СѓС‡РµРЅРёРµ РґР°РЅРЅС‹С… С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
   async getCurrentUser(): Promise<User | null> {
     if (!this.isAuthenticated()) {
       return null;
     }
     try {
       const user = await apiClient.get<User>('/users/me');
-      // Исправляем URL аватара
+      // РСЃРїСЂР°РІР»СЏРµРј URL Р°РІР°С‚Р°СЂР°
       return {
         ...user,
         avatar_url: this.fixImageUrl(user.avatar_url),
@@ -163,7 +133,7 @@ class AuthService {
     }
   }
 
-  // Уведомление об изменении состояния авторизации
+  // РЈРІРµРґРѕРјР»РµРЅРёРµ РѕР± РёР·РјРµРЅРµРЅРёРё СЃРѕСЃС‚РѕСЏРЅРёСЏ Р°РІС‚РѕСЂРёР·Р°С†РёРё
   dispatchAuthChange(): void {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('auth-change'));
@@ -172,3 +142,5 @@ class AuthService {
 }
 
 export const authService = new AuthService();
+
+
