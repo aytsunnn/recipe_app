@@ -9,6 +9,7 @@ import { authService } from "../../services/authService";
 import { commentService, Comment } from "../../services/commentService";
 import { likeService } from "../../services/likeService";
 import { favoriteService } from "../../services/favoriteService";
+import { recipeService } from "../../services/recipeService";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
@@ -51,6 +52,9 @@ export default function RecipeDetailsPage() {
     taste_spicy: null as number | null,
     taste_umami: null as number | null,
   });
+  const [personalNote, setPersonalNote] = useState("");
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [commentLikeBusy, setCommentLikeBusy] = useState<Record<string, boolean>>({});
 
   const categories = useMemo(() => {
     if (!recipe?.Categories) return [];
@@ -177,6 +181,7 @@ export default function RecipeDetailsPage() {
     if (!recipe) return;
     setLikesCountState(recipe._count?.Likes ?? recipe.Likes?.length ?? 0);
     setCommentsCountState(recipe._count?.Comments ?? comments.length ?? 0);
+    setPersonalNote(recipe.personal_note ?? "");
   }, [recipe]);
 
   useEffect(() => {
@@ -260,6 +265,92 @@ export default function RecipeDetailsPage() {
 
   const handleCookedToggle = () => {
     setIsCooked((prev) => !prev);
+  };
+
+  const handleSavePersonalNote = async () => {
+    if (!currentUserId || !recipeId || noteSaving) {
+      if (!currentUserId) alert("Необходимо авторизоваться");
+      return;
+    }
+    try {
+      setNoteSaving(true);
+      await recipeService.updatePersonalNote(recipeId, personalNote.trim());
+    } catch (error) {
+      console.error("Ошибка сохранения заметки:", error);
+      alert("Не удалось сохранить заметку");
+    } finally {
+      setNoteSaving(false);
+    }
+  };
+
+  const getCommentLikesCount = (comment: Comment): number => {
+    if (typeof comment.likes_count === "number") return comment.likes_count;
+    if (typeof comment._count?.Likes === "number") return comment._count.Likes;
+    if (Array.isArray(comment.Likes)) return comment.Likes.length;
+    return 0;
+  };
+
+  const isCommentLikedByCurrentUser = (comment: Comment): boolean => {
+    if (typeof comment.is_liked === "boolean") return comment.is_liked;
+    if (!currentUserId) return false;
+    return Array.isArray(comment.Likes)
+      ? comment.Likes.some((like) => String(like.user_id) === String(currentUserId))
+      : false;
+  };
+
+  const patchCommentLikeState = (
+    targetCommentId: string,
+    nextIsLiked: boolean,
+    nextLikesCount: number
+  ) => {
+    const applyPatch = (item: Comment): Comment => {
+      const current = item as Comment & { Replies?: Comment[] };
+      if (String(current.id) === String(targetCommentId)) {
+        return {
+          ...current,
+          is_liked: nextIsLiked,
+          likes_count: Math.max(0, nextLikesCount),
+          _count: {
+            ...(current._count || {}),
+            Likes: Math.max(0, nextLikesCount),
+          },
+        };
+      }
+      if (Array.isArray(current.Replies)) {
+        return {
+          ...current,
+          Replies: current.Replies.map((reply) => applyPatch(reply)),
+        } as Comment;
+      }
+      return current;
+    };
+
+    setComments((prev) => prev.map((comment) => applyPatch(comment)));
+  };
+
+  const handleToggleCommentLike = async (comment: Comment) => {
+    if (!currentUserId) {
+      alert("Необходимо авторизоваться");
+      return;
+    }
+    const commentId = String(comment.id);
+    if (commentLikeBusy[commentId]) return;
+    const prevLiked = isCommentLikedByCurrentUser(comment);
+    const prevCount = getCommentLikesCount(comment);
+    const nextLiked = !prevLiked;
+    const nextCount = prevLiked ? Math.max(0, prevCount - 1) : prevCount + 1;
+
+    try {
+      setCommentLikeBusy((prev) => ({ ...prev, [commentId]: true }));
+      patchCommentLikeState(commentId, nextLiked, nextCount);
+      await commentService.toggleLike(commentId);
+    } catch (error) {
+      patchCommentLikeState(commentId, prevLiked, prevCount);
+      console.error("Ошибка лайка комментария:", error);
+      alert("Не удалось поставить лайк на комментарий");
+    } finally {
+      setCommentLikeBusy((prev) => ({ ...prev, [commentId]: false }));
+    }
   };
 
   const handleSubmitComment = async () => {
@@ -588,6 +679,26 @@ export default function RecipeDetailsPage() {
           </div>
 
           <div className="mt-4 rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
+            <div className="mb-4 rounded-2xl border border-umami-light-gray/50 p-4">
+              <p className="font-nunito text-base font-bold text-umami-dark-gray">
+                Личная заметка
+              </p>
+              <textarea
+                value={personalNote}
+                onChange={(e) => setPersonalNote(e.target.value)}
+                placeholder="Заметка видна только вам"
+                className="mt-2 h-20 w-full rounded-2xl border border-umami-light-gray px-3 py-2 font-inter text-sm"
+              />
+              <button
+                type="button"
+                onClick={handleSavePersonalNote}
+                disabled={noteSaving}
+                className="mt-2 rounded-full bg-umami-orange px-4 py-2 font-nunito text-sm text-white disabled:opacity-60"
+              >
+                {noteSaving ? "Сохраняем..." : "Сохранить заметку"}
+              </button>
+            </div>
+
             {activeTab === "info" && (
               <div className="flex flex-col gap-3">
                 <div className="grid grid-cols-3 gap-10">
@@ -937,6 +1048,26 @@ export default function RecipeDetailsPage() {
                           >
                             Ответить
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleToggleCommentLike(comment)}
+                            disabled={Boolean(commentLikeBusy[comment.id])}
+                            className="ml-2 mt-2 inline-flex items-center gap-1 disabled:opacity-60"
+                          >
+                            <Image
+                              width={20}
+                              height={20}
+                              src={
+                                isCommentLikedByCurrentUser(comment)
+                                  ? "/RedHeart.svg"
+                                  : "/HeartGray.svg"
+                              }
+                              alt="comment-like"
+                            />
+                            <span className="font-nunito text-sm text-umami-gray">
+                              {getCommentLikesCount(comment)}
+                            </span>
+                          </button>
                         </div>
                       </div>
 
@@ -966,6 +1097,26 @@ export default function RecipeDetailsPage() {
                                   <p className="font-inter text-sm text-umami-gray">
                                     {reply.content}
                                   </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => void handleToggleCommentLike(reply)}
+                                    disabled={Boolean(commentLikeBusy[reply.id])}
+                                    className="mt-1 inline-flex items-center gap-1 disabled:opacity-60"
+                                  >
+                                    <Image
+                                      width={18}
+                                      height={18}
+                                      src={
+                                        isCommentLikedByCurrentUser(reply)
+                                          ? "/RedHeart.svg"
+                                          : "/HeartGray.svg"
+                                      }
+                                      alt="reply-like"
+                                    />
+                                    <span className="font-nunito text-xs text-umami-gray">
+                                      {getCommentLikesCount(reply)}
+                                    </span>
+                                  </button>
                                 </div>
                               </div>
                             )

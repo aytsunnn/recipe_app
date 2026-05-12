@@ -69,6 +69,7 @@ export interface Recipe {
     Likes: number;
     Comments: number;
   };
+  personal_note?: string | null;
 }
 
 export interface GetRecipesParams {
@@ -161,6 +162,10 @@ class RecipeService {
 
   async delete(id: string): Promise<void> {
     return apiClient.delete(`/recipes/${id}`);
+  }
+
+  async updatePersonalNote(id: string, note: string): Promise<void> {
+    await apiClient.patch<unknown>(`/recipes/${id}/personal-note`, { note });
   }
 
   async getRecommendations(page = 1, limit = 8): Promise<Recipe[]> {

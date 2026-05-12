@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -21,6 +21,7 @@ import {
   Unit,
 } from "../services/metaService";
 import { normalizeImageUrl } from "../utils/imageUrl";
+import { toolsService } from "../services/toolsService";
 
 interface UserStats {
   followingCount: number;
@@ -63,12 +64,13 @@ interface RecipeFormData {
   categories: number[];
   ingredients: IngredientRow[];
   steps: StepRow[];
+  source_url: string;
 }
 
 const DIFFICULTY_TO_API: Record<string, "1" | "2" | "3" | "4" | "5"> = {
-  Легко: "1",
-  Средне: "3",
-  Сложно: "5",
+  "Легко": "1",
+  "Средне": "3",
+  "Сложно": "5",
   easy: "1",
   medium: "3",
   hard: "5",
@@ -133,6 +135,7 @@ const emptyRecipeForm: RecipeFormData = {
   steps: [
     { description: "", image_url: "", image_file: null, image_preview: "" },
   ],
+  source_url: "",
 };
 
 export default function ProfilePage() {
@@ -181,6 +184,8 @@ export default function ProfilePage() {
     []
   );
   const [units, setUnits] = useState<Unit[]>([]);
+  const [parseLoading, setParseLoading] = useState(false);
+  const [parseWarnings, setParseWarnings] = useState<string[]>([]);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   const filteredRecipes = useMemo(() => {
@@ -410,6 +415,7 @@ export default function ProfilePage() {
   const openCreateRecipeEditor = () => {
     setEditingRecipeId(null);
     setRecipeForm(emptyRecipeForm);
+    setParseWarnings([]);
     setIsRecipeEditorOpen(true);
   };
 
@@ -496,7 +502,9 @@ export default function ProfilePage() {
               image_preview: "",
             },
           ],
+      source_url: "",
     });
+    setParseWarnings([]);
     setIsRecipeEditorOpen(true);
   };
 
@@ -576,6 +584,202 @@ export default function ProfilePage() {
       ingredient_name: selected?.name || "",
       unit_of_measurement: selected?.unit_of_measurement || "",
     });
+  };
+
+  const handleParseRecipeByUrl = async () => {
+    const sourceUrl = recipeForm.source_url.trim();
+    if (!sourceUrl) {
+      alert("Добавьте ссылку на рецепт");
+      return;
+    }
+
+    const toStringValue = (value: unknown): string => {
+      if (typeof value === "string") return value.trim();
+      if (typeof value === "number") return String(value);
+      return "";
+    };
+
+    const toNumberValue = (value: unknown): number | null => {
+      if (typeof value === "number" && Number.isFinite(value)) return value;
+      if (typeof value === "string") {
+        const normalized = value.replace(",", ".").replace(/[^\d.-]/g, "");
+        const num = Number(normalized);
+        return Number.isFinite(num) ? num : null;
+      }
+      return null;
+    };
+
+    const findRecipeLikeObject = (root: unknown): Record<string, unknown> => {
+      if (!root) return {};
+      if (typeof root === "string") {
+        try {
+          const parsed = JSON.parse(root);
+          return findRecipeLikeObject(parsed);
+        } catch {
+          return {};
+        }
+      }
+      if (typeof root !== "object") return {};
+
+      const queue: Record<string, unknown>[] = [root as Record<string, unknown>];
+      while (queue.length > 0) {
+        const current = queue.shift()!;
+        const hasRecipeShape =
+          typeof current.title === "string" ||
+          typeof current.description === "string" ||
+          Array.isArray(current.ingredients) ||
+          Array.isArray(current.steps);
+        if (hasRecipeShape) return current;
+
+        for (const value of Object.values(current)) {
+          if (value && typeof value === "object") {
+            if (Array.isArray(value)) {
+              value.forEach((entry) => {
+                if (entry && typeof entry === "object") {
+                  queue.push(entry as Record<string, unknown>);
+                }
+              });
+            } else {
+              queue.push(value as Record<string, unknown>);
+            }
+          }
+        }
+      }
+
+      return root as Record<string, unknown>;
+    };
+
+    try {
+      setParseLoading(true);
+      setParseWarnings([]);
+
+      const payload = await toolsService.parseRecipeByUrl(sourceUrl);
+      const raw = findRecipeLikeObject(payload);
+
+      const parsedIngredients = Array.isArray(raw.ingredients)
+        ? raw.ingredients
+            .map((item) => {
+              if (!item || typeof item !== "object") return null;
+              const row = item as Record<string, unknown>;
+              const name = toStringValue(row.name);
+              const quantityRaw =
+                toNumberValue(row.quantity) ??
+                toNumberValue(row.amount) ??
+                toNumberValue(row.value);
+              const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? quantityRaw : 1;
+              const unit =
+                toStringValue(row.unit) ||
+                toStringValue(row.unit_of_measurement) ||
+                toStringValue(row.measure);
+              if (!name) return null;
+              return {
+                ingredient_id: null,
+                ingredient_name: name,
+                quantity,
+                unit_of_measurement: unit,
+                note: "",
+              } satisfies IngredientRow;
+            })
+            .filter((item): item is IngredientRow => Boolean(item))
+        : [];
+
+      const parsedSteps = Array.isArray(raw.steps)
+        ? raw.steps
+            .map((item) => {
+              if (typeof item === "string") {
+                const description = item.trim();
+                if (!description) return null;
+                return {
+                  description,
+                  image_url: "",
+                  image_file: null,
+                  image_preview: "",
+                } satisfies StepRow;
+              }
+              if (!item || typeof item !== "object") return null;
+              const row = item as Record<string, unknown>;
+              const description =
+                toStringValue(row.description) ||
+                toStringValue(row.text) ||
+                toStringValue(row.step);
+              const imageUrl =
+                toStringValue(row.image_url) ||
+                toStringValue(row.image) ||
+                toStringValue(row.photo);
+              if (!description) return null;
+              return {
+                description,
+                image_url: imageUrl,
+                image_file: null,
+                image_preview: imageUrl,
+              } satisfies StepRow;
+            })
+            .filter((item): item is StepRow => Boolean(item))
+        : [];
+
+      const title = toStringValue(raw.title);
+      const description = toStringValue(raw.description);
+      const difficultyRaw =
+        toStringValue(raw.difficulty) ||
+        toStringValue(raw.level) ||
+        toStringValue(raw.complexity);
+      const difficulty = normalizeDifficulty(difficultyRaw || "1");
+      const nextWarnings: string[] = [];
+
+      if (!title) nextWarnings.push("Название не найдено");
+      if (!description) nextWarnings.push("Описание не найдено");
+      if (parsedIngredients.length === 0) nextWarnings.push("Ингредиенты не найдены");
+      if (parsedSteps.length === 0) nextWarnings.push("Шаги не найдены");
+      const parsedImageUrl =
+        toStringValue(raw.image_url) ||
+        toStringValue(raw.image) ||
+        toStringValue(raw.photo);
+
+      if (!parsedImageUrl) nextWarnings.push("Фото рецепта не найдено");
+
+      setParseWarnings(nextWarnings);
+
+      setRecipeForm((prev) => ({
+        ...prev,
+        title: title || prev.title,
+        description: description || prev.description,
+        difficulty,
+        image_url: parsedImageUrl || prev.image_url,
+        image_preview: parsedImageUrl || prev.image_preview,
+        portion:
+          (toNumberValue(raw.portion) ?? toNumberValue(raw.servings) ?? 0) > 0
+            ? Number(toNumberValue(raw.portion) ?? toNumberValue(raw.servings))
+            : prev.portion,
+        cooking_time:
+          (toNumberValue(raw.cooking_time) ?? toNumberValue(raw.time) ?? 0) > 0
+            ? Number(toNumberValue(raw.cooking_time) ?? toNumberValue(raw.time))
+            : prev.cooking_time,
+        calorific:
+          (toNumberValue(raw.calorific) ?? toNumberValue(raw.calories)) !== null &&
+          Number(toNumberValue(raw.calorific) ?? toNumberValue(raw.calories)) >= 0
+            ? Number(toNumberValue(raw.calorific) ?? toNumberValue(raw.calories))
+            : prev.calorific,
+        proteins:
+          Number.isFinite(Number(raw.proteins)) && Number(raw.proteins) >= 0
+            ? Number(raw.proteins)
+            : prev.proteins,
+        fats:
+          Number.isFinite(Number(raw.fats)) && Number(raw.fats) >= 0
+            ? Number(raw.fats)
+            : prev.fats,
+        carbohydrates:
+          Number.isFinite(Number(raw.carbohydrates)) && Number(raw.carbohydrates) >= 0
+            ? Number(raw.carbohydrates)
+            : prev.carbohydrates,
+        ingredients: parsedIngredients.length > 0 ? parsedIngredients : prev.ingredients,
+        steps: parsedSteps.length > 0 ? parsedSteps : prev.steps,
+      }));
+    } catch (error) {
+      console.error("Ошибка парсинга рецепта:", error);
+      alert("Не удалось распарсить рецепт по ссылке");
+    } finally {
+      setParseLoading(false);
+    }
   };
 
   const handleSaveRecipe = async () => {
@@ -1174,6 +1378,41 @@ export default function ProfilePage() {
                   />
                 </label>
 
+                <div className="col-span-2">
+                  <span className="mb-1 block font-inter text-sm text-umami-gray">
+                    Ссылка на рецепт для парсинга
+                  </span>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={recipeForm.source_url}
+                      onChange={(e) =>
+                        setRecipeForm({ ...recipeForm, source_url: e.target.value })
+                      }
+                      placeholder="https://..."
+                      className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleParseRecipeByUrl}
+                      disabled={parseLoading}
+                      className="whitespace-nowrap rounded-full bg-umami-orange px-4 py-2 font-nunito text-sm text-white disabled:opacity-60"
+                    >
+                      {parseLoading ? "Парсинг..." : "Заполнить"}
+                    </button>
+                  </div>
+                  {parseWarnings.length > 0 ? (
+                    <div className="mt-2 rounded-2xl border border-umami-light-gray bg-[#fff8ea] p-3">
+                      <p className="font-inter text-xs text-umami-gray">
+                        Не удалось получить поля:
+                      </p>
+                      <p className="mt-1 font-inter text-sm text-umami-dark-gray">
+                        {parseWarnings.join(", ")}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+
                 <label className="col-span-2 block">
                   <span className="mb-1 block font-inter text-sm text-umami-gray">
                     Описание
@@ -1736,3 +1975,6 @@ export default function ProfilePage() {
     </>
   );
 }
+
+
+

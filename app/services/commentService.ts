@@ -21,6 +21,12 @@ export interface Comment {
     username: string;
     avatar_url: string | null;
   };
+  Likes?: Array<{ id: string; user_id: string }>;
+  _count?: {
+    Likes?: number;
+  };
+  likes_count?: number;
+  is_liked?: boolean;
 }
 
 export interface CreateCommentData {
@@ -68,6 +74,10 @@ class CommentService {
   async update(recipeId: string, commentId: string, data: CreateCommentData): Promise<Comment> {
     const comment = await apiClient.put<Comment>(`/recipes/${recipeId}/comments/${commentId}`, data);
     return this.fixCommentImages(comment);
+  }
+
+  async toggleLike(commentId: string): Promise<void> {
+    await apiClient.post<unknown>(`/comments/${commentId}/like`);
   }
 }
 
