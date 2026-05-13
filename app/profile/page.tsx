@@ -1508,7 +1508,7 @@ export default function ProfilePage() {
                 прокручивать.
               </p>
 
-              <div className="max-h-[72vh] overflow-y-auto px-6 pb-6 pt-4">
+              <div className="px-6 pb-6 pt-4">
                 <div className="grid grid-cols-2 gap-5">
                   <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
                     <span className="mb-1 block font-inter text-sm text-umami-gray">
@@ -1750,6 +1750,43 @@ export default function ProfilePage() {
                     </label>
                   </div>
 
+                  <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
+                    <span className="mb-1 block font-inter text-sm text-umami-gray">
+                      Категории
+                    </span>
+                    <div className="flex flex-wrap gap-2 rounded-2xl border border-umami-light-gray p-3">
+                      {categories.map((item) => {
+                        const selected = recipeForm.categories.includes(
+                          Number(item.id)
+                        );
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() =>
+                              setRecipeForm((prev) => ({
+                                ...prev,
+                                categories: selected
+                                  ? prev.categories.filter(
+                                      (id) => id !== Number(item.id)
+                                    )
+                                  : [...prev.categories, Number(item.id)],
+                              }))
+                            }
+                            className={`rounded-full px-3 py-1 text-sm font-nunito ${
+                              selected
+                                ? "bg-umami-orange text-white"
+                                : "bg-gray-100 text-umami-gray"
+                            }`}
+                          >
+                            {item.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                <div className="col-span-2 grid grid-cols-3 gap-3">
                   <label className="block">
                     <span className="mb-1 block font-inter text-sm text-umami-gray">
                       Кухня
@@ -1824,42 +1861,7 @@ export default function ProfilePage() {
                       ))}
                     </select>
                   </label>
-
-                  <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
-                    <span className="mb-1 block font-inter text-sm text-umami-gray">
-                      Категории
-                    </span>
-                    <div className="flex flex-wrap gap-2 rounded-2xl border border-umami-light-gray p-3">
-                      {categories.map((item) => {
-                        const selected = recipeForm.categories.includes(
-                          Number(item.id)
-                        );
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() =>
-                              setRecipeForm((prev) => ({
-                                ...prev,
-                                categories: selected
-                                  ? prev.categories.filter(
-                                      (id) => id !== Number(item.id)
-                                    )
-                                  : [...prev.categories, Number(item.id)],
-                              }))
-                            }
-                            className={`rounded-full px-3 py-1 text-sm font-nunito ${
-                              selected
-                                ? "bg-umami-orange text-white"
-                                : "bg-gray-100 text-umami-gray"
-                            }`}
-                          >
-                            {item.name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                </div>
 
                   <div className="col-span-2">
                     <div className="mb-2 flex items-center justify-between">
@@ -1892,7 +1894,7 @@ export default function ProfilePage() {
                       {recipeForm.ingredients.map((item, index) => (
                         <div
                           key={index}
-                          className="grid grid-cols-4 gap-2 rounded-2xl border border-[#efefef] bg-white p-3"
+                          className="grid grid-cols-4 gap-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-3"
                         >
                           <select
                             value={item.ingredient_id ?? ""}
@@ -2081,28 +2083,28 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="sticky bottom-0 mt-6 flex gap-4 border-t border-[#efefef] bg-white pt-4">
-                  <button
-                    type="button"
-                    disabled={recipeActionLoading}
-                    onClick={handleSaveRecipe}
-                    className="flex-1 rounded-full bg-umami-green px-6 py-2 font-nunito font-medium text-white transition-colors hover:bg-[#6a805e] disabled:opacity-60"
-                  >
-                    {recipeActionLoading ? "Сохраняем..." : "Сохранить рецепт"}
-                  </button>
-                  <button
-                    type="button"
+              <div className="mt-6 flex gap-3 border-t border-[#efefef] pt-3">
+                <button
+                  type="button"
+                  disabled={recipeActionLoading}
+                  onClick={handleSaveRecipe}
+                  className="flex-1 rounded-full bg-umami-green px-4 py-1.75 font-nunito text-sm font-medium text-white transition-colors hover:bg-[#6a805e] disabled:opacity-60"
+                >
+                  {recipeActionLoading ? "Сохраняем..." : "Сохранить рецепт"}
+                </button>
+                <button
+                  type="button"
                     disabled={recipeActionLoading}
                     onClick={() => {
                       setIsRecipeEditorOpen(false);
                       setEditingRecipeId(null);
                       setRecipeForm(emptyRecipeForm);
                     }}
-                    className="flex-1 rounded-full bg-umami-gray px-6 py-2 font-nunito font-medium text-white transition-colors hover:bg-gray-500 disabled:opacity-60"
-                  >
-                    Отмена
-                  </button>
-                </div>
+                  className="flex-1 rounded-full bg-umami-gray px-4 py-1.75 font-nunito text-sm font-medium text-white transition-colors hover:bg-gray-500 disabled:opacity-60"
+                >
+                  Отмена
+                </button>
+              </div>
               </div>
             </div>
           )}
