@@ -1457,8 +1457,8 @@ export default function ProfilePage() {
           )}
 
           {isRecipeEditorOpen && (
-            <div className="rounded-[20px] border border-[#eaeaea] bg-white p-6">
-              <div className="mb-6 flex items-center justify-between">
+            <div className="overflow-hidden rounded-[24px] border border-[#eaeaea] bg-white shadow-[0_12px_36px_rgba(0,0,0,0.08)]">
+              <div className="flex items-center justify-between border-b border-[#efefef] bg-[#fcfaf5] px-6 py-4">
                 <h2 className="font-nunito text-2xl font-bold text-umami-dark-gray">
                   {editingRecipeId ? "Редактировать рецепт" : "Добавить рецепт"}
                 </h2>
@@ -1474,8 +1474,12 @@ export default function ProfilePage() {
                   Закрыть
                 </button>
               </div>
+              <p className="px-6 pt-3 font-inter text-sm text-umami-gray">
+                Заполните основные поля, затем ингредиенты и шаги. Секцию можно прокручивать.
+              </p>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="max-h-[72vh] overflow-y-auto px-6 pb-6 pt-4">
+              <div className="grid grid-cols-2 gap-5">
                 <label className="col-span-2 block">
                   <span className="mb-1 block font-inter text-sm text-umami-gray">
                     Название
@@ -1486,11 +1490,11 @@ export default function ProfilePage() {
                     onChange={(e) =>
                       setRecipeForm({ ...recipeForm, title: e.target.value })
                     }
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   />
                 </label>
 
-                <div className="col-span-2">
+                <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
                   <span className="mb-1 block font-inter text-sm text-umami-gray">
                     Ссылка на рецепт для парсинга
                   </span>
@@ -1502,7 +1506,7 @@ export default function ProfilePage() {
                         setRecipeForm({ ...recipeForm, source_url: e.target.value })
                       }
                       placeholder="https://..."
-                      className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                      className="w-full rounded-full border border-umami-light-gray bg-white px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                     />
                     <button
                       type="button"
@@ -1546,7 +1550,7 @@ export default function ProfilePage() {
                         description: e.target.value,
                       })
                     }
-                    className="h-24 w-full rounded-2xl border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="h-24 w-full rounded-2xl border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   />
                 </label>
 
@@ -1560,7 +1564,7 @@ export default function ProfilePage() {
                     onChange={(e) =>
                       handleRecipeImageFileChange(e.target.files?.[0] || null)
                     }
-                    className="w-full rounded-2xl border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="w-full rounded-2xl border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   />
                   {recipeForm.image_preview && (
                     <div className="relative mt-2 w-full overflow-hidden rounded-2xl border border-umami-light-gray">
@@ -1587,7 +1591,7 @@ export default function ProfilePage() {
                         difficulty: e.target.value,
                       })
                     }
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   >
                     <option value="1">Легко</option>
                     <option value="3">Средне</option>
@@ -1609,7 +1613,7 @@ export default function ProfilePage() {
                         portion: Number(e.target.value) || 1,
                       })
                     }
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   />
                 </label>
 
@@ -1627,7 +1631,7 @@ export default function ProfilePage() {
                         cooking_time: Number(e.target.value) || 1,
                       })
                     }
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   />
                 </label>
 
@@ -1645,7 +1649,7 @@ export default function ProfilePage() {
                         calorific: Number(e.target.value) || 0,
                       })
                     }
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   />
                 </label>
 
@@ -1663,7 +1667,7 @@ export default function ProfilePage() {
                         proteins: Number(e.target.value) || 0,
                       })
                     }
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   />
                 </label>
 
@@ -1681,7 +1685,7 @@ export default function ProfilePage() {
                         fats: Number(e.target.value) || 0,
                       })
                     }
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   />
                 </label>
 
@@ -1699,7 +1703,7 @@ export default function ProfilePage() {
                         carbohydrates: Number(e.target.value) || 0,
                       })
                     }
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   />
                 </label>
 
@@ -1717,7 +1721,7 @@ export default function ProfilePage() {
                           : null,
                       })
                     }
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   >
                     <option value="">Не выбрано</option>
                     {kitchens.map((item) => (
@@ -1742,7 +1746,7 @@ export default function ProfilePage() {
                           : null,
                       })
                     }
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   >
                     <option value="">Не выбрано</option>
                     {celebrations.map((item) => (
@@ -1767,7 +1771,7 @@ export default function ProfilePage() {
                           : null,
                       })
                     }
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm"
+                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                   >
                     <option value="">Не выбрано</option>
                     {cookings.map((item) => (
@@ -1778,7 +1782,7 @@ export default function ProfilePage() {
                   </select>
                 </label>
 
-                <div className="col-span-2">
+                <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
                   <span className="mb-1 block font-inter text-sm text-umami-gray">
                     Категории
                   </span>
@@ -1840,9 +1844,9 @@ export default function ProfilePage() {
                       + ингредиент
                     </button>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {recipeForm.ingredients.map((item, index) => (
-                      <div key={index} className="grid grid-cols-4 gap-2">
+                      <div key={index} className="grid grid-cols-4 gap-2 rounded-2xl border border-[#efefef] bg-white p-3">
                         <select
                           value={item.ingredient_id ?? ""}
                           onChange={(e) =>
@@ -1909,7 +1913,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="col-span-2">
+                <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="font-inter text-sm text-umami-gray">
                       Шаги
@@ -2021,7 +2025,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="mt-6 flex gap-4">
+              <div className="sticky bottom-0 mt-6 flex gap-4 border-t border-[#efefef] bg-white pt-4">
                 <button
                   type="button"
                   disabled={recipeActionLoading}
@@ -2042,6 +2046,7 @@ export default function ProfilePage() {
                 >
                   Отмена
                 </button>
+              </div>
               </div>
             </div>
           )}
