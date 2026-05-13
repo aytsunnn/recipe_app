@@ -69,9 +69,9 @@ interface RecipeFormData {
 }
 
 const DIFFICULTY_TO_API: Record<string, "1" | "2" | "3" | "4" | "5"> = {
-  "Легко": "1",
-  "Средне": "3",
-  "Сложно": "5",
+  Легко: "1",
+  Средне: "3",
+  Сложно: "5",
   easy: "1",
   medium: "3",
   hard: "5",
@@ -172,7 +172,9 @@ export default function ProfilePage() {
   const [recipeActionLoading, setRecipeActionLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [isAvatarActionsOpen, setIsAvatarActionsOpen] = useState(false);
-  const [recipeFilter, setRecipeFilter] = useState<'all' | 'public' | 'private'>('all');
+  const [recipeFilter, setRecipeFilter] = useState<
+    "all" | "public" | "private"
+  >("all");
   const [followModalType, setFollowModalType] = useState<
     "following" | "followers" | null
   >(null);
@@ -192,9 +194,8 @@ export default function ProfilePage() {
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   const filteredRecipes = useMemo(() => {
-
-    if (recipeFilter === 'public') return recipes.filter(r => !r.is_private);
-    if (recipeFilter === 'private') return recipes.filter(r => r.is_private);
+    if (recipeFilter === "public") return recipes.filter((r) => !r.is_private);
+    if (recipeFilter === "private") return recipes.filter((r) => r.is_private);
     return recipes;
   }, [recipes, recipeFilter]);
 
@@ -249,7 +250,8 @@ export default function ProfilePage() {
     });
     const ownRecipes = Array.from(allById.values()).sort(
       (a, b) =>
-        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+        new Date(b.createdAt || 0).getTime() -
+        new Date(a.createdAt || 0).getTime()
     );
     setRecipes(ownRecipes);
     setStats({
@@ -504,41 +506,41 @@ export default function ProfilePage() {
       ingredients:
         (fullRecipe.Ingredients || []).length > 0
           ? (fullRecipe.Ingredients || []).map((ingredient) => ({
-            ingredient_id: Number(ingredient.id),
-            ingredient_name: ingredient.name || "",
-            quantity: Number(ingredient.RecipeIngredient?.quantity) || 1,
-            unit_of_measurement:
-              ingredient.Unit?.short_name ||
-              ingredient.Unit?.name ||
-              ingredient.unit_of_measurement ||
-              "",
-            note: ingredient.RecipeIngredient?.note || "",
-          }))
+              ingredient_id: Number(ingredient.id),
+              ingredient_name: ingredient.name || "",
+              quantity: Number(ingredient.RecipeIngredient?.quantity) || 1,
+              unit_of_measurement:
+                ingredient.Unit?.short_name ||
+                ingredient.Unit?.name ||
+                ingredient.unit_of_measurement ||
+                "",
+              note: ingredient.RecipeIngredient?.note || "",
+            }))
           : [
-            {
-              ingredient_id: null,
-              ingredient_name: "",
-              quantity: 1,
-              unit_of_measurement: "",
-              note: "",
-            },
-          ],
+              {
+                ingredient_id: null,
+                ingredient_name: "",
+                quantity: 1,
+                unit_of_measurement: "",
+                note: "",
+              },
+            ],
       steps:
         sortedSteps.length > 0
           ? sortedSteps.map((step) => ({
-            description: step.description || "",
-            image_url: step.image_url || "",
-            image_file: null,
-            image_preview: step.image_url || "",
-          }))
-          : [
-            {
-              description: "",
-              image_url: "",
+              description: step.description || "",
+              image_url: step.image_url || "",
               image_file: null,
-              image_preview: "",
-            },
-          ],
+              image_preview: step.image_url || "",
+            }))
+          : [
+              {
+                description: "",
+                image_url: "",
+                image_file: null,
+                image_preview: "",
+              },
+            ],
       source_url: sourceUrlFromApi,
       parsed_from_url: isParsedRecipe,
     });
@@ -613,8 +615,8 @@ export default function ProfilePage() {
     const ingredientId = ingredientIdValue ? Number(ingredientIdValue) : null;
     const selected = ingredientId
       ? ingredientsCatalog.find(
-        (ingredient) => Number(ingredient.id) === ingredientId
-      )
+          (ingredient) => Number(ingredient.id) === ingredientId
+        )
       : null;
 
     setIngredient(index, {
@@ -659,7 +661,9 @@ export default function ProfilePage() {
       }
       if (typeof root !== "object") return {};
 
-      const queue: Record<string, unknown>[] = [root as Record<string, unknown>];
+      const queue: Record<string, unknown>[] = [
+        root as Record<string, unknown>,
+      ];
       while (queue.length > 0) {
         const current = queue.shift()!;
         const hasRecipeShape =
@@ -704,7 +708,10 @@ export default function ProfilePage() {
                 toNumberValue(row.quantity) ??
                 toNumberValue(row.amount) ??
                 toNumberValue(row.value);
-              const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? quantityRaw : 1;
+              const quantity =
+                Number.isFinite(quantityRaw) && quantityRaw > 0
+                  ? quantityRaw
+                  : 1;
               const unit =
                 toStringValue(row.unit) ||
                 toStringValue(row.unit_of_measurement) ||
@@ -759,7 +766,9 @@ export default function ProfilePage() {
       const description = toStringValue(raw.description);
       const parsedSiteLabel = (() => {
         try {
-          const host = new URL(sourceUrl).hostname.replace(/^www\./i, "").trim();
+          const host = new URL(sourceUrl).hostname
+            .replace(/^www\./i, "")
+            .trim();
           return host || "сайта";
         } catch {
           return "сайта";
@@ -774,8 +783,12 @@ export default function ProfilePage() {
       const nextWarnings: string[] = [];
 
       if (!title) nextWarnings.push("Название не найдено");
-      if (!description) nextWarnings.push("Описание из статьи не найдено, подставлено имя сайта");
-      if (parsedIngredients.length === 0) nextWarnings.push("Ингредиенты не найдены");
+      if (!description)
+        nextWarnings.push(
+          "Описание из статьи не найдено, подставлено имя сайта"
+        );
+      if (parsedIngredients.length === 0)
+        nextWarnings.push("Ингредиенты не найдены");
       if (parsedSteps.length === 0) nextWarnings.push("Шаги не найдены");
       const parsedImageUrl =
         toStringValue(raw.image_url) ||
@@ -802,9 +815,13 @@ export default function ProfilePage() {
             ? Number(toNumberValue(raw.cooking_time) ?? toNumberValue(raw.time))
             : prev.cooking_time,
         calorific:
-          (toNumberValue(raw.calorific) ?? toNumberValue(raw.calories)) !== null &&
-          Number(toNumberValue(raw.calorific) ?? toNumberValue(raw.calories)) >= 0
-            ? Number(toNumberValue(raw.calorific) ?? toNumberValue(raw.calories))
+          (toNumberValue(raw.calorific) ?? toNumberValue(raw.calories)) !==
+            null &&
+          Number(toNumberValue(raw.calorific) ?? toNumberValue(raw.calories)) >=
+            0
+            ? Number(
+                toNumberValue(raw.calorific) ?? toNumberValue(raw.calories)
+              )
             : prev.calorific,
         proteins:
           Number.isFinite(Number(raw.proteins)) && Number(raw.proteins) >= 0
@@ -815,10 +832,12 @@ export default function ProfilePage() {
             ? Number(raw.fats)
             : prev.fats,
         carbohydrates:
-          Number.isFinite(Number(raw.carbohydrates)) && Number(raw.carbohydrates) >= 0
+          Number.isFinite(Number(raw.carbohydrates)) &&
+          Number(raw.carbohydrates) >= 0
             ? Number(raw.carbohydrates)
             : prev.carbohydrates,
-        ingredients: parsedIngredients.length > 0 ? parsedIngredients : prev.ingredients,
+        ingredients:
+          parsedIngredients.length > 0 ? parsedIngredients : prev.ingredients,
         steps: parsedSteps.length > 0 ? parsedSteps : prev.steps,
         parsed_from_url: true,
         is_private: true,
@@ -904,15 +923,15 @@ export default function ProfilePage() {
         carbohydrates: Number(recipeForm.carbohydrates) || 0,
         is_private: recipeForm.parsed_from_url ? true : recipeForm.is_private,
         ...(Number.isFinite(Number(recipeForm.kitchen_id)) &&
-          recipeForm.kitchen_id
+        recipeForm.kitchen_id
           ? { kitchen_id: Number(recipeForm.kitchen_id) }
           : {}),
         ...(Number.isFinite(Number(recipeForm.celebration_id)) &&
-          recipeForm.celebration_id
+        recipeForm.celebration_id
           ? { celebration_id: Number(recipeForm.celebration_id) }
           : {}),
         ...(Number.isFinite(Number(recipeForm.cooking_id)) &&
-          recipeForm.cooking_id
+        recipeForm.cooking_id
           ? { cooking_id: Number(recipeForm.cooking_id) }
           : {}),
         ...(recipeForm.categories.length > 0
@@ -961,21 +980,25 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAvatarFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarFileChange = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
     if (!user) return;
     const file = event.target.files?.[0];
     if (!file) return;
     try {
       setAvatarLoading(true);
       const avatarUrl = await uploadService.uploadImage(file, "avatars");
-      const updatedUser = await userService.updateProfile({ avatar_url: avatarUrl });
+      const updatedUser = await userService.updateProfile({
+        avatar_url: avatarUrl,
+      });
       setUser((prev) =>
         prev
           ? {
-            ...prev,
-            ...updatedUser,
-            avatar_url: updatedUser.avatar_url ?? avatarUrl,
-          }
+              ...prev,
+              ...updatedUser,
+              avatar_url: updatedUser.avatar_url ?? avatarUrl,
+            }
           : prev
       );
       authService.dispatchAuthChange();
@@ -996,10 +1019,10 @@ export default function ProfilePage() {
       setUser((prev) =>
         prev
           ? {
-            ...prev,
-            ...updatedUser,
-            avatar_url: null,
-          }
+              ...prev,
+              ...updatedUser,
+              avatar_url: null,
+            }
           : prev
       );
       authService.dispatchAuthChange();
@@ -1059,8 +1082,9 @@ export default function ProfilePage() {
             <Link
               key={item.label}
               href={item.href}
-              className={`flex h-[30px] items-center gap-2.5 rounded-[7px] px-[5px] font-nunito text-xs font-bold text-umami-dark-gray transition-colors ${item.active ? "bg-[#f1ebdb]" : "hover:bg-[#f1ebdb]/70"
-                }`}
+              className={`flex h-[30px] items-center gap-2.5 rounded-[7px] px-[5px] font-nunito text-xs font-bold text-umami-dark-gray transition-colors ${
+                item.active ? "bg-[#f1ebdb]" : "hover:bg-[#f1ebdb]/70"
+              }`}
             >
               <Image width={20} height={20} src={item.icon} alt="" />
               <span>{item.label}</span>
@@ -1314,8 +1338,8 @@ export default function ProfilePage() {
                         {isEditProfileLoading
                           ? "Сохраняем..."
                           : isEditVerificationStep
-                            ? "Подтвердить и сохранить"
-                            : "Сохранить"}
+                          ? "Подтвердить и сохранить"
+                          : "Сохранить"}
                       </button>
                       <button
                         type="button"
@@ -1335,31 +1359,35 @@ export default function ProfilePage() {
                     {/* Фильтры рецептов */}
                     <div className="flex gap-2.5 mb-2.5">
                       <button
-                        onClick={() => setRecipeFilter('all')}
-                        className={`px-4 py-1.5 rounded-full font-nunito text-xs font-bold transition-colors ${recipeFilter === 'all'
+                        onClick={() => setRecipeFilter("all")}
+                        className={`px-4 py-1.5 rounded-full font-nunito text-xs font-bold transition-colors ${
+                          recipeFilter === "all"
                             ? "bg-umami-green text-white"
                             : "bg-white border border-[#eaeaea] text-umami-gray hover:bg-gray-50"
-                          }`}
+                        }`}
                       >
                         Все ({recipes.length})
                       </button>
                       <button
-                        onClick={() => setRecipeFilter('public')}
-                        className={`px-4 py-1.5 rounded-full font-nunito text-xs font-bold transition-colors ${recipeFilter === 'public'
+                        onClick={() => setRecipeFilter("public")}
+                        className={`px-4 py-1.5 rounded-full font-nunito text-xs font-bold transition-colors ${
+                          recipeFilter === "public"
                             ? "bg-umami-green text-white"
                             : "bg-white border border-[#eaeaea] text-umami-gray hover:bg-gray-50"
-                          }`}
+                        }`}
                       >
-                        Публичные ({recipes.filter(r => !r.is_private).length})
+                        Публичные ({recipes.filter((r) => !r.is_private).length}
+                        )
                       </button>
                       <button
-                        onClick={() => setRecipeFilter('private')}
-                        className={`px-4 py-1.5 rounded-full font-nunito text-xs font-bold transition-colors ${recipeFilter === 'private'
+                        onClick={() => setRecipeFilter("private")}
+                        className={`px-4 py-1.5 rounded-full font-nunito text-xs font-bold transition-colors ${
+                          recipeFilter === "private"
                             ? "bg-umami-green text-white"
                             : "bg-white border border-[#eaeaea] text-umami-gray hover:bg-gray-50"
-                          }`}
+                        }`}
                       >
-                        Приватные ({recipes.filter(r => r.is_private).length})
+                        Приватные ({recipes.filter((r) => r.is_private).length})
                       </button>
                     </div>
 
@@ -1381,7 +1409,9 @@ export default function ProfilePage() {
                               <>
                                 <button
                                   type="button"
-                                  onClick={() => void openEditRecipeEditor(recipe)}
+                                  onClick={() =>
+                                    void openEditRecipeEditor(recipe)
+                                  }
                                   className="rounded-full bg-white px-3 py-1 font-nunito text-xs font-bold text-umami-dark-gray border border-umami-light-gray/70"
                                 >
                                   Редактировать
@@ -1407,7 +1437,6 @@ export default function ProfilePage() {
                     )}
                     <ScrollToTopButton anchorRef={feedColumnRef} />
                   </div>
-
                 ) : (
                   <div className="rounded-[15px] border border-[#eaeaea] bg-white p-8 text-center">
                     <p className="font-nunito text-lg font-bold text-umami-gray">
@@ -1475,578 +1504,605 @@ export default function ProfilePage() {
                 </button>
               </div>
               <p className="px-6 pt-3 font-inter text-sm text-umami-gray">
-                Заполните основные поля, затем ингредиенты и шаги. Секцию можно прокручивать.
+                Заполните основные поля, затем ингредиенты и шаги. Секцию можно
+                прокручивать.
               </p>
 
               <div className="max-h-[72vh] overflow-y-auto px-6 pb-6 pt-4">
-              <div className="grid grid-cols-2 gap-5">
-                <label className="col-span-2 block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Название
-                  </span>
-                  <input
-                    type="text"
-                    value={recipeForm.title}
-                    onChange={(e) =>
-                      setRecipeForm({ ...recipeForm, title: e.target.value })
-                    }
-                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  />
-                </label>
-
-                <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Ссылка на рецепт для парсинга
-                  </span>
-                  <div className="flex gap-2">
-                    <input
-                      type="url"
-                      value={recipeForm.source_url}
-                      onChange={(e) =>
-                        setRecipeForm({ ...recipeForm, source_url: e.target.value })
-                      }
-                      placeholder="https://..."
-                      className="w-full rounded-full border border-umami-light-gray bg-white px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleParseRecipeByUrl}
-                      disabled={parseLoading}
-                      className="whitespace-nowrap rounded-full bg-umami-orange px-4 py-2 font-nunito text-sm text-white disabled:opacity-60"
-                    >
-                      {parseLoading ? "Парсинг..." : "Заполнить"}
-                    </button>
-                    {recipeForm.parsed_from_url ? (
+                <div className="grid grid-cols-2 gap-5">
+                  <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
+                    <span className="mb-1 block font-inter text-sm text-umami-gray">
+                      Ссылка на рецепт для парсинга
+                    </span>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        value={recipeForm.source_url}
+                        onChange={(e) =>
+                          setRecipeForm({
+                            ...recipeForm,
+                            source_url: e.target.value,
+                          })
+                        }
+                        placeholder="https://..."
+                        className="w-full rounded-full border border-umami-light-gray bg-white px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                      />
                       <button
                         type="button"
-                        onClick={handleResetParsedRecipe}
-                        className="whitespace-nowrap rounded-full bg-umami-gray px-4 py-2 font-nunito text-sm text-white"
+                        onClick={handleParseRecipeByUrl}
+                        disabled={parseLoading}
+                        className="whitespace-nowrap rounded-full bg-umami-orange px-4 py-2 font-nunito text-sm text-white disabled:opacity-60"
                       >
-                        Сбросить
+                        {parseLoading ? "Парсинг..." : "Заполнить"}
                       </button>
+                      {recipeForm.parsed_from_url ? (
+                        <button
+                          type="button"
+                          onClick={handleResetParsedRecipe}
+                          className="whitespace-nowrap rounded-full bg-umami-gray px-4 py-2 font-nunito text-sm text-white"
+                        >
+                          Сбросить
+                        </button>
+                      ) : null}
+                    </div>
+                    {parseWarnings.length > 0 ? (
+                      <div className="mt-2 rounded-2xl border border-umami-light-gray bg-[#fff8ea] p-3">
+                        <p className="font-inter text-xs text-umami-gray">
+                          Не удалось получить поля:
+                        </p>
+                        <p className="mt-1 font-inter text-sm text-umami-dark-gray">
+                          {parseWarnings.join(", ")}
+                        </p>
+                      </div>
                     ) : null}
                   </div>
-                  {parseWarnings.length > 0 ? (
-                    <div className="mt-2 rounded-2xl border border-umami-light-gray bg-[#fff8ea] p-3">
-                      <p className="font-inter text-xs text-umami-gray">
-                        Не удалось получить поля:
-                      </p>
-                      <p className="mt-1 font-inter text-sm text-umami-dark-gray">
-                        {parseWarnings.join(", ")}
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-
-                <label className="col-span-2 block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Описание
-                  </span>
-                  <textarea
-                    value={recipeForm.description}
-                    onChange={(e) =>
-                      setRecipeForm({
-                        ...recipeForm,
-                        description: e.target.value,
-                      })
-                    }
-                    className="h-24 w-full rounded-2xl border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  />
-                </label>
-
-                <label className="col-span-2 block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Фото рецепта
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) =>
-                      handleRecipeImageFileChange(e.target.files?.[0] || null)
-                    }
-                    className="w-full rounded-2xl border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  />
-                  {recipeForm.image_preview && (
-                    <div className="relative mt-2 w-full overflow-hidden rounded-2xl border border-umami-light-gray">
-                      <Image
-                        src={getSafeImageUrl(recipeForm.image_preview)}
-                        alt="recipe preview"
-                        width={960}
-                        height={960}
-                        className="h-auto w-full rounded-2xl object-contain"
-                      />
-                    </div>
-                  )}
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Сложность
-                  </span>
-                  <select
-                    value={recipeForm.difficulty}
-                    onChange={(e) =>
-                      setRecipeForm({
-                        ...recipeForm,
-                        difficulty: e.target.value,
-                      })
-                    }
-                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  >
-                    <option value="1">Легко</option>
-                    <option value="3">Средне</option>
-                    <option value="5">Сложно</option>
-                  </select>
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Порции
-                  </span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={recipeForm.portion}
-                    onChange={(e) =>
-                      setRecipeForm({
-                        ...recipeForm,
-                        portion: Number(e.target.value) || 1,
-                      })
-                    }
-                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Время приготовления (мин)
-                  </span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={recipeForm.cooking_time}
-                    onChange={(e) =>
-                      setRecipeForm({
-                        ...recipeForm,
-                        cooking_time: Number(e.target.value) || 1,
-                      })
-                    }
-                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Калории
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={recipeForm.calorific}
-                    onChange={(e) =>
-                      setRecipeForm({
-                        ...recipeForm,
-                        calorific: Number(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Белки
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={recipeForm.proteins}
-                    onChange={(e) =>
-                      setRecipeForm({
-                        ...recipeForm,
-                        proteins: Number(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Жиры
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={recipeForm.fats}
-                    onChange={(e) =>
-                      setRecipeForm({
-                        ...recipeForm,
-                        fats: Number(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Углеводы
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={recipeForm.carbohydrates}
-                    onChange={(e) =>
-                      setRecipeForm({
-                        ...recipeForm,
-                        carbohydrates: Number(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Кухня
-                  </span>
-                  <select
-                    value={recipeForm.kitchen_id ?? ""}
-                    onChange={(e) =>
-                      setRecipeForm({
-                        ...recipeForm,
-                        kitchen_id: e.target.value
-                          ? Number(e.target.value)
-                          : null,
-                      })
-                    }
-                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  >
-                    <option value="">Не выбрано</option>
-                    {kitchens.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Праздник
-                  </span>
-                  <select
-                    value={recipeForm.celebration_id ?? ""}
-                    onChange={(e) =>
-                      setRecipeForm({
-                        ...recipeForm,
-                        celebration_id: e.target.value
-                          ? Number(e.target.value)
-                          : null,
-                      })
-                    }
-                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  >
-                    <option value="">Не выбрано</option>
-                    {celebrations.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Способ приготовления
-                  </span>
-                  <select
-                    value={recipeForm.cooking_id ?? ""}
-                    onChange={(e) =>
-                      setRecipeForm({
-                        ...recipeForm,
-                        cooking_id: e.target.value
-                          ? Number(e.target.value)
-                          : null,
-                      })
-                    }
-                    className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                  >
-                    <option value="">Не выбрано</option>
-                    {cookings.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
-                  <span className="mb-1 block font-inter text-sm text-umami-gray">
-                    Категории
-                  </span>
-                  <div className="flex flex-wrap gap-2 rounded-2xl border border-umami-light-gray p-3">
-                    {categories.map((item) => {
-                      const selected = recipeForm.categories.includes(
-                        Number(item.id)
-                      );
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() =>
-                            setRecipeForm((prev) => ({
-                              ...prev,
-                              categories: selected
-                                ? prev.categories.filter(
-                                  (id) => id !== Number(item.id)
-                                )
-                                : [...prev.categories, Number(item.id)],
-                            }))
-                          }
-                          className={`rounded-full px-3 py-1 text-sm font-nunito ${selected
-                              ? "bg-umami-orange text-white"
-                              : "bg-gray-100 text-umami-gray"
-                            }`}
-                        >
-                          {item.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="col-span-2">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="font-inter text-sm text-umami-gray">
-                      Ингредиенты
+                  <label className="col-span-2 block">
+                    <span className="mb-1 block font-inter text-sm text-umami-gray">
+                      Название
                     </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setRecipeForm((prev) => ({
-                          ...prev,
-                          ingredients: [
-                            ...prev.ingredients,
-                            {
-                              ingredient_id: null,
-                              ingredient_name: "",
-                              quantity: 1,
-                              unit_of_measurement: "",
-                              note: "",
-                            },
-                          ],
-                        }))
+                    <input
+                      type="text"
+                      value={recipeForm.title}
+                      onChange={(e) =>
+                        setRecipeForm({ ...recipeForm, title: e.target.value })
                       }
-                      className="rounded-full bg-gray-100 px-3 py-1 text-xs font-nunito"
-                    >
-                      + ингредиент
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    {recipeForm.ingredients.map((item, index) => (
-                      <div key={index} className="grid grid-cols-4 gap-2 rounded-2xl border border-[#efefef] bg-white p-3">
-                        <select
-                          value={item.ingredient_id ?? ""}
-                          onChange={(e) =>
-                            handleIngredientSelect(index, e.target.value)
-                          }
-                          className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                        >
-                          <option value="">Ингредиент</option>
-                          {ingredientsCatalog.map((ingredient) => (
-                            <option key={ingredient.id} value={ingredient.id}>
-                              {ingredient.name}
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type="number"
-                          min={0}
-                          value={item.quantity}
-                          onChange={(e) =>
-                            setIngredient(index, {
-                              quantity: Number(e.target.value) || 1,
-                            })
-                          }
-                          placeholder="Кол-во"
-                          className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                        />
-                        <select
-                          value={item.unit_of_measurement}
-                          onChange={(e) =>
-                            setIngredient(index, {
-                              unit_of_measurement: e.target.value,
-                            })
-                          }
-                          className="rounded-full border border-umami-light-gray px-4 py-2 text-sm text-umami-gray"
-                        >
-                          <option value="">Ед. изм.</option>
-                          {units.map((unit) => (
-                            <option key={`${index}-${unit.id}`} value={unit.short_name || unit.name}>
-                              {unit.name} ({unit.short_name || unit.name})
-                            </option>
-                          ))}
-                          {item.unit_of_measurement &&
-                            !units.some(
-                              (unit) =>
-                                (unit.short_name || unit.name) ===
-                                item.unit_of_measurement
-                            ) && (
-                              <option value={item.unit_of_measurement}>
-                                {item.unit_of_measurement}
-                              </option>
-                            )}
-                        </select>
-                        <input
-                          type="text"
-                          value={item.note}
-                          onChange={(e) =>
-                            setIngredient(index, { note: e.target.value })
-                          }
-                          placeholder="Примечание"
-                          className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
+                      className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                    />
+                  </label>
+
+                  <label className="col-span-2 block">
+                    <span className="mb-1 block font-inter text-sm text-umami-gray">
+                      Описание
+                    </span>
+                    <textarea
+                      value={recipeForm.description}
+                      onChange={(e) =>
+                        setRecipeForm({
+                          ...recipeForm,
+                          description: e.target.value,
+                        })
+                      }
+                      className="h-24 w-full rounded-2xl border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                    />
+                  </label>
+
+                  <label className="col-span-2 block">
+                    <span className="mb-1 block font-inter text-sm text-umami-gray">
+                      Фото рецепта
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) =>
+                        handleRecipeImageFileChange(e.target.files?.[0] || null)
+                      }
+                      className="w-full rounded-2xl border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                    />
+                    {recipeForm.image_preview && (
+                      <div className="relative mt-2 w-full overflow-hidden rounded-2xl border border-umami-light-gray">
+                        <Image
+                          src={getSafeImageUrl(recipeForm.image_preview)}
+                          alt="recipe preview"
+                          width={960}
+                          height={960}
+                          className="h-auto w-full rounded-2xl object-contain"
                         />
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    )}
+                  </label>
 
-                <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="font-inter text-sm text-umami-gray">
-                      Шаги
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setRecipeForm((prev) => ({
-                          ...prev,
-                          steps: [
-                            ...prev.steps,
-                            {
-                              description: "",
-                              image_url: "",
-                              image_file: null,
-                              image_preview: "",
-                            },
-                          ],
-                        }))
-                      }
-                      className="rounded-full bg-gray-100 px-3 py-1 text-xs font-nunito"
-                    >
-                      + шаг
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    {recipeForm.steps.map((item, index) => (
-                      <div
-                        key={index}
-                        className="grid grid-cols-1 gap-2 rounded-2xl border border-umami-light-gray p-3"
+                  <div className="col-span-2 grid grid-cols-3 gap-3">
+                    <label className="block">
+                      <span className="mb-1 block font-inter text-sm text-umami-gray">
+                        Сложность
+                      </span>
+                      <select
+                        value={recipeForm.difficulty}
+                        onChange={(e) =>
+                          setRecipeForm({
+                            ...recipeForm,
+                            difficulty: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                       >
-                        <input
-                          type="text"
-                          value={item.description}
-                          onChange={(e) =>
-                            setStep(index, { description: e.target.value })
-                          }
-                          placeholder="Описание шага"
-                          className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                        />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) =>
-                            handleStepImageFileChange(
-                              index,
-                              e.target.files?.[0] || null
-                            )
-                          }
-                          className="rounded-2xl border border-umami-light-gray px-4 py-2 text-sm"
-                        />
-                        <input
-                          type="text"
-                          value={item.image_url}
-                          onChange={(e) =>
-                            setStep(index, { image_url: e.target.value })
-                          }
-                          placeholder="или ссылка на фото шага"
-                          className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                        />
-                        {item.image_preview && (
-                          <div className="relative w-full overflow-hidden rounded-2xl border border-umami-light-gray">
-                            <Image
-                              src={getSafeImageUrl(item.image_preview)}
-                              alt="step preview"
-                              width={960}
-                              height={960}
-                              className="h-auto w-full rounded-2xl object-contain"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                        <option value="1">Легко</option>
+                        <option value="3">Средне</option>
+                        <option value="5">Сложно</option>
+                      </select>
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1 block font-inter text-sm text-umami-gray">
+                        Порции
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={recipeForm.portion}
+                        onChange={(e) =>
+                          setRecipeForm({
+                            ...recipeForm,
+                            portion: Number(e.target.value) || 1,
+                          })
+                        }
+                        className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1 block font-inter text-sm text-umami-gray">
+                        Время приготовления (мин)
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={recipeForm.cooking_time}
+                        onChange={(e) =>
+                          setRecipeForm({
+                            ...recipeForm,
+                            cooking_time: Number(e.target.value) || 1,
+                          })
+                        }
+                        className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="col-span-2 rounded-xl border border-[#f3d8b6] bg-[#fff7ec] px-3 py-2">
+                    <p className="font-inter text-xs text-umami-gray">
+                      Если не заполнять поля белки, жиры и углеводы, их
+                      рассчитает ИИ после публикации рецепта.
+                    </p>
+                  </div>
+
+                  <div className="col-span-2 grid grid-cols-2 gap-4">
+                    <label className="block">
+                      <span className="mb-1 block font-inter text-sm text-umami-gray">
+                        Калории
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={recipeForm.calorific}
+                        onChange={(e) =>
+                          setRecipeForm({
+                            ...recipeForm,
+                            calorific: Number(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1 block font-inter text-sm text-umami-gray">
+                        Белки
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={recipeForm.proteins}
+                        onChange={(e) =>
+                          setRecipeForm({
+                            ...recipeForm,
+                            proteins: Number(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1 block font-inter text-sm text-umami-gray">
+                        Жиры
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={recipeForm.fats}
+                        onChange={(e) =>
+                          setRecipeForm({
+                            ...recipeForm,
+                            fats: Number(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1 block font-inter text-sm text-umami-gray">
+                        Углеводы
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={recipeForm.carbohydrates}
+                        onChange={(e) =>
+                          setRecipeForm({
+                            ...recipeForm,
+                            carbohydrates: Number(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                      />
+                    </label>
+                  </div>
+
+                  <label className="block">
+                    <span className="mb-1 block font-inter text-sm text-umami-gray">
+                      Кухня
+                    </span>
+                    <select
+                      value={recipeForm.kitchen_id ?? ""}
+                      onChange={(e) =>
+                        setRecipeForm({
+                          ...recipeForm,
+                          kitchen_id: e.target.value
+                            ? Number(e.target.value)
+                            : null,
+                        })
+                      }
+                      className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                    >
+                      <option value="">Не выбрано</option>
+                      {kitchens.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 block font-inter text-sm text-umami-gray">
+                      Праздник
+                    </span>
+                    <select
+                      value={recipeForm.celebration_id ?? ""}
+                      onChange={(e) =>
+                        setRecipeForm({
+                          ...recipeForm,
+                          celebration_id: e.target.value
+                            ? Number(e.target.value)
+                            : null,
+                        })
+                      }
+                      className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                    >
+                      <option value="">Не выбрано</option>
+                      {celebrations.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 block font-inter text-sm text-umami-gray">
+                      Способ приготовления
+                    </span>
+                    <select
+                      value={recipeForm.cooking_id ?? ""}
+                      onChange={(e) =>
+                        setRecipeForm({
+                          ...recipeForm,
+                          cooking_id: e.target.value
+                            ? Number(e.target.value)
+                            : null,
+                        })
+                      }
+                      className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
+                    >
+                      <option value="">Не выбрано</option>
+                      {cookings.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
+                    <span className="mb-1 block font-inter text-sm text-umami-gray">
+                      Категории
+                    </span>
+                    <div className="flex flex-wrap gap-2 rounded-2xl border border-umami-light-gray p-3">
+                      {categories.map((item) => {
+                        const selected = recipeForm.categories.includes(
+                          Number(item.id)
+                        );
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() =>
+                              setRecipeForm((prev) => ({
+                                ...prev,
+                                categories: selected
+                                  ? prev.categories.filter(
+                                      (id) => id !== Number(item.id)
+                                    )
+                                  : [...prev.categories, Number(item.id)],
+                              }))
+                            }
+                            className={`rounded-full px-3 py-1 text-sm font-nunito ${
+                              selected
+                                ? "bg-umami-orange text-white"
+                                : "bg-gray-100 text-umami-gray"
+                            }`}
+                          >
+                            {item.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="font-inter text-sm text-umami-gray">
+                        Ингредиенты
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRecipeForm((prev) => ({
+                            ...prev,
+                            ingredients: [
+                              ...prev.ingredients,
+                              {
+                                ingredient_id: null,
+                                ingredient_name: "",
+                                quantity: 1,
+                                unit_of_measurement: "",
+                                note: "",
+                              },
+                            ],
+                          }))
+                        }
+                        className="rounded-full bg-gray-100 px-3 py-1 text-xs font-nunito"
+                      >
+                        + ингредиент
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      {recipeForm.ingredients.map((item, index) => (
+                        <div
+                          key={index}
+                          className="grid grid-cols-4 gap-2 rounded-2xl border border-[#efefef] bg-white p-3"
+                        >
+                          <select
+                            value={item.ingredient_id ?? ""}
+                            onChange={(e) =>
+                              handleIngredientSelect(index, e.target.value)
+                            }
+                            className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
+                          >
+                            <option value="">Ингредиент</option>
+                            {ingredientsCatalog.map((ingredient) => (
+                              <option key={ingredient.id} value={ingredient.id}>
+                                {ingredient.name}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            type="number"
+                            min={0}
+                            value={item.quantity}
+                            onChange={(e) =>
+                              setIngredient(index, {
+                                quantity: Number(e.target.value) || 1,
+                              })
+                            }
+                            placeholder="Кол-во"
+                            className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
+                          />
+                          <select
+                            value={item.unit_of_measurement}
+                            onChange={(e) =>
+                              setIngredient(index, {
+                                unit_of_measurement: e.target.value,
+                              })
+                            }
+                            className="rounded-full border border-umami-light-gray px-4 py-2 text-sm text-umami-gray"
+                          >
+                            <option value="">Ед. изм.</option>
+                            {units.map((unit) => (
+                              <option
+                                key={`${index}-${unit.id}`}
+                                value={unit.short_name || unit.name}
+                              >
+                                {unit.name} ({unit.short_name || unit.name})
+                              </option>
+                            ))}
+                            {item.unit_of_measurement &&
+                              !units.some(
+                                (unit) =>
+                                  (unit.short_name || unit.name) ===
+                                  item.unit_of_measurement
+                              ) && (
+                                <option value={item.unit_of_measurement}>
+                                  {item.unit_of_measurement}
+                                </option>
+                              )}
+                          </select>
+                          <input
+                            type="text"
+                            value={item.note}
+                            onChange={(e) =>
+                              setIngredient(index, { note: e.target.value })
+                            }
+                            placeholder="Примечание"
+                            className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="font-inter text-sm text-umami-gray">
+                        Шаги
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRecipeForm((prev) => ({
+                            ...prev,
+                            steps: [
+                              ...prev.steps,
+                              {
+                                description: "",
+                                image_url: "",
+                                image_file: null,
+                                image_preview: "",
+                              },
+                            ],
+                          }))
+                        }
+                        className="rounded-full bg-gray-100 px-3 py-1 text-xs font-nunito"
+                      >
+                        + шаг
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {recipeForm.steps.map((item, index) => (
+                        <div
+                          key={index}
+                          className="grid grid-cols-1 gap-2 rounded-2xl border border-umami-light-gray p-3"
+                        >
+                          <input
+                            type="text"
+                            value={item.description}
+                            onChange={(e) =>
+                              setStep(index, { description: e.target.value })
+                            }
+                            placeholder="Описание шага"
+                            className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
+                          />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) =>
+                              handleStepImageFileChange(
+                                index,
+                                e.target.files?.[0] || null
+                              )
+                            }
+                            className="rounded-2xl border border-umami-light-gray px-4 py-2 text-sm"
+                          />
+                          <input
+                            type="text"
+                            value={item.image_url}
+                            onChange={(e) =>
+                              setStep(index, { image_url: e.target.value })
+                            }
+                            placeholder="или ссылка на фото шага"
+                            className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
+                          />
+                          {item.image_preview && (
+                            <div className="relative w-full overflow-hidden rounded-2xl border border-umami-light-gray">
+                              <Image
+                                src={getSafeImageUrl(item.image_preview)}
+                                alt="step preview"
+                                width={960}
+                                height={960}
+                                className="h-auto w-full rounded-2xl object-contain"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="col-span-2 mt-1 flex items-center gap-3">
+                    <span className="font-inter text-sm text-umami-gray">
+                      Видимость рецепта:
+                    </span>
+                    {!recipeForm.parsed_from_url ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRecipeForm({ ...recipeForm, is_private: false })
+                        }
+                        className={`rounded-full px-4 py-1.5 font-nunito text-sm ${
+                          !recipeForm.is_private
+                            ? "bg-umami-green text-white"
+                            : "bg-gray-100 text-umami-gray"
+                        }`}
+                      >
+                        Публичный
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!recipeForm.parsed_from_url) {
+                          setRecipeForm({ ...recipeForm, is_private: true });
+                        }
+                      }}
+                      className={`rounded-full px-4 py-1.5 font-nunito text-sm ${
+                        recipeForm.is_private
+                          ? "bg-umami-orange text-white"
+                          : "bg-gray-100 text-umami-gray"
+                      } ${
+                        recipeForm.parsed_from_url
+                          ? "cursor-not-allowed opacity-85"
+                          : ""
+                      }`}
+                    >
+                      Приватный
+                    </button>
                   </div>
                 </div>
 
-                <div className="col-span-2 mt-1 flex items-center gap-3">
-                  <span className="font-inter text-sm text-umami-gray">
-                    Видимость рецепта:
-                  </span>
-                  {!recipeForm.parsed_from_url ? (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setRecipeForm({ ...recipeForm, is_private: false })
-                      }
-                      className={`rounded-full px-4 py-1.5 font-nunito text-sm ${!recipeForm.is_private
-                          ? "bg-umami-green text-white"
-                          : "bg-gray-100 text-umami-gray"
-                        }`}
-                    >
-                      Публичный
-                    </button>
-                  ) : null}
+                <div className="sticky bottom-0 mt-6 flex gap-4 border-t border-[#efefef] bg-white pt-4">
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!recipeForm.parsed_from_url) {
-                        setRecipeForm({ ...recipeForm, is_private: true });
-                      }
-                    }}
-                    className={`rounded-full px-4 py-1.5 font-nunito text-sm ${recipeForm.is_private
-                        ? "bg-umami-orange text-white"
-                        : "bg-gray-100 text-umami-gray"
-                      } ${recipeForm.parsed_from_url ? "cursor-not-allowed opacity-85" : ""}`}
+                    disabled={recipeActionLoading}
+                    onClick={handleSaveRecipe}
+                    className="flex-1 rounded-full bg-umami-green px-6 py-2 font-nunito font-medium text-white transition-colors hover:bg-[#6a805e] disabled:opacity-60"
                   >
-                    Приватный
+                    {recipeActionLoading ? "Сохраняем..." : "Сохранить рецепт"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={recipeActionLoading}
+                    onClick={() => {
+                      setIsRecipeEditorOpen(false);
+                      setEditingRecipeId(null);
+                      setRecipeForm(emptyRecipeForm);
+                    }}
+                    className="flex-1 rounded-full bg-umami-gray px-6 py-2 font-nunito font-medium text-white transition-colors hover:bg-gray-500 disabled:opacity-60"
+                  >
+                    Отмена
                   </button>
                 </div>
-              </div>
-
-              <div className="sticky bottom-0 mt-6 flex gap-4 border-t border-[#efefef] bg-white pt-4">
-                <button
-                  type="button"
-                  disabled={recipeActionLoading}
-                  onClick={handleSaveRecipe}
-                  className="flex-1 rounded-full bg-umami-green px-6 py-2 font-nunito font-medium text-white transition-colors hover:bg-[#6a805e] disabled:opacity-60"
-                >
-                  {recipeActionLoading ? "Сохраняем..." : "Сохранить рецепт"}
-                </button>
-                <button
-                  type="button"
-                  disabled={recipeActionLoading}
-                  onClick={() => {
-                    setIsRecipeEditorOpen(false);
-                    setEditingRecipeId(null);
-                    setRecipeForm(emptyRecipeForm);
-                  }}
-                  className="flex-1 rounded-full bg-umami-gray px-6 py-2 font-nunito font-medium text-white transition-colors hover:bg-gray-500 disabled:opacity-60"
-                >
-                  Отмена
-                </button>
-              </div>
               </div>
             </div>
           )}
@@ -2105,6 +2161,3 @@ export default function ProfilePage() {
     </>
   );
 }
-
-
-
