@@ -13,7 +13,6 @@ import ScrollToTopButton from "../ScrollToTopButton";
 import Link from "next/link";
 import Image from "next/image";
 
-
 const firstFromCsv = (csvValue: string | null) =>
   csvValue ? csvValue.split(",").filter(Boolean)[0] : undefined;
 
@@ -23,21 +22,41 @@ export default function FeedOfPosts() {
   const showFilters = searchParams?.get("filters") === "true";
 
   const firstKitchenId = firstFromCsv(searchParams?.get("kitchen_id") || null);
-  const firstCategoryId = firstFromCsv(searchParams?.get("category_id") || null);
-  const firstCelebrationId = firstFromCsv(searchParams?.get("celebration_id") || null);
+  const firstCategoryId = firstFromCsv(
+    searchParams?.get("category_id") || null
+  );
+  const firstCelebrationId = firstFromCsv(
+    searchParams?.get("celebration_id") || null
+  );
   const firstCookingId = firstFromCsv(searchParams?.get("cooking_id") || null);
   const firstDifficulty = firstFromCsv(searchParams?.get("difficulty") || null);
 
   const kitchenId = firstKitchenId ? parseInt(firstKitchenId) : undefined;
   const categoryId = firstCategoryId ? parseInt(firstCategoryId) : undefined;
-  const celebrationId = firstCelebrationId ? parseInt(firstCelebrationId) : undefined;
+  const celebrationId = firstCelebrationId
+    ? parseInt(firstCelebrationId)
+    : undefined;
   const cookingId = firstCookingId ? parseInt(firstCookingId) : undefined;
   const difficulty = firstDifficulty || undefined;
 
   const useRecommendations =
-    !searchQuery && !kitchenId && !categoryId && !celebrationId && !cookingId && !difficulty;
+    !searchQuery &&
+    !kitchenId &&
+    !categoryId &&
+    !celebrationId &&
+    !cookingId &&
+    !difficulty;
 
-  const { recipes, loading, loadingMore, error, refetch, updateParams, loadMore, hasMore } = useRecipes({
+  const {
+    recipes,
+    loading,
+    loadingMore,
+    error,
+    refetch,
+    updateParams,
+    loadMore,
+    hasMore,
+  } = useRecipes({
     initialParams: {
       search: searchQuery || undefined,
       kitchen_id: kitchenId,
@@ -48,7 +67,7 @@ export default function FeedOfPosts() {
     },
     useRecommendations,
   });
- 
+
   const [foundUsers, setFoundUsers] = useState<User[]>([]);
   const [isUsersLoading, setIsUsersLoading] = useState(false);
 
@@ -64,7 +83,8 @@ export default function FeedOfPosts() {
 
     if (searchQuery) {
       setIsUsersLoading(true);
-      userService.search(searchQuery)
+      userService
+        .search(searchQuery)
         .then(setFoundUsers)
         .catch(console.error)
         .finally(() => setIsUsersLoading(false));
@@ -81,8 +101,9 @@ export default function FeedOfPosts() {
     difficulty,
   ]);
 
-
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(
+    undefined
+  );
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const feedColumnRef = useRef<HTMLDivElement | null>(null);
@@ -152,7 +173,10 @@ export default function FeedOfPosts() {
   return (
     <div ref={feedColumnRef} className="w-full flex flex-col gap-2">
       {showFilters && (
-        <FiltersPanel onApplyFilters={handleApplyFilters} resultsCount={recipes.length} />
+        <FiltersPanel
+          onApplyFilters={handleApplyFilters}
+          resultsCount={recipes.length}
+        />
       )}
 
       {/* Результаты поиска пользователей */}
@@ -160,20 +184,24 @@ export default function FeedOfPosts() {
         <div className="bg-white rounded-[20px] border border-umami-light-gray/50 p-5 mb-2 flex flex-col gap-4">
           <h3 className="font-nunito font-bold text-lg text-umami-dark-gray flex items-center gap-2">
             Пользователи
-            {isUsersLoading && <span className="text-xs font-normal text-umami-gray animate-pulse">(ищем...)</span>}
+            {isUsersLoading && (
+              <span className="text-xs font-normal text-umami-gray animate-pulse">
+                (ищем...)
+              </span>
+            )}
           </h3>
           <div className="flex flex-wrap gap-4">
             {foundUsers.map((user) => (
-              <Link 
-                href={`/users/${user.id}`} 
-                key={user.id} 
+              <Link
+                href={`/users/${user.id}`}
+                key={user.id}
                 className="flex flex-col items-center gap-2 w-24 group"
               >
                 <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-transparent group-hover:border-umami-green transition-all">
-                  <Image 
-                    src={normalizeImageUrl(user.avatar_url, '/avatar.jpg')} 
-                    alt={user.name} 
-                    fill 
+                  <Image
+                    src={normalizeImageUrl(user.avatar_url, "/avatar.jpg")}
+                    alt={user.name}
+                    fill
                     className="object-cover"
                   />
                 </div>
@@ -188,7 +216,6 @@ export default function FeedOfPosts() {
           </div>
         </div>
       )}
-
 
       {recipes.length === 0 && !loading && (
         <div className="bg-white rounded-lg border border-umami-light-gray/50 p-8 text-center">
@@ -214,7 +241,9 @@ export default function FeedOfPosts() {
       <div ref={sentinelRef} className="h-1 w-full" />
       {hasMore && (
         <p className="py-2 text-center text-sm text-umami-gray">
-          {loadingMore ? "Загружаем еще..." : "Прокрутите вниз, чтобы загрузить еще"}
+          {loadingMore
+            ? "Загружаем еще..."
+            : "Прокрутите вниз, чтобы загрузить еще"}
         </p>
       )}
       <ScrollToTopButton anchorRef={feedColumnRef} />

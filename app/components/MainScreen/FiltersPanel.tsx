@@ -243,10 +243,7 @@ export default function FiltersPanel({
     <div className="mb-2">
       <div
         ref={chipsRowRef}
-        className={`flex gap-2 ${!openFilter
-            ? "no-scrollbar flex-nowrap overflow-x-auto pb-1 cursor-grab active:cursor-grabbing select-none"
-            : "flex-wrap"
-          }`}
+        className="no-scrollbar flex flex-nowrap gap-2 overflow-x-auto pb-1 cursor-grab select-none active:cursor-grabbing"
         onWheel={handleWheelScroll}
         onMouseDown={handleDragStart}
         onMouseMove={handleDragMove}
@@ -297,7 +294,7 @@ export default function FiltersPanel({
       </div>
 
       {openFilter && (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="no-scrollbar mt-3 flex flex-nowrap gap-2 overflow-x-auto pb-1">
           <button
             onClick={() =>
               setSelected(
