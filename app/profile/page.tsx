@@ -1,9 +1,11 @@
 ﻿"use client";
 
+export const dynamic = "force-dynamic";
+
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import FeedCard from "../components/FeedCard";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import { authService, User } from "../services/authService";
@@ -193,7 +195,7 @@ const emptyRecipeForm: RecipeFormData = {
   parsed_from_url: false,
 };
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
@@ -2468,3 +2470,13 @@ export default function ProfilePage() {
     </>
   );
 }
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[420px] items-center justify-center"><p className="font-nunito text-sm text-umami-gray">Загрузка...</p></div>}>
+      <ProfilePageContent />
+    </Suspense>
+  );
+}
+
+

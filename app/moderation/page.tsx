@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import LeftPart from "../components/MainScreen/NavigationLeftPart";
 import { authService } from "../services/authService";
@@ -252,7 +252,9 @@ export default function ModerationPage() {
   return (
     <div className="flex w-full gap-5">
       <div className="hidden w-55.75 lg:flex">
-        <LeftPart />
+        <Suspense fallback={<div className="w-full" />}>
+          <LeftPart />
+        </Suspense>
       </div>
 
       <div className="w-full pb-10 lg:w-[calc(100%-223px-20px)]">

@@ -31,7 +31,9 @@ function normalizeCategoryName(category: unknown): string | null {
   return null;
 }
 
-function parseUnitOverrideFromNote(note: string | null | undefined): string | null {
+function parseUnitOverrideFromNote(
+  note: string | null | undefined
+): string | null {
   const raw = (note || "").trim();
   if (!raw) return null;
   const marker = raw
@@ -74,15 +76,23 @@ export default function RecipeDetailsPage() {
   });
   const [personalNote, setPersonalNote] = useState("");
   const [noteSaving, setNoteSaving] = useState(false);
-  const [commentLikeBusy, setCommentLikeBusy] = useState<Record<string, boolean>>({});
+  const [commentLikeBusy, setCommentLikeBusy] = useState<
+    Record<string, boolean>
+  >({});
   const [canModerate, setCanModerate] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [recipeActionsOpen, setRecipeActionsOpen] = useState(false);
-  const [commentActionsOpenId, setCommentActionsOpenId] = useState<string | null>(null);
+  const [commentActionsOpenId, setCommentActionsOpenId] = useState<
+    string | null
+  >(null);
   const [deleteRecipeBusy, setDeleteRecipeBusy] = useState(false);
-  const [deleteCommentBusy, setDeleteCommentBusy] = useState<Record<string, boolean>>({});
+  const [deleteCommentBusy, setDeleteCommentBusy] = useState<
+    Record<string, boolean>
+  >({});
   const [desiredPortions, setDesiredPortions] = useState(1);
-  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+  const [highlightedCommentId, setHighlightedCommentId] = useState<
+    string | null
+  >(null);
   const recipeActionsRef = useRef<HTMLDivElement | null>(null);
   const commentActionsRef = useRef<HTMLDivElement | null>(null);
 
@@ -174,7 +184,8 @@ export default function RecipeDetailsPage() {
     quantity: string | number | null | undefined
   ): string | number => {
     if (quantity === null || quantity === undefined) return "—";
-    const basePortions = recipe?.portion && recipe.portion > 0 ? recipe.portion : 1;
+    const basePortions =
+      recipe?.portion && recipe.portion > 0 ? recipe.portion : 1;
     const ratio = desiredPortions > 0 ? desiredPortions / basePortions : 1;
 
     if (typeof quantity === "number") {
@@ -359,7 +370,12 @@ export default function RecipeDetailsPage() {
       );
       if (typeof window !== "undefined") {
         const raw = localStorage.getItem(RECIPE_LIKE_OVERRIDES_KEY);
-        const map = raw ? (JSON.parse(raw) as Record<string, { userId: string; isLiked: boolean }>) : {};
+        const map = raw
+          ? (JSON.parse(raw) as Record<
+              string,
+              { userId: string; isLiked: boolean }
+            >)
+          : {};
         map[recipeId] = { userId: currentUserId, isLiked: !prev };
         localStorage.setItem(RECIPE_LIKE_OVERRIDES_KEY, JSON.stringify(map));
       }
@@ -381,7 +397,12 @@ export default function RecipeDetailsPage() {
       );
       if (typeof window !== "undefined") {
         const raw = localStorage.getItem(RECIPE_LIKE_OVERRIDES_KEY);
-        const map = raw ? (JSON.parse(raw) as Record<string, { userId: string; isLiked: boolean }>) : {};
+        const map = raw
+          ? (JSON.parse(raw) as Record<
+              string,
+              { userId: string; isLiked: boolean }
+            >)
+          : {};
         map[recipeId] = { userId: currentUserId, isLiked: prev };
         localStorage.setItem(RECIPE_LIKE_OVERRIDES_KEY, JSON.stringify(map));
       }
@@ -444,7 +465,8 @@ export default function RecipeDetailsPage() {
     }
     const reason = window.prompt("Причина жалобы");
     if (!reason || !reason.trim()) return;
-    const description = window.prompt("Комментарий к жалобе (необязательно)") || "";
+    const description =
+      window.prompt("Комментарий к жалобе (необязательно)") || "";
     try {
       await moderationService.createReport({
         type: "recipe",
@@ -524,18 +546,23 @@ export default function RecipeDetailsPage() {
     if (typeof comment.is_liked === "boolean") return comment.is_liked;
     const commentAny = comment as unknown as Record<string, unknown>;
     if (typeof commentAny.isLiked === "boolean") return commentAny.isLiked;
-    if (typeof commentAny.liked_by_me === "boolean") return commentAny.liked_by_me;
+    if (typeof commentAny.liked_by_me === "boolean")
+      return commentAny.liked_by_me;
     if (!currentUserId) return false;
 
     if (Array.isArray(comment.Likes)) {
-      return comment.Likes.some((like) => String(like.user_id) === String(currentUserId));
+      return comment.Likes.some(
+        (like) => String(like.user_id) === String(currentUserId)
+      );
     }
 
     if (Array.isArray(commentAny.likes)) {
-      return (commentAny.likes as Array<Record<string, unknown>>).some((like) => {
-        const likeUserId = like.user_id ?? like.userId ?? like.author_id;
-        return String(likeUserId) === String(currentUserId);
-      });
+      return (commentAny.likes as Array<Record<string, unknown>>).some(
+        (like) => {
+          const likeUserId = like.user_id ?? like.userId ?? like.author_id;
+          return String(likeUserId) === String(currentUserId);
+        }
+      );
     }
 
     return false;
@@ -620,14 +647,17 @@ export default function RecipeDetailsPage() {
     }
     const reason = window.prompt("Причина жалобы");
     if (!reason || !reason.trim()) return;
-    const description = window.prompt("Комментарий к жалобе (необязательно)") || "";
+    const description =
+      window.prompt("Комментарий к жалобе (необязательно)") || "";
     try {
       await moderationService.createReport({
         type: "comment",
         reason: reason.trim(),
         description: description.trim(),
         recipe_id: Number(recipeId),
-        reported_user_id: comment.Author?.id ? Number(comment.Author.id) : undefined,
+        reported_user_id: comment.Author?.id
+          ? Number(comment.Author.id)
+          : undefined,
         comment_id: Number(comment.id),
       });
       setCommentActionsOpenId(null);
@@ -688,7 +718,10 @@ export default function RecipeDetailsPage() {
         const raw = localStorage.getItem(RECIPE_COMMENTS_OVERRIDES_KEY);
         const map = raw ? (JSON.parse(raw) as Record<string, number>) : {};
         map[recipeId] = Math.max(map[recipeId] ?? 0, nextCommentsCount);
-        localStorage.setItem(RECIPE_COMMENTS_OVERRIDES_KEY, JSON.stringify(map));
+        localStorage.setItem(
+          RECIPE_COMMENTS_OVERRIDES_KEY,
+          JSON.stringify(map)
+        );
       }
       window.dispatchEvent(
         new CustomEvent("recipe-comments-updated", {
@@ -835,7 +868,12 @@ export default function RecipeDetailsPage() {
                   onClick={() => setRecipeActionsOpen((prev) => !prev)}
                   className="h-9 w-9 rounded-full border border-umami-light-gray/60 bg-white flex items-center justify-center"
                 >
-                  <Image width={20} height={20} src="/DotsThreeOutlineVertical.svg" alt="actions" />
+                  <Image
+                    width={20}
+                    height={20}
+                    src="/DotsThreeOutlineVertical.svg"
+                    alt="actions"
+                  />
                 </button>
                 {recipeActionsOpen && (
                   <div className="absolute right-0 top-10 z-20 min-w-[160px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
@@ -847,14 +885,14 @@ export default function RecipeDetailsPage() {
                       Пожаловаться
                     </button>
                     {canModerate ? (
-                    <button
-                      type="button"
-                      disabled={deleteRecipeBusy}
-                      onClick={() => void handleDeleteRecipe()}
-                      className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
-                    >
-                      Удалить рецепт
-                    </button>
+                      <button
+                        type="button"
+                        disabled={deleteRecipeBusy}
+                        onClick={() => void handleDeleteRecipe()}
+                        className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
+                      >
+                        Удалить рецепт
+                      </button>
                     ) : null}
                   </div>
                 )}
@@ -1173,7 +1211,11 @@ export default function RecipeDetailsPage() {
                     type="number"
                     min={1}
                     value={desiredPortions}
-                    onChange={(e) => setDesiredPortions(Math.max(1, Number(e.target.value) || 1))}
+                    onChange={(e) =>
+                      setDesiredPortions(
+                        Math.max(1, Number(e.target.value) || 1)
+                      )
+                    }
                     className="w-24 rounded-full border border-umami-light-gray px-3 py-1 text-sm text-umami-dark-gray"
                   />
                   <span className="font-inter text-xs text-umami-light-gray">
@@ -1419,7 +1461,9 @@ export default function RecipeDetailsPage() {
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                onClick={() => void handleToggleCommentLike(comment)}
+                                onClick={() =>
+                                  void handleToggleCommentLike(comment)
+                                }
                                 disabled={Boolean(commentLikeBusy[comment.id])}
                                 className="inline-flex shrink-0 items-center gap-1 disabled:opacity-60"
                               >
@@ -1450,31 +1494,49 @@ export default function RecipeDetailsPage() {
                                     type="button"
                                     onClick={() =>
                                       setCommentActionsOpenId((prev) =>
-                                        prev === String(comment.id) ? null : String(comment.id)
+                                        prev === String(comment.id)
+                                          ? null
+                                          : String(comment.id)
                                       )
                                     }
                                     className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-[#f4f1e8]"
                                   >
-                                    <Image width={18} height={18} src="/DotsThreeOutlineVertical.svg" alt="actions" />
+                                    <Image
+                                      width={18}
+                                      height={18}
+                                      src="/DotsThreeOutlineVertical.svg"
+                                      alt="actions"
+                                    />
                                   </button>
-                                  {commentActionsOpenId === String(comment.id) && (
+                                  {commentActionsOpenId ===
+                                    String(comment.id) && (
                                     <div className="absolute right-0 top-8 z-20 min-w-[170px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
                                       <button
                                         type="button"
-                                        onClick={() => void handleReportComment(comment)}
+                                        onClick={() =>
+                                          void handleReportComment(comment)
+                                        }
                                         className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
                                       >
                                         Пожаловаться
                                       </button>
                                       {canModerate ? (
-                                      <button
-                                        type="button"
-                                        disabled={Boolean(deleteCommentBusy[String(comment.id)])}
-                                        onClick={() => void handleDeleteComment(String(comment.id))}
-                                        className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
-                                      >
-                                        Удалить комментарий
-                                      </button>
+                                        <button
+                                          type="button"
+                                          disabled={Boolean(
+                                            deleteCommentBusy[
+                                              String(comment.id)
+                                            ]
+                                          )}
+                                          onClick={() =>
+                                            void handleDeleteComment(
+                                              String(comment.id)
+                                            )
+                                          }
+                                          className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
+                                        >
+                                          Удалить комментарий
+                                        </button>
                                       ) : null}
                                     </div>
                                   )}
@@ -1583,8 +1645,12 @@ export default function RecipeDetailsPage() {
                                     <div className="flex items-center gap-1">
                                       <button
                                         type="button"
-                                        onClick={() => void handleToggleCommentLike(reply)}
-                                        disabled={Boolean(commentLikeBusy[reply.id])}
+                                        onClick={() =>
+                                          void handleToggleCommentLike(reply)
+                                        }
+                                        disabled={Boolean(
+                                          commentLikeBusy[reply.id]
+                                        )}
                                         className="inline-flex shrink-0 items-center gap-1 disabled:opacity-60"
                                       >
                                         <Image
@@ -1601,10 +1667,12 @@ export default function RecipeDetailsPage() {
                                           {getCommentLikesCount(reply)}
                                         </span>
                                       </button>
-                                      {(canModerate || Boolean(currentUserId)) && (
+                                      {(canModerate ||
+                                        Boolean(currentUserId)) && (
                                         <div
                                           ref={
-                                            commentActionsOpenId === String(reply.id)
+                                            commentActionsOpenId ===
+                                            String(reply.id)
                                               ? commentActionsRef
                                               : null
                                           }
@@ -1614,31 +1682,51 @@ export default function RecipeDetailsPage() {
                                             type="button"
                                             onClick={() =>
                                               setCommentActionsOpenId((prev) =>
-                                                prev === String(reply.id) ? null : String(reply.id)
+                                                prev === String(reply.id)
+                                                  ? null
+                                                  : String(reply.id)
                                               )
                                             }
                                             className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-[#f4f1e8]"
                                           >
-                                            <Image width={16} height={16} src="/DotsThreeOutlineVertical.svg" alt="actions" />
+                                            <Image
+                                              width={16}
+                                              height={16}
+                                              src="/DotsThreeOutlineVertical.svg"
+                                              alt="actions"
+                                            />
                                           </button>
-                                          {commentActionsOpenId === String(reply.id) && (
+                                          {commentActionsOpenId ===
+                                            String(reply.id) && (
                                             <div className="absolute right-0 top-7 z-20 min-w-[170px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
                                               <button
                                                 type="button"
-                                                onClick={() => void handleReportComment(reply)}
+                                                onClick={() =>
+                                                  void handleReportComment(
+                                                    reply
+                                                  )
+                                                }
                                                 className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
                                               >
                                                 Пожаловаться
                                               </button>
                                               {canModerate ? (
-                                              <button
-                                                type="button"
-                                                disabled={Boolean(deleteCommentBusy[String(reply.id)])}
-                                                onClick={() => void handleDeleteComment(String(reply.id))}
-                                                className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
-                                              >
-                                                Удалить комментарий
-                                              </button>
+                                                <button
+                                                  type="button"
+                                                  disabled={Boolean(
+                                                    deleteCommentBusy[
+                                                      String(reply.id)
+                                                    ]
+                                                  )}
+                                                  onClick={() =>
+                                                    void handleDeleteComment(
+                                                      String(reply.id)
+                                                    )
+                                                  }
+                                                  className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
+                                                >
+                                                  Удалить комментарий
+                                                </button>
                                               ) : null}
                                             </div>
                                           )}
@@ -1668,5 +1756,3 @@ export default function RecipeDetailsPage() {
     </div>
   );
 }
-
-
