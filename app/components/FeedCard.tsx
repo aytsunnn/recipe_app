@@ -382,6 +382,32 @@ export default function FeedCard({
     }
   };
 
+  const handleReportRecipe = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      alert("Необходимо авторизоваться");
+      return;
+    }
+    const reason = window.prompt("Причина жалобы");
+    if (!reason || !reason.trim()) return;
+    const description = window.prompt("Комментарий к жалобе (необязательно)") || "";
+    try {
+      await moderationService.createReport({
+        type: "recipe",
+        reason: reason.trim(),
+        description: description.trim(),
+        recipe_id: Number(recipe.id),
+        reported_user_id: Number(recipe.user_id),
+      });
+      setActionsOpen(false);
+      alert("Жалоба отправлена");
+    } catch (error) {
+      console.error("Ошибка отправки жалобы:", error);
+      alert("Не удалось отправить жалобу");
+    }
+  };
+
   if (isDeleted) return null;
 
   return (
@@ -434,7 +460,7 @@ export default function FeedCard({
                 {/* Если был подписан изначально (following && !justFollowed) - ничего не показываем */}
               </>
             )}
-            {canModerate && (
+            {(canModerate || isAuthenticated) && (
               <div className="relative ml-2">
                 <button
                   type="button"
@@ -457,12 +483,21 @@ export default function FeedCard({
                   <div className="absolute right-0 top-8 z-20 min-w-[150px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
                     <button
                       type="button"
+                      onClick={handleReportRecipe}
+                      className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
+                    >
+                      Пожаловаться
+                    </button>
+                    {canModerate ? (
+                    <button
+                      type="button"
                       disabled={deleteBusy}
                       onClick={handleDeleteRecipe}
                       className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
                     >
                       Удалить рецепт
                     </button>
+                    ) : null}
                   </div>
                 )}
               </div>

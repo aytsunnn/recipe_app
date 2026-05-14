@@ -10,6 +10,7 @@ import NotFoundState from "../../components/NotFoundState";
 import ScrollToTopButton from "../../components/ScrollToTopButton";
 import { authService } from "../../services/authService";
 import { followService, FollowUser } from "../../services/followService";
+import { moderationService } from "../../services/moderationService";
 import { Recipe } from "../../services/recipeService";
 import { userService, User } from "../../services/userService";
 import { isNotFoundErrorMessage } from "../../utils/errorUtils";
@@ -34,6 +35,7 @@ export default function PublicUserPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [stats, setStats] = useState<ProfileStats>({ recipes: 0, followers: 0, following: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
+  const [profileActionsOpen, setProfileActionsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const feedColumnRef = useRef<HTMLDivElement | null>(null);
@@ -92,6 +94,30 @@ export default function PublicUserPage() {
     }
   };
 
+  const handleReportProfile = async () => {
+    if (!authService.isAuthenticated() || !profile) {
+      alert("Необходимо авторизоваться");
+      return;
+    }
+    const reason = window.prompt("Причина жалобы");
+    if (!reason || !reason.trim()) return;
+    const description = window.prompt("Комментарий к жалобе (необязательно)") || "";
+
+    try {
+      await moderationService.createReport({
+        type: "profile",
+        reason: reason.trim(),
+        description: description.trim(),
+        reported_user_id: Number(profile.id),
+      });
+      setProfileActionsOpen(false);
+      alert("Жалоба отправлена");
+    } catch (error) {
+      console.error("Ошибка отправки жалобы на профиль:", error);
+      alert("Не удалось отправить жалобу");
+    }
+  };
+
   return (
     <div className="flex w-full gap-5">
       <div className="hidden w-55.75 lg:flex">
@@ -135,15 +161,38 @@ export default function PublicUserPage() {
                   </p>
                 </div>
                 {!isOwnProfile && authService.isAuthenticated() && (
-                  <button
-                    type="button"
-                    onClick={() => void toggleFollow()}
-                    className={`rounded-full px-4 py-2 font-nunito text-sm font-bold ${
-                      isFollowing ? "bg-[#f1ebdb] text-umami-dark-gray" : "bg-umami-green text-white"
-                    }`}
-                  >
-                    {isFollowing ? "Вы подписаны" : "Подписаться"}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setProfileActionsOpen((prev) => !prev)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-umami-light-gray/60 bg-white"
+                        aria-label="Действия профиля"
+                      >
+                        <Image width={20} height={20} src="/DotsThreeOutlineVertical.svg" alt="actions" />
+                      </button>
+                      {profileActionsOpen && (
+                        <div className="absolute right-0 top-10 z-20 min-w-[170px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
+                          <button
+                            type="button"
+                            onClick={() => void handleReportProfile()}
+                            className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
+                          >
+                            Пожаловаться
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void toggleFollow()}
+                      className={`rounded-full px-4 py-2 font-nunito text-sm font-bold ${
+                        isFollowing ? "bg-[#f1ebdb] text-umami-dark-gray" : "bg-umami-green text-white"
+                      }`}
+                    >
+                      {isFollowing ? "Вы подписаны" : "Подписаться"}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

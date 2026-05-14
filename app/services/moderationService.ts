@@ -25,7 +25,35 @@ export interface ModerationUser {
   is_blocked?: boolean;
 }
 
+export interface CreateReportData {
+  type: "recipe" | "user" | "profile" | "comment";
+  reason: string;
+  description?: string;
+  recipe_id?: number;
+  reported_user_id?: number;
+  comment_id?: number;
+}
+
 class ModerationService {
+  async createReport(data: CreateReportData): Promise<void> {
+    const payload: Record<string, unknown> = {
+      type: data.type === "comment" ? "recipe" : data.type,
+      reason: data.reason,
+    };
+    if (typeof data.recipe_id === "number") payload.recipe_id = data.recipe_id;
+    if (typeof data.reported_user_id === "number") {
+      payload.reported_user_id = data.reported_user_id;
+    }
+    const details: string[] = [];
+    if (typeof data.comment_id === "number") {
+      details.push(`comment_id=${data.comment_id}`);
+    }
+    if (data.description?.trim()) details.push(data.description.trim());
+    if (details.length > 0) payload.description = details.join("\n");
+
+    await apiClient.post("/reports", payload);
+  }
+
   async getReports(): Promise<ModerationReport[]> {
     return apiClient.get<ModerationReport[]>("/reports");
   }
@@ -66,4 +94,3 @@ class ModerationService {
 }
 
 export const moderationService = new ModerationService();
-

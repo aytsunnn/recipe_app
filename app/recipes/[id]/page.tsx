@@ -384,6 +384,30 @@ export default function RecipeDetailsPage() {
     }
   };
 
+  const handleReportRecipe = async () => {
+    if (!currentUserId || !recipeId) {
+      alert("Необходимо авторизоваться");
+      return;
+    }
+    const reason = window.prompt("Причина жалобы");
+    if (!reason || !reason.trim()) return;
+    const description = window.prompt("Комментарий к жалобе (необязательно)") || "";
+    try {
+      await moderationService.createReport({
+        type: "recipe",
+        reason: reason.trim(),
+        description: description.trim(),
+        recipe_id: Number(recipeId),
+        reported_user_id: recipe?.User?.id ? Number(recipe.User.id) : undefined,
+      });
+      setRecipeActionsOpen(false);
+      alert("Жалоба отправлена");
+    } catch (error) {
+      console.error("Ошибка отправки жалобы:", error);
+      alert("Не удалось отправить жалобу");
+    }
+  };
+
   const handleCookedToggle = () => {
     setIsCooked((prev) => !prev);
   };
@@ -533,6 +557,31 @@ export default function RecipeDetailsPage() {
       alert("Не удалось удалить комментарий");
     } finally {
       setDeleteCommentBusy((prev) => ({ ...prev, [commentId]: false }));
+    }
+  };
+
+  const handleReportComment = async (comment: Comment) => {
+    if (!currentUserId || !recipeId) {
+      alert("Необходимо авторизоваться");
+      return;
+    }
+    const reason = window.prompt("Причина жалобы");
+    if (!reason || !reason.trim()) return;
+    const description = window.prompt("Комментарий к жалобе (необязательно)") || "";
+    try {
+      await moderationService.createReport({
+        type: "comment",
+        reason: reason.trim(),
+        description: description.trim(),
+        recipe_id: Number(recipeId),
+        reported_user_id: comment.Author?.id ? Number(comment.Author.id) : undefined,
+        comment_id: Number(comment.id),
+      });
+      setCommentActionsOpenId(null);
+      alert("Жалоба отправлена");
+    } catch (error) {
+      console.error("Ошибка отправки жалобы на комментарий:", error);
+      alert("Не удалось отправить жалобу");
     }
   };
 
@@ -726,7 +775,7 @@ export default function RecipeDetailsPage() {
             <h1 className="min-w-0 flex-1 truncate font-nunito text-2xl font-bold leading-none text-umami-orange">
               {recipe.title}
             </h1>
-            {canModerate && (
+            {(canModerate || Boolean(currentUserId)) && (
               <div className="relative ml-2">
                 <button
                   type="button"
@@ -739,12 +788,21 @@ export default function RecipeDetailsPage() {
                   <div className="absolute right-0 top-10 z-20 min-w-[160px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
                     <button
                       type="button"
+                      onClick={() => void handleReportRecipe()}
+                      className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
+                    >
+                      Пожаловаться
+                    </button>
+                    {canModerate ? (
+                    <button
+                      type="button"
                       disabled={deleteRecipeBusy}
                       onClick={() => void handleDeleteRecipe()}
                       className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
                     >
                       Удалить рецепт
                     </button>
+                    ) : null}
                   </div>
                 )}
               </div>
@@ -1321,7 +1379,7 @@ export default function RecipeDetailsPage() {
                                   {getCommentLikesCount(comment)}
                                 </span>
                               </button>
-                              {canModerate && (
+                              {(canModerate || Boolean(currentUserId)) && (
                                 <div className="relative">
                                   <button
                                     type="button"
@@ -1338,12 +1396,21 @@ export default function RecipeDetailsPage() {
                                     <div className="absolute right-0 top-8 z-20 min-w-[170px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
                                       <button
                                         type="button"
+                                        onClick={() => void handleReportComment(comment)}
+                                        className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
+                                      >
+                                        Пожаловаться
+                                      </button>
+                                      {canModerate ? (
+                                      <button
+                                        type="button"
                                         disabled={Boolean(deleteCommentBusy[String(comment.id)])}
                                         onClick={() => void handleDeleteComment(String(comment.id))}
                                         className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
                                       >
                                         Удалить комментарий
                                       </button>
+                                      ) : null}
                                     </div>
                                   )}
                                 </div>
@@ -1461,7 +1528,7 @@ export default function RecipeDetailsPage() {
                                           {getCommentLikesCount(reply)}
                                         </span>
                                       </button>
-                                      {canModerate && (
+                                      {(canModerate || Boolean(currentUserId)) && (
                                         <div className="relative">
                                           <button
                                             type="button"
@@ -1478,12 +1545,21 @@ export default function RecipeDetailsPage() {
                                             <div className="absolute right-0 top-7 z-20 min-w-[170px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
                                               <button
                                                 type="button"
+                                                onClick={() => void handleReportComment(reply)}
+                                                className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
+                                              >
+                                                Пожаловаться
+                                              </button>
+                                              {canModerate ? (
+                                              <button
+                                                type="button"
                                                 disabled={Boolean(deleteCommentBusy[String(reply.id)])}
                                                 onClick={() => void handleDeleteComment(String(reply.id))}
                                                 className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
                                               >
                                                 Удалить комментарий
                                               </button>
+                                              ) : null}
                                             </div>
                                           )}
                                         </div>
