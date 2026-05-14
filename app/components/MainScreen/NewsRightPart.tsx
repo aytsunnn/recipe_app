@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import FeedCard from "../FeedCard";
 import { authService, User } from "../../services/authService";
 import { favoriteService } from "../../services/favoriteService";
 import { followService } from "../../services/followService";
@@ -560,61 +559,76 @@ export default function RightPart() {
                     className={`${message.role === "user" ? "ml-auto" : ""
                       } max-w-[85%]`}
                   >
-                    {message.recipeCard ? (
-                      <div className="max-w-[560px]">
-                        <FeedCard
-                          recipe={message.recipeCard}
-                          currentUserId={currentUser?.id}
-                          isFollowing={followingIds.has(message.recipeCard.user_id)}
-                          showComments={false}
-                        />
-                      </div>
-                    ) : message.recipeDraft ? (
-                      <div className="max-w-[560px] rounded-lg border border-umami-light-gray/50 bg-white p-4">
+                    {message.recipeCard || message.recipeDraft ? (
+                      <div className="max-w-[560px] rounded-2xl border border-[#E9E1D2] bg-white p-4">
                         <button
                           type="button"
-                          onClick={() => setOpenedDraftId(message.id)}
+                          onClick={() => {
+                            if (message.recipeDraft) {
+                              setOpenedDraftId(message.id);
+                            }
+                          }}
                           className="w-full text-left"
                         >
-                          <p className="font-nunito text-lg font-bold text-umami-dark-gray">
-                            {message.recipeDraft.title}
+                          <p className="line-clamp-2 font-nunito text-lg font-bold text-umami-dark-gray">
+                            {message.recipeDraft?.title || message.recipeCard?.title}
                           </p>
-                          <p className="mt-1 line-clamp-2 text-sm text-umami-gray">
-                            {message.recipeDraft.description}
+                          <p className="mt-1 line-clamp-3 text-sm text-umami-gray">
+                            {message.recipeDraft?.description || message.recipeCard?.description}
                           </p>
                           <p className="mt-2 text-xs text-umami-gray">
-                            {message.recipeDraft.portion
-                              ? `${message.recipeDraft.portion} порц. • `
+                            {(message.recipeDraft?.portion ?? message.recipeCard?.portion)
+                              ? `${message.recipeDraft?.portion ?? message.recipeCard?.portion} порц. • `
                               : ""}
-                            {message.recipeDraft.cooking_time
-                              ? `${message.recipeDraft.cooking_time} мин • `
+                            {(message.recipeDraft?.cooking_time ??
+                              message.recipeCard?.cooking_time)
+                              ? `${message.recipeDraft?.cooking_time ?? message.recipeCard?.cooking_time} мин • `
                               : ""}
-                            {message.recipeDraft.difficulty || "без уровня"}
+                            {message.recipeDraft?.difficulty ||
+                              message.recipeCard?.difficulty ||
+                              "без уровня"}
                           </p>
                         </button>
+
+                        {message.recipeDraft?.ingredients?.length ? (
+                          <div className="mt-3 rounded-xl border border-[#EFE5D6] bg-[#FFFCF7] p-3">
+                            <p className="font-nunito text-xs font-bold uppercase tracking-wide text-[#9A846B]">
+                              Ингредиенты
+                            </p>
+                            <p className="mt-1 line-clamp-3 text-sm text-[#5E5142]">
+                              {message.recipeDraft.ingredients.slice(0, 5).join(", ")}
+                            </p>
+                          </div>
+                        ) : null}
+
                         <div className="mt-3 flex gap-2">
-                          <button
-                            type="button"
-                            disabled={savingDraftId === message.id}
-                            onClick={() =>
-                              void handleSaveDraftAsPrivateRecipe(
-                                message.id,
-                                message.recipeDraft!
-                              )
-                            }
-                            className="rounded-full bg-umami-green px-3 py-1.5 font-nunito text-xs font-bold text-white disabled:opacity-60"
-                          >
-                            {savingDraftId === message.id
-                              ? "Сохраняем..."
-                              : "Сохранить как приватный"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOpenedDraftId(message.id)}
-                            className="rounded-full bg-umami-orange px-3 py-1.5 font-nunito text-xs font-bold text-white"
-                          >
-                            Подробнее
-                          </button>
+                          {message.recipeDraft ? (
+                            <button
+                              type="button"
+                              disabled={savingDraftId === message.id}
+                              onClick={() =>
+                                void handleSaveDraftAsPrivateRecipe(
+                                  message.id,
+                                  message.recipeDraft!
+                                )
+                              }
+                              className="rounded-full bg-umami-green px-3 py-1.5 font-nunito text-xs font-bold text-white disabled:opacity-60"
+                            >
+                              {savingDraftId === message.id
+                                ? "Сохраняем..."
+                                : "Сохранить как приватный"}
+                            </button>
+                          ) : null}
+
+                          {message.recipeDraft ? (
+                            <button
+                              type="button"
+                              onClick={() => setOpenedDraftId(message.id)}
+                              className="rounded-full bg-umami-orange px-3 py-1.5 font-nunito text-xs font-bold text-white"
+                            >
+                              Подробнее
+                            </button>
+                          ) : null}
                         </div>
                       </div>
                     ) : (
