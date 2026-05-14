@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import FeedCard from "../components/FeedCard";
 import ScrollToTopButton from "../components/ScrollToTopButton";
@@ -66,6 +66,24 @@ interface RecipeFormData {
   steps: StepRow[];
   source_url: string;
   parsed_from_url: boolean;
+}
+
+interface MicrochefPrefill {
+  title?: string;
+  description?: string;
+  difficulty?: string;
+  portion?: number;
+  cooking_time?: number;
+  calorific?: number;
+  proteins?: number;
+  fats?: number;
+  carbohydrates?: number;
+  kitchen?: string;
+  celebration?: string;
+  cookingType?: string;
+  ingredients?: Array<{ name?: string; quantity?: string; unit?: string }>;
+  steps?: Array<{ description?: string }>;
+  is_private?: boolean;
 }
 
 const DIFFICULTY_TO_API: Record<string, "1" | "2" | "3" | "4" | "5"> = {
@@ -142,6 +160,7 @@ const emptyRecipeForm: RecipeFormData = {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<UserStats>({
     followingCount: 0,
@@ -430,6 +449,133 @@ export default function ProfilePage() {
     setParseWarnings([]);
     setIsRecipeEditorOpen(true);
   };
+
+  useEffect(() => {
+    if (isLoading) return;
+    const shouldOpenCreate = searchParams?.get("create") === "1";
+    if (!shouldOpenCreate || typeof window === "undefined") return;
+
+    const raw = window.sessionStorage.getItem("microchef_recipe_prefill");
+    if (!raw) {
+      openCreateRecipeEditor();
+      return;
+    }
+
+    try {
+      const prefill = JSON.parse(raw) as MicrochefPrefill;
+      const toNum = (value: unknown, fallback: number) => {
+        if (typeof value === "number" && Number.isFinite(value)) return value;
+        if (typeof value === "string") {
+          const parsed = Number(value.replace(",", "."));
+          if (Number.isFinite(parsed)) return parsed;
+        }
+        return fallback;
+      };
+
+      const matchByName = (
+        options: Array<{ id: string; name: string }>,
+        name?: string
+      ) => {
+        if (!name) return null;
+        const normalized = name.trim().toLowerCase();
+        const found = options.find(
+          (item) => item.name.trim().toLowerCase() === normalized
+        );
+        return found ? Number(found.id) : null;
+      };
+
+      const ingredients = Array.isArray(prefill.ingredients)
+        ? prefill.ingredients.map((item) => {
+            const ingredientName = (item?.name || "").trim();
+            const quantityRaw = (item?.quantity || "").trim();
+            const parsedQuantity = Number(quantityRaw.replace(",", "."));
+            const unit = (item?.unit || "").trim();
+
+            const matchedIngredient = ingredientsCatalog.find(
+              (entry) =>
+                entry.name.trim().toLowerCase() ===
+                ingredientName.trim().toLowerCase()
+            );
+
+            return {
+              ingredient_id: matchedIngredient ? Number(matchedIngredient.id) : null,
+              ingredient_name: ingredientName,
+              quantity:
+                Number.isFinite(parsedQuantity) && parsedQuantity > 0
+                  ? parsedQuantity
+                  : 1,
+              unit_of_measurement: unit,
+              note:
+                !Number.isFinite(parsedQuantity) && quantityRaw
+                  ? `Количество: ${quantityRaw}`
+                  : "",
+            };
+          })
+        : [];
+
+      const steps = Array.isArray(prefill.steps)
+        ? prefill.steps
+            .map((step) => (step?.description || "").trim())
+            .filter(Boolean)
+            .map((description) => ({
+              description,
+              image_url: "",
+              image_file: null,
+              image_preview: "",
+            }))
+        : [];
+
+      setEditingRecipeId(null);
+      setParseWarnings([]);
+      setRecipeForm({
+        ...emptyRecipeForm,
+        title: (prefill.title || "").trim(),
+        description: (prefill.description || "").trim(),
+        difficulty: normalizeDifficulty(prefill.difficulty),
+        portion: Math.max(1, Math.round(toNum(prefill.portion, 1))),
+        cooking_time: Math.max(1, Math.round(toNum(prefill.cooking_time, 30))),
+        calorific: Math.max(0, Math.round(toNum(prefill.calorific, 0))),
+        proteins: Math.max(0, Math.round(toNum(prefill.proteins, 0))),
+        fats: Math.max(0, Math.round(toNum(prefill.fats, 0))),
+        carbohydrates: Math.max(0, Math.round(toNum(prefill.carbohydrates, 0))),
+        is_private: true,
+        kitchen_id: matchByName(kitchens, prefill.kitchen),
+        celebration_id: matchByName(celebrations, prefill.celebration),
+        cooking_id: matchByName(cookings, prefill.cookingType),
+        ingredients:
+          ingredients.length > 0
+            ? ingredients
+            : [
+                {
+                  ingredient_id: null,
+                  ingredient_name: "",
+                  quantity: 1,
+                  unit_of_measurement: "",
+                  note: "",
+                },
+              ],
+        steps:
+          steps.length > 0
+            ? steps
+            : [{ description: "", image_url: "", image_file: null, image_preview: "" }],
+      });
+      setIsRecipeEditorOpen(true);
+    } catch (error) {
+      console.error("Ошибка автозаполнения рецепта из микро-шефа:", error);
+      openCreateRecipeEditor();
+    } finally {
+      window.sessionStorage.removeItem("microchef_recipe_prefill");
+      router.replace("/profile");
+    }
+  }, [
+    isLoading,
+    searchParams,
+    kitchens,
+    celebrations,
+    cookings,
+    ingredientsCatalog,
+    router,
+  ]);
 
   const openEditRecipeEditor = async (recipe: Recipe) => {
     let fullRecipe = recipe;
