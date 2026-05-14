@@ -16,8 +16,21 @@ type RecipeDraft = {
   portion?: number;
   cooking_time?: number;
   calorific?: number;
-  ingredients: string[];
-  steps: string[];
+  proteins?: number;
+  fats?: number;
+  carbohydrates?: number;
+  kitchen?: string;
+  celebration?: string;
+  cookingType?: string;
+  ingredients: Array<{
+    name: string;
+    quantity?: string;
+    unit?: string;
+  }>;
+  steps: Array<{
+    step_number?: number;
+    description: string;
+  }>;
 };
 
 interface PopularAuthor {
@@ -74,34 +87,95 @@ const toRecipeDraft = (value: unknown): RecipeDraft | null => {
     typeof source.description === "string" ? source.description.trim() : "";
   if (!title || !description) return null;
 
-  const normalizeStringArray = (input: unknown): string[] => {
+  const readNumber = (raw: unknown): number | undefined => {
+    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+    if (typeof raw === "string") {
+      const parsed = Number(raw.replace(",", "."));
+      if (Number.isFinite(parsed)) return parsed;
+    }
+    return undefined;
+  };
+
+  const readText = (raw: unknown): string | undefined => {
+    if (typeof raw !== "string") return undefined;
+    const text = raw.trim();
+    return text.length > 0 ? text : undefined;
+  };
+
+  const normalizeIngredients = (
+    input: unknown
+  ): Array<{ name: string; quantity?: string; unit?: string }> => {
     if (!Array.isArray(input)) return [];
+
     return input
       .map((item) => {
-        if (typeof item === "string") return item.trim();
-        if (item && typeof item === "object") {
-          const row = item as Record<string, unknown>;
-          if (typeof row.description === "string")
-            return row.description.trim();
-          if (typeof row.name === "string") return row.name.trim();
+        if (typeof item === "string") {
+          const name = item.trim();
+          return name ? { name } : null;
         }
-        return "";
+        if (!item || typeof item !== "object") return null;
+
+        const row = item as Record<string, unknown>;
+        const name = readText(row.name);
+        if (!name) return null;
+
+        const quantityRaw = row.quantity;
+        const unitRaw = row.unit ?? row.unit_of_measurement ?? row.measure;
+        const quantity =
+          typeof quantityRaw === "number"
+            ? String(quantityRaw)
+            : readText(quantityRaw);
+        const unit = readText(unitRaw);
+
+        return { name, quantity, unit };
       })
-      .filter(Boolean);
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+  };
+
+  const normalizeSteps = (
+    input: unknown
+  ): Array<{ step_number?: number; description: string }> => {
+    if (!Array.isArray(input)) return [];
+
+    return input
+      .map((item, index) => {
+        if (typeof item === "string") {
+          const description = item.trim();
+          return description ? { step_number: index + 1, description } : null;
+        }
+        if (!item || typeof item !== "object") return null;
+
+        const row = item as Record<string, unknown>;
+        const description = readText(row.description);
+        if (!description) return null;
+
+        const step_number = readNumber(row.step_number);
+        return { step_number, description };
+      })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item));
   };
 
   return {
     title,
     description,
-    difficulty:
-      typeof source.difficulty === "string" ? source.difficulty : undefined,
-    portion: typeof source.portion === "number" ? source.portion : undefined,
-    cooking_time:
-      typeof source.cooking_time === "number" ? source.cooking_time : undefined,
-    calorific:
-      typeof source.calorific === "number" ? source.calorific : undefined,
-    ingredients: normalizeStringArray(source.ingredients),
-    steps: normalizeStringArray(source.steps),
+    difficulty: readText(source.difficulty),
+    portion: readNumber(source.portion),
+    cooking_time: readNumber(source.cooking_time),
+    calorific: readNumber(source.calorific),
+    proteins: readNumber(source.proteins),
+    fats: readNumber(source.fats),
+    carbohydrates: readNumber(source.carbohydrates),
+    kitchen:
+      readText((source.Kitchen as Record<string, unknown> | undefined)?.name) ??
+      readText(source.kitchen),
+    celebration:
+      readText((source.Celebration as Record<string, unknown> | undefined)?.name) ??
+      readText(source.celebration),
+    cookingType:
+      readText((source.TypeCooking as Record<string, unknown> | undefined)?.name) ??
+      readText(source.cooking_type),
+    ingredients: normalizeIngredients(source.ingredients),
+    steps: normalizeSteps(source.steps),
   };
 };
 
@@ -214,7 +288,7 @@ export default function RightPart() {
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const [chatLoading, setChatLoading] = useState(false);
   const [savingDraftId, setSavingDraftId] = useState<string | null>(null);
-  const [openedDraftId, setOpenedDraftId] = useState<string | null>(null);
+  const [expandedDraftIds, setExpandedDraftIds] = useState<Set<string>>(new Set());
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
@@ -250,7 +324,7 @@ export default function RightPart() {
 
   useEffect(() => {
     if (typeof document === "undefined") return;
-    const isAnyModalOpen = isChatOpen || Boolean(openedDraftId);
+    const isAnyModalOpen = isChatOpen;
     if (!isAnyModalOpen) return;
 
     const html = document.documentElement;
@@ -271,7 +345,7 @@ export default function RightPart() {
       body.style.overflow = prevBodyOverflow;
       body.style.paddingRight = prevBodyPaddingRight;
     };
-  }, [isChatOpen, openedDraftId]);
+  }, [isChatOpen]);
 
   useEffect(() => {
     const loadPopularAuthors = async () => {
@@ -376,7 +450,7 @@ export default function RightPart() {
         calorific: draft.calorific ?? 0,
         is_private: true,
         steps: draft.steps
-          .map((description) => description.trim())
+          .map((step) => step.description.trim())
           .filter(Boolean)
           .map((description) => ({ description })),
       });
@@ -561,15 +635,7 @@ export default function RightPart() {
                   >
                     {message.recipeCard || message.recipeDraft ? (
                       <div className="max-w-[560px] rounded-2xl border border-[#E9E1D2] bg-white p-4">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (message.recipeDraft) {
-                              setOpenedDraftId(message.id);
-                            }
-                          }}
-                          className="w-full text-left"
-                        >
+                        <div className="w-full text-left">
                           <p className="line-clamp-2 font-nunito text-lg font-bold text-umami-dark-gray">
                             {message.recipeDraft?.title || message.recipeCard?.title}
                           </p>
@@ -588,18 +654,7 @@ export default function RightPart() {
                               message.recipeCard?.difficulty ||
                               "без уровня"}
                           </p>
-                        </button>
-
-                        {message.recipeDraft?.ingredients?.length ? (
-                          <div className="mt-3 rounded-xl border border-[#EFE5D6] bg-[#FFFCF7] p-3">
-                            <p className="font-nunito text-xs font-bold uppercase tracking-wide text-[#9A846B]">
-                              Ингредиенты
-                            </p>
-                            <p className="mt-1 line-clamp-3 text-sm text-[#5E5142]">
-                              {message.recipeDraft.ingredients.slice(0, 5).join(", ")}
-                            </p>
-                          </div>
-                        ) : null}
+                        </div>
 
                         <div className="mt-3 flex gap-2">
                           {message.recipeDraft ? (
@@ -623,13 +678,81 @@ export default function RightPart() {
                           {message.recipeDraft ? (
                             <button
                               type="button"
-                              onClick={() => setOpenedDraftId(message.id)}
+                              onClick={() =>
+                                setExpandedDraftIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(message.id)) next.delete(message.id);
+                                  else next.add(message.id);
+                                  return next;
+                                })
+                              }
                               className="rounded-full bg-umami-orange px-3 py-1.5 font-nunito text-xs font-bold text-white"
                             >
-                              Подробнее
+                              {expandedDraftIds.has(message.id) ? "Свернуть" : "Подробнее"}
                             </button>
                           ) : null}
                         </div>
+
+                        {message.recipeDraft && expandedDraftIds.has(message.id) ? (
+                          <div className="mt-3 space-y-3 rounded-xl border border-[#E6D6BE] bg-[#FFF8EC] p-3">
+                            <div className="grid grid-cols-2 gap-2 text-xs text-[#6A533A]">
+                              {typeof message.recipeDraft.calorific === "number" ? (
+                                <p>Калории: {message.recipeDraft.calorific}</p>
+                              ) : null}
+                              {typeof message.recipeDraft.proteins === "number" ? (
+                                <p>Белки: {message.recipeDraft.proteins}</p>
+                              ) : null}
+                              {typeof message.recipeDraft.fats === "number" ? (
+                                <p>Жиры: {message.recipeDraft.fats}</p>
+                              ) : null}
+                              {typeof message.recipeDraft.carbohydrates === "number" ? (
+                                <p>Углеводы: {message.recipeDraft.carbohydrates}</p>
+                              ) : null}
+                              {message.recipeDraft.kitchen ? (
+                                <p>Кухня: {message.recipeDraft.kitchen}</p>
+                              ) : null}
+                              {message.recipeDraft.celebration ? (
+                                <p>Праздник: {message.recipeDraft.celebration}</p>
+                              ) : null}
+                              {message.recipeDraft.cookingType ? (
+                                <p>Тип: {message.recipeDraft.cookingType}</p>
+                              ) : null}
+                            </div>
+
+
+                            {message.recipeDraft.ingredients.length > 0 ? (
+                              <div>
+                                <p className="font-nunito text-xs font-bold uppercase tracking-wide text-[#9A846B]">
+                                  Ингредиенты
+                                </p>
+                                <ul className="mt-1 list-disc pl-5 text-sm text-[#5E5142]">
+                                  {message.recipeDraft.ingredients.map((item, idx) => (
+                                    <li key={`inline-ing-${message.id}-${idx}`}>
+                                      {item.name}
+                                      {item.quantity ? ` — ${item.quantity}` : ""}
+                                      {item.unit ? ` ${item.unit}` : ""}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : null}
+
+                            {message.recipeDraft.steps.length > 0 ? (
+                              <div>
+                                <p className="font-nunito text-xs font-bold uppercase tracking-wide text-[#9A846B]">
+                                  Шаги
+                                </p>
+                                <ol className="mt-1 list-decimal pl-5 text-sm text-[#5E5142]">
+                                  {message.recipeDraft.steps.map((item, idx) => (
+                                    <li key={`inline-step-${message.id}-${idx}`}>
+                                      {item.description}
+                                    </li>
+                                  ))}
+                                </ol>
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
                     ) : (
                       <div
@@ -722,69 +845,6 @@ export default function RightPart() {
         </div>
       )}
 
-      {openedDraftId && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
-          <div className="modal-thin-scroll max-h-[85vh] w-full max-w-[760px] overflow-y-auto rounded-[20px] bg-white p-5">
-            {(() => {
-              const openedMessage = messages.find((item) => item.id === openedDraftId);
-              const draft = openedMessage?.recipeDraft;
-              if (!draft) {
-                return (
-                  <p className="font-inter text-sm text-umami-gray">
-                    Не удалось открыть рецепт.
-                  </p>
-                );
-              }
-              return (
-                <>
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <h3 className="font-nunito text-2xl font-bold text-umami-dark-gray">
-                      {draft.title}
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setOpenedDraftId(null)}
-                      className="rounded-full bg-umami-gray px-3 py-1 font-nunito text-xs text-white"
-                    >
-                      Закрыть
-                    </button>
-                  </div>
-                  <p className="text-sm text-umami-gray">{draft.description}</p>
-                  <p className="mt-2 text-sm text-umami-gray">
-                    {draft.portion ? `${draft.portion} порц. • ` : ""}
-                    {draft.cooking_time ? `${draft.cooking_time} мин • ` : ""}
-                    {draft.difficulty || "без уровня"}
-                  </p>
-                  {draft.ingredients.length > 0 && (
-                    <div className="mt-4">
-                      <p className="font-nunito text-base font-bold text-umami-dark-gray">
-                        Ингредиенты
-                      </p>
-                      <ul className="mt-1 list-disc pl-5 text-sm text-umami-dark-gray">
-                        {draft.ingredients.map((item, idx) => (
-                          <li key={`preview-ing-${idx}`}>{item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {draft.steps.length > 0 && (
-                    <div className="mt-4">
-                      <p className="font-nunito text-base font-bold text-umami-dark-gray">
-                        Шаги
-                      </p>
-                      <ol className="mt-1 list-decimal pl-5 text-sm text-umami-dark-gray">
-                        {draft.steps.map((item, idx) => (
-                          <li key={`preview-step-${idx}`}>{item}</li>
-                        ))}
-                      </ol>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-        </div>
-      )}
     </>
   );
 }
