@@ -13,7 +13,7 @@ window.onload = function() {
     "info": {
       "title": "Vkusno API",
       "version": "2.0.0",
-      "description": "Полный API проекта \"Вкусно\" — рецепты, социалка, модерация, синхронизация"
+      "description": "Полный API проекта \"Вкусно\""
     },
     "servers": [
       {
@@ -852,6 +852,127 @@ window.onload = function() {
               "description": "Статус лайка изменён"
             }
           }
+        }
+      },
+      "/diet-plans": {
+        "post": {
+          "summary": "Создать план питания",
+          "tags": [
+            "DietPlans"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "is_private": {
+                      "type": "boolean"
+                    },
+                    "recipes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "recipe_id": {
+                            "type": "integer"
+                          },
+                          "day_of_week": {
+                            "type": "integer",
+                            "description": "1-7 (Mon-Sun)"
+                          },
+                          "meal_order": {
+                            "type": "integer",
+                            "description": "1-5"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "get": {
+          "summary": "Список публичных планов питания",
+          "tags": [
+            "DietPlans"
+          ],
+          "parameters": [
+            {
+              "in": "query",
+              "name": "search",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      },
+      "/diet-plans/me": {
+        "get": {
+          "summary": "Мои планы питания",
+          "tags": [
+            "DietPlans"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ]
+        }
+      },
+      "/diet-plans/{id}": {
+        "get": {
+          "summary": "Детальная информация о плане",
+          "tags": [
+            "DietPlans"
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ]
+        },
+        "patch": {
+          "summary": "Обновить план",
+          "tags": [
+            "DietPlans"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ]
+        },
+        "delete": {
+          "summary": "Удалить план",
+          "tags": [
+            "DietPlans"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ]
         }
       },
       "/favorites": {
@@ -2999,6 +3120,41 @@ window.onload = function() {
             }
           }
         }
+      },
+      "/users/verify-request": {
+        "post": {
+          "summary": "Подать заявку на верификацию",
+          "tags": [
+            "Users"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "full_name": {
+                      "type": "string"
+                    },
+                    "info": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Заявка создана"
+            }
+          }
+        }
       }
     },
     "tags": [
@@ -3013,6 +3169,10 @@ window.onload = function() {
       {
         "name": "Comments",
         "description": "Комментарии"
+      },
+      {
+        "name": "DietPlans",
+        "description": "Пользовательские планы питания (диеты)"
       },
       {
         "name": "Favorites",

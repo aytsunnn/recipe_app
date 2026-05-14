@@ -186,12 +186,12 @@ function HeaderContent() {
         {user && (
           <div className="flex gap-2.5 items-center">
             <Link
-              href="/"
+              href="/notifications"
               className="w-9 h-9 rounded-full border flex justify-center items-center border-umami-light-gray/50"
             >
               <Image
-                width={23}
-                height={23}
+                width={22}
+                height={22}
                 src="/Colocolchik.svg"
                 alt="notifications"
                 className="w-5.25 h-5.25"
