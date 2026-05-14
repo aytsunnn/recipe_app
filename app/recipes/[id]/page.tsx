@@ -82,6 +82,7 @@ export default function RecipeDetailsPage() {
   const [deleteRecipeBusy, setDeleteRecipeBusy] = useState(false);
   const [deleteCommentBusy, setDeleteCommentBusy] = useState<Record<string, boolean>>({});
   const [desiredPortions, setDesiredPortions] = useState(1);
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
   const recipeActionsRef = useRef<HTMLDivElement | null>(null);
   const commentActionsRef = useRef<HTMLDivElement | null>(null);
 
@@ -283,6 +284,7 @@ export default function RecipeDetailsPage() {
     if (!commentIdFromQuery) return;
     setActiveTab("comments");
     if (comments.length === 0) return;
+    setHighlightedCommentId(commentIdFromQuery);
 
     const scrollToComment = () => {
       const target = document.getElementById(`comment-${commentIdFromQuery}`);
@@ -291,10 +293,16 @@ export default function RecipeDetailsPage() {
     };
 
     const timer = window.setTimeout(scrollToComment, 120);
-    return () => window.clearTimeout(timer);
+    const clearHighlightTimer = window.setTimeout(() => {
+      setHighlightedCommentId((prev) =>
+        prev === commentIdFromQuery ? null : prev
+      );
+    }, 3500);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(clearHighlightTimer);
+    };
   }, [searchParams, comments.length, activeTab]);
-
-  const highlightedCommentId = searchParams?.get("commentId");
 
   useEffect(() => {
     if (!recipe) return;
@@ -1379,7 +1387,7 @@ export default function RecipeDetailsPage() {
                       key={comment.id}
                       id={`comment-${comment.id}`}
                       className={`rounded-xl border p-3 ${
-                        isAdmin && highlightedCommentId === String(comment.id)
+                        highlightedCommentId === String(comment.id)
                           ? "border-umami-orange bg-[#fff5e8] ring-2 ring-umami-orange/35"
                           : "border-umami-light-gray/40"
                       }`}
@@ -1544,7 +1552,7 @@ export default function RecipeDetailsPage() {
                                 id={`comment-${reply.id}`}
                                 key={reply.id}
                                 className={`flex gap-3 rounded-lg p-1 ${
-                                  isAdmin && highlightedCommentId === String(reply.id)
+                                  highlightedCommentId === String(reply.id)
                                     ? "bg-[#fff5e8] ring-2 ring-umami-orange/35"
                                     : ""
                                 }`}
