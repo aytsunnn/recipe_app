@@ -16,7 +16,7 @@ import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
 import NotFoundState from "../../components/NotFoundState";
 import { isNotFoundErrorMessage } from "../../utils/errorUtils";
-import { canAccessModeration } from "../../utils/role";
+import { canAccessModeration, isAdminRole } from "../../utils/role";
 
 const RECIPE_LIKE_OVERRIDES_KEY = "recipe_like_overrides";
 const RECIPE_COMMENTS_OVERRIDES_KEY = "recipe_comments_overrides";
@@ -76,6 +76,7 @@ export default function RecipeDetailsPage() {
   const [noteSaving, setNoteSaving] = useState(false);
   const [commentLikeBusy, setCommentLikeBusy] = useState<Record<string, boolean>>({});
   const [canModerate, setCanModerate] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [recipeActionsOpen, setRecipeActionsOpen] = useState(false);
   const [commentActionsOpenId, setCommentActionsOpenId] = useState<string | null>(null);
   const [deleteRecipeBusy, setDeleteRecipeBusy] = useState(false);
@@ -239,6 +240,7 @@ export default function RecipeDetailsPage() {
       setCurrentUserId(user?.id || null);
       const role = user?.role || authService.getRoleFromToken();
       setCanModerate(canAccessModeration(role));
+      setIsAdmin(isAdminRole(role));
     };
     loadUser();
   }, []);
@@ -275,6 +277,24 @@ export default function RecipeDetailsPage() {
       }
     }
   }, [searchParams, comments.length]);
+
+  useEffect(() => {
+    const commentIdFromQuery = searchParams?.get("commentId");
+    if (!commentIdFromQuery) return;
+    setActiveTab("comments");
+    if (comments.length === 0) return;
+
+    const scrollToComment = () => {
+      const target = document.getElementById(`comment-${commentIdFromQuery}`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+
+    const timer = window.setTimeout(scrollToComment, 120);
+    return () => window.clearTimeout(timer);
+  }, [searchParams, comments.length, activeTab]);
+
+  const highlightedCommentId = searchParams?.get("commentId");
 
   useEffect(() => {
     if (!recipe) return;
@@ -1357,7 +1377,12 @@ export default function RecipeDetailsPage() {
                   groupedComments.roots.map((comment) => (
                     <div
                       key={comment.id}
-                      className="rounded-xl border border-umami-light-gray/40 p-3"
+                      id={`comment-${comment.id}`}
+                      className={`rounded-xl border p-3 ${
+                        isAdmin && highlightedCommentId === String(comment.id)
+                          ? "border-umami-orange bg-[#fff5e8] ring-2 ring-umami-orange/35"
+                          : "border-umami-light-gray/40"
+                      }`}
                     >
                       <div className="flex gap-3">
                         <Link
@@ -1515,7 +1540,15 @@ export default function RecipeDetailsPage() {
                           </p>
                           {(groupedComments.children.get(comment.id) || []).map(
                             (reply) => (
-                              <div key={reply.id} className="flex gap-3">
+                              <div
+                                id={`comment-${reply.id}`}
+                                key={reply.id}
+                                className={`flex gap-3 rounded-lg p-1 ${
+                                  isAdmin && highlightedCommentId === String(reply.id)
+                                    ? "bg-[#fff5e8] ring-2 ring-umami-orange/35"
+                                    : ""
+                                }`}
+                              >
                                 <Link
                                   href={`/users/${reply.Author.id}`}
                                   className="h-7.5 w-7.5 shrink-0 rounded-full"

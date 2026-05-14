@@ -124,9 +124,10 @@ export default function ModerationPage() {
   };
 
   const getTargetLabel = (report: ModerationReport) => {
-    const hasCommentTarget = Boolean(report.comment_id);
+    const commentId = getReportCommentId(report);
+    const hasCommentTarget = Boolean(commentId);
     if (hasCommentTarget) {
-      return `Комментарий ID ${report.comment_id}`;
+      return `Комментарий ID ${commentId}`;
     }
 
     if (report.type === "recipe") {
@@ -167,8 +168,9 @@ export default function ModerationPage() {
   };
 
   const getTargetHref = (report: ModerationReport): string | null => {
-    if (report.comment_id && report.recipe_id) {
-      return `/recipes/${report.recipe_id}?tab=comments`;
+    const commentId = getReportCommentId(report);
+    if (commentId && report.recipe_id) {
+      return `/recipes/${report.recipe_id}?tab=comments&commentId=${commentId}#comment-${commentId}`;
     }
     if (report.type === "recipe" && report.recipe_id) {
       return `/recipes/${report.recipe_id}`;
@@ -185,13 +187,11 @@ export default function ModerationPage() {
   const getUnavailableTargetMessage = (
     report: ModerationReport
   ): string | null => {
-    const hasCommentTarget = Boolean(report.comment_id);
+    const commentId = getReportCommentId(report);
+    const hasCommentTarget = Boolean(commentId);
     const type = (report.type || "").toLowerCase();
 
     if (hasCommentTarget) {
-      if (!report.comment_id && !report.Comment?.id) {
-        return "Комментарий удален или недоступен";
-      }
       return null;
     }
 
@@ -211,6 +211,15 @@ export default function ModerationPage() {
     }
 
     return null;
+  };
+
+  const getReportCommentId = (report: ModerationReport): string | null => {
+    if (report.comment_id !== null && report.comment_id !== undefined) {
+      return String(report.comment_id);
+    }
+    const description = report.description || "";
+    const match = description.match(/comment_id\s*=\s*(\d+)/i);
+    return match?.[1] || null;
   };
 
   const runAction = async (key: string, action: () => Promise<void>) => {
