@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import FeedCard from "../FeedCard";
 import { authService, User } from "../../services/authService";
 import { favoriteService } from "../../services/favoriteService";
@@ -212,6 +212,7 @@ export default function RightPart() {
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
   const [chatLoading, setChatLoading] = useState(false);
   const [savingDraftId, setSavingDraftId] = useState<string | null>(null);
   const [openedDraftId, setOpenedDraftId] = useState<string | null>(null);
@@ -399,6 +400,9 @@ export default function RightPart() {
     if (!userText) return;
 
     setChatInput("");
+    if (chatInputRef.current) {
+      chatInputRef.current.style.height = "38px";
+    }
     setMessages((prev) => [
       ...prev,
       { id: `u-${Date.now()}`, role: "user", text: userText },
@@ -634,6 +638,7 @@ export default function RightPart() {
 
               <div className="mt-2.5 flex items-end gap-2">
                 <textarea
+                  ref={chatInputRef}
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onInput={(event) => {
@@ -660,8 +665,8 @@ export default function RightPart() {
                   onClick={handleSendMessage}
                   className="inline-flex h-9 items-center gap-1.5 self-end rounded-full bg-umami-green px-3 py-1.5 font-nunito text-xs font-bold text-white disabled:opacity-50"
                 >
-                  <Image src="/PaperPlane.svg" alt="send" width={12} height={12} />
                   Отправить
+                  <Image src="/PaperPlane.svg" alt="send" width={16} height={16} />
                 </button>
               </div>
             </div>
