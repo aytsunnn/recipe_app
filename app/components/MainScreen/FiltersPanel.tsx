@@ -68,7 +68,9 @@ export default function FiltersPanel({
   const [isLoading, setIsLoading] = useState(true);
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
   const chipsRowRef = useRef<HTMLDivElement | null>(null);
+  const optionsRowRef = useRef<HTMLDivElement | null>(null);
   const isDraggingRef = useRef(false);
+  const draggingTargetRef = useRef<"chips" | "options" | null>(null);
   const dragStartXRef = useRef(0);
   const dragStartScrollRef = useRef(0);
 
@@ -159,8 +161,8 @@ export default function FiltersPanel({
         key === "difficulty"
           ? values
           : values
-            .map((item) => Number(item))
-            .filter((item) => !Number.isNaN(item)),
+              .map((item) => Number(item))
+              .filter((item) => !Number.isNaN(item)),
     };
 
     setFilters(updatedFilters);
@@ -193,31 +195,44 @@ export default function FiltersPanel({
   const activeOptions = openFilter ? optionMap[openFilter] : [];
   const activeSelected = openFilter ? getSelected(openFilter) : [];
 
-  const handleWheelScroll = (event: React.WheelEvent<HTMLDivElement>) => {
-    const container = chipsRowRef.current;
-    if (!container || openFilter) return;
+  const handleWheelScroll = (
+    event: React.WheelEvent<HTMLDivElement>,
+    target: "chips" | "options"
+  ) => {
+    const container =
+      target === "chips" ? chipsRowRef.current : optionsRowRef.current;
+    if (!container) return;
     if (Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
     event.preventDefault();
     container.scrollLeft += event.deltaY;
   };
 
-  const handleDragStart = (event: React.MouseEvent<HTMLDivElement>) => {
-    const container = chipsRowRef.current;
-    if (!container || openFilter) return;
+  const handleDragStart = (
+    event: React.MouseEvent<HTMLDivElement>,
+    target: "chips" | "options"
+  ) => {
+    const container =
+      target === "chips" ? chipsRowRef.current : optionsRowRef.current;
+    if (!container) return;
     isDraggingRef.current = true;
+    draggingTargetRef.current = target;
     dragStartXRef.current = event.clientX;
     dragStartScrollRef.current = container.scrollLeft;
   };
 
   const handleDragMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    const container = chipsRowRef.current;
-    if (!container || !isDraggingRef.current || openFilter) return;
+    if (!isDraggingRef.current) return;
+    const target = draggingTargetRef.current;
+    const container =
+      target === "chips" ? chipsRowRef.current : optionsRowRef.current;
+    if (!container) return;
     const delta = event.clientX - dragStartXRef.current;
     container.scrollLeft = dragStartScrollRef.current - delta;
   };
 
   const stopDragging = () => {
     isDraggingRef.current = false;
+    draggingTargetRef.current = null;
   };
 
   const getRecipeWord = (count: number) => {
@@ -231,21 +246,19 @@ export default function FiltersPanel({
 
   if (isLoading) {
     return (
-      <div className="mb-4 py-2">
-        <p className="font-inter text-sm text-umami-gray">
-          Загрузка фильтров...
-        </p>
+      <div className="mb-2 rounded-2xl border border-[#E9E1D2] bg-[#FFFCF7] px-3 py-3">
+        <p className="font-inter text-sm text-[#7A6B5A]">Загрузка фильтров...</p>
       </div>
     );
   }
 
   return (
-    <div className="mb-2">
+    <div className="mb-2 rounded-2xl border border-[#E9E1D2] bg-[#FFFCF7] px-3 py-3">
       <div
         ref={chipsRowRef}
-        className="no-scrollbar flex flex-nowrap gap-2 overflow-x-auto pb-1 cursor-grab select-none active:cursor-grabbing"
-        onWheel={handleWheelScroll}
-        onMouseDown={handleDragStart}
+        className="no-scrollbar flex flex-nowrap gap-2 overflow-x-auto pb-1 cursor-grab select-none active:cursor-grabbing [scrollbar-width:none] [-ms-overflow-style:none]"
+        onWheel={(event) => handleWheelScroll(event, "chips")}
+        onMouseDown={(event) => handleDragStart(event, "chips")}
         onMouseMove={handleDragMove}
         onMouseUp={stopDragging}
         onMouseLeave={stopDragging}
@@ -253,7 +266,7 @@ export default function FiltersPanel({
         {selectedTotal > 0 && (
           <button
             onClick={resetAll}
-            className="flex h-9 shrink-0 items-center gap-2 rounded-full border border-umami-dark-gray px-3 font-nunito text-umami-dark-gray"
+            className="flex h-9 shrink-0 items-center gap-2 rounded-full border border-[#D7C7AB] bg-[#FFF6E9] px-3 font-nunito text-[#7B6140] transition-colors hover:bg-[#FDECD1]"
           >
             <span className="text-sm font-bold">Сбросить фильтры</span>
             <Image src="/X.svg" alt="cross" width={15} height={15} />
@@ -270,14 +283,15 @@ export default function FiltersPanel({
               onClick={() =>
                 setOpenFilter((prev) => (prev === key ? null : key))
               }
-              className={`flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 font-nunito transition-colors ${isOpen
-                  ? "border-umami-orange bg-[#fff8ef] text-umami-dark-gray"
-                  : "border-umami-dark-gray text-umami-dark-gray"
-                }`}
+              className={`flex h-9 shrink-0 items-center gap-2 rounded-full border px-3 font-nunito transition-colors ${
+                isOpen
+                  ? "border-[#E3B679] bg-[#FFE8C5] text-[#5B4630]"
+                  : "border-[#E3D7C6] bg-white text-[#65513D] hover:bg-[#FFF4E4]"
+              }`}
             >
               <span className="text-sm font-bold">{fieldLabels[key]}</span>
               {selectedCount > 0 && (
-                <span className="text-sm font-bold text-umami-orange">
+                <span className="text-sm font-bold text-[#D7862A]">
                   {selectedCount}
                 </span>
               )}
@@ -294,7 +308,15 @@ export default function FiltersPanel({
       </div>
 
       {openFilter && (
-        <div className="no-scrollbar mt-3 flex flex-nowrap gap-2 overflow-x-auto pb-1">
+        <div
+          ref={optionsRowRef}
+          className="no-scrollbar mt-3 flex flex-nowrap gap-2 overflow-x-auto rounded-xl border border-[#F0E5D6] bg-white p-2 cursor-grab select-none active:cursor-grabbing [scrollbar-width:none] [-ms-overflow-style:none]"
+          onWheel={(event) => handleWheelScroll(event, "options")}
+          onMouseDown={(event) => handleDragStart(event, "options")}
+          onMouseMove={handleDragMove}
+          onMouseUp={stopDragging}
+          onMouseLeave={stopDragging}
+        >
           <button
             onClick={() =>
               setSelected(
@@ -302,14 +324,16 @@ export default function FiltersPanel({
                 activeOptions.map((item) => item.value)
               )
             }
-            className="h-9 rounded-full border border-umami-green px-4 font-nunito text-sm font-bold text-umami-green"
+            className="inline-flex h-9 items-center gap-2 rounded-full border border-[#9CC199] bg-[#EDF8EC] px-4 font-nunito text-sm font-bold text-[#426F3F]"
           >
+            <Image src="/DoneCircle.svg" alt="select-all" width={14} height={14} />
             Выбрать все
           </button>
           <button
             onClick={() => setSelected(openFilter, [])}
-            className="h-9 rounded-full border border-umami-dark-gray/60 px-4 font-nunito text-sm font-bold text-umami-gray"
+            className="inline-flex h-9 items-center gap-2 rounded-full border border-[#D7C7AB] bg-[#FFF6E9] px-4 font-nunito text-sm font-bold text-[#7B6140]"
           >
+            <Image src="/X.svg" alt="clear-all" width={14} height={14} />
             Сбросить все
           </button>
 
@@ -328,10 +352,11 @@ export default function FiltersPanel({
                   }
                   setSelected(openFilter, [...activeSelected, option.value]);
                 }}
-                className={`h-9 rounded-full border px-4 font-nunito text-sm font-bold transition-colors ${isSelected
-                    ? "border-umami-orange bg-[#fff8ef] text-umami-orange"
-                    : "border-umami-dark-gray text-umami-dark-gray"
-                  }`}
+                className={`h-9 rounded-full border px-4 font-nunito text-sm font-bold transition-colors ${
+                  isSelected
+                    ? "border-[#E3B679] bg-[#FFEED5] text-[#B66B1F]"
+                    : "border-[#E8DDCF] bg-[#FFFDFA] text-[#65513D] hover:bg-[#FFF4E4]"
+                }`}
               >
                 {option.label}
               </button>
@@ -341,12 +366,11 @@ export default function FiltersPanel({
       )}
 
       {typeof resultsCount === "number" && (
-        <p className="mt-2 text-center font-nunito text-sm font-bold text-umami-gray">
-          Найдено <span className="text-umami-green">{resultsCount}</span>{" "}
+        <p className="mt-2 text-center font-nunito text-sm font-bold text-[#7A6B5A]">
+          Найдено <span className="text-[#B66B1F]">{resultsCount}</span>{" "}
           {getRecipeWord(resultsCount)}
         </p>
       )}
     </div>
   );
 }
-
