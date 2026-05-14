@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import LeftPart from "../components/MainScreen/NavigationLeftPart";
@@ -9,7 +9,7 @@ import {
   ModerationReport,
   ModerationUser,
 } from "../services/moderationService";
-import { canAccessModeration } from "../utils/role";
+import { canAccessModeration, isAdminRole } from "../utils/role";
 
 const toIdList = (value: string): number[] =>
   value
@@ -19,6 +19,7 @@ const toIdList = (value: string): number[] =>
 
 export default function ModerationPage() {
   const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [reports, setReports] = useState<ModerationReport[]>([]);
   const [users, setUsers] = useState<ModerationUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +49,9 @@ export default function ModerationPage() {
   useEffect(() => {
     const bootstrap = async () => {
       const me = await authService.getCurrentUser();
-      const allowed = canAccessModeration(me?.role);
+      const role = me?.role || authService.getRoleFromToken();
+      const allowed = canAccessModeration(role);
+      setIsAdmin(isAdminRole(role));
       setIsAllowed(allowed);
       if (!allowed) return;
       await loadData();
@@ -82,7 +85,7 @@ export default function ModerationPage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <p className="rounded-2xl bg-white px-5 py-4 text-sm text-umami-gray">
-          Доступ к модерации только для ролей Moderator и Admin.
+          Доступ к панели только для ролей Moderator и Admin.
         </p>
       </div>
     );
@@ -98,11 +101,10 @@ export default function ModerationPage() {
         <div className="flex flex-col gap-4">
           <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
             <h1 className="font-nunito text-2xl font-bold text-umami-dark-gray">
-              Модерация
+              {isAdmin ? "Админ-панель" : "Модерация"}
             </h1>
             <p className="mt-1 text-sm text-umami-gray">
-              Жалобы: {reports.length} • Пользователи: {users.length} •
-              Заблокировано: {blockedUsersCount}
+              Жалобы: {reports.length} • Пользователи: {users.length} • Заблокировано: {blockedUsersCount}
             </p>
           </div>
 
@@ -122,42 +124,33 @@ export default function ModerationPage() {
                     className="rounded-xl border border-umami-light-gray/50 p-3"
                   >
                     <p className="text-sm font-bold text-umami-dark-gray">
-                      #{report.id} • {report.type || "unknown"} •{" "}
-                      {report.status || "pending"}
+                      #{report.id} • {report.type || "unknown"} • {report.status || "pending"}
                     </p>
                     <p className="mt-1 text-sm text-umami-gray">
                       {report.reason || "Без причины"}
                     </p>
                     {report.description ? (
-                      <p className="mt-1 text-sm text-umami-gray">
-                        {report.description}
-                      </p>
+                      <p className="mt-1 text-sm text-umami-gray">{report.description}</p>
                     ) : null}
                     <p className="mt-1 text-xs text-umami-light-gray">
-                      recipe_id: {String(report.recipe_id ?? "—")} •
-                      reported_user_id: {String(report.reported_user_id ?? "—")}
+                      recipe_id: {String(report.recipe_id ?? "—")} • reported_user_id: {String(report.reported_user_id ?? "—")}
                     </p>
                     <div className="mt-2 flex gap-2">
-                      {(["reviewed", "resolved", "dismissed"] as const).map(
-                        (status) => (
-                          <button
-                            key={status}
-                            type="button"
-                            disabled={actionLoading === `report-${report.id}`}
-                            onClick={() =>
-                              void runAction(`report-${report.id}`, () =>
-                                moderationService.updateReportStatus(
-                                  report.id,
-                                  status
-                                )
-                              )
-                            }
-                            className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-umami-dark-gray"
-                          >
-                            {status}
-                          </button>
-                        )
-                      )}
+                      {(["reviewed", "resolved", "dismissed"] as const).map((status) => (
+                        <button
+                          key={status}
+                          type="button"
+                          disabled={actionLoading === `report-${report.id}`}
+                          onClick={() =>
+                            void runAction(`report-${report.id}`, () =>
+                              moderationService.updateReportStatus(report.id, status)
+                            )
+                          }
+                          className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-umami-dark-gray"
+                        >
+                          {status}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -191,31 +184,31 @@ export default function ModerationPage() {
                 </button>
               </div>
 
-              <div className="mt-3 flex gap-2">
-                <input
-                  value={bulkRecipeIds}
-                  onChange={(e) => setBulkRecipeIds(e.target.value)}
-                  placeholder="ID рецептов через запятую"
-                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                />
-                <button
-                  type="button"
-                  disabled={
-                    toIdList(bulkRecipeIds).length === 0 ||
-                    actionLoading === "bulk-delete-recipes"
-                  }
-                  onClick={() =>
-                    void runAction("bulk-delete-recipes", () =>
-                      moderationService.bulkDeleteRecipes(
-                        toIdList(bulkRecipeIds)
+              {isAdmin ? (
+                <div className="mt-3 flex gap-2">
+                  <input
+                    value={bulkRecipeIds}
+                    onChange={(e) => setBulkRecipeIds(e.target.value)}
+                    placeholder="ID рецептов через запятую"
+                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    disabled={
+                      toIdList(bulkRecipeIds).length === 0 ||
+                      actionLoading === "bulk-delete-recipes"
+                    }
+                    onClick={() =>
+                      void runAction("bulk-delete-recipes", () =>
+                        moderationService.bulkDeleteRecipes(toIdList(bulkRecipeIds))
                       )
-                    )
-                  }
-                  className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
-                >
-                  Массово
-                </button>
-              </div>
+                    }
+                    className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
+                  >
+                    Массово
+                  </button>
+                </div>
+              ) : null}
             </div>
 
             <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
@@ -272,34 +265,36 @@ export default function ModerationPage() {
               </div>
             </div>
 
-            <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
-              <h3 className="font-nunito text-base font-bold text-umami-dark-gray">
-                Массовая блокировка пользователей
-              </h3>
-              <div className="mt-3 flex gap-2">
-                <input
-                  value={bulkUserIds}
-                  onChange={(e) => setBulkUserIds(e.target.value)}
-                  placeholder="ID пользователей через запятую"
-                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                />
-                <button
-                  type="button"
-                  disabled={
-                    toIdList(bulkUserIds).length === 0 ||
-                    actionLoading === "bulk-block-users"
-                  }
-                  onClick={() =>
-                    void runAction("bulk-block-users", () =>
-                      moderationService.bulkBlockUsers(toIdList(bulkUserIds))
-                    )
-                  }
-                  className="rounded-full bg-umami-orange px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
-                >
-                  Массово
-                </button>
+            {isAdmin ? (
+              <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
+                <h3 className="font-nunito text-base font-bold text-umami-dark-gray">
+                  Массовая блокировка пользователей
+                </h3>
+                <div className="mt-3 flex gap-2">
+                  <input
+                    value={bulkUserIds}
+                    onChange={(e) => setBulkUserIds(e.target.value)}
+                    placeholder="ID пользователей через запятую"
+                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    disabled={
+                      toIdList(bulkUserIds).length === 0 ||
+                      actionLoading === "bulk-block-users"
+                    }
+                    onClick={() =>
+                      void runAction("bulk-block-users", () =>
+                        moderationService.bulkBlockUsers(toIdList(bulkUserIds))
+                      )
+                    }
+                    className="rounded-full bg-umami-orange px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
+                  >
+                    Массово
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : null}
           </div>
         </div>
       </div>

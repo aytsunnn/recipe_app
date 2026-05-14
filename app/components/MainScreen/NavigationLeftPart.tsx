@@ -7,7 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { metaService, Category } from "../../services/metaService";
 import { authService, User } from "../../services/authService";
 import { normalizeImageUrl } from "../../utils/imageUrl";
-import { canAccessModeration } from "../../utils/role";
+import { canAccessModeration, isAdminRole } from "../../utils/role";
 
 const navItems = [
   { href: "/", label: "Главная", icon: "/House.svg" },
@@ -79,8 +79,11 @@ export default function LeftPart() {
 
   const effectiveRole = currentUser?.role || authService.getRoleFromToken();
   const canModerate = canAccessModeration(effectiveRole);
+  const moderationLabel = isAdminRole(effectiveRole)
+    ? "Админ-панель"
+    : "Модерация";
   const roleNavItem = canModerate
-    ? { href: "/moderation", label: "Модерация", icon: "/Shield.svg" }
+    ? { href: "/moderation", label: moderationLabel, icon: "/Shield.svg" }
     : null;
   const resolvedNavItems = roleNavItem ? [...navItems, roleNavItem] : navItems;
 

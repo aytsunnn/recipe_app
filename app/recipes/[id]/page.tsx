@@ -10,11 +10,13 @@ import { commentService, Comment } from "../../services/commentService";
 import { likeService } from "../../services/likeService";
 import { favoriteService } from "../../services/favoriteService";
 import { recipeService } from "../../services/recipeService";
+import { moderationService } from "../../services/moderationService";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
 import NotFoundState from "../../components/NotFoundState";
 import { isNotFoundErrorMessage } from "../../utils/errorUtils";
+import { canAccessModeration } from "../../utils/role";
 
 const RECIPE_LIKE_OVERRIDES_KEY = "recipe_like_overrides";
 const RECIPE_COMMENTS_OVERRIDES_KEY = "recipe_comments_overrides";
@@ -73,6 +75,11 @@ export default function RecipeDetailsPage() {
   const [personalNote, setPersonalNote] = useState("");
   const [noteSaving, setNoteSaving] = useState(false);
   const [commentLikeBusy, setCommentLikeBusy] = useState<Record<string, boolean>>({});
+  const [canModerate, setCanModerate] = useState(false);
+  const [recipeActionsOpen, setRecipeActionsOpen] = useState(false);
+  const [commentActionsOpenId, setCommentActionsOpenId] = useState<string | null>(null);
+  const [deleteRecipeBusy, setDeleteRecipeBusy] = useState(false);
+  const [deleteCommentBusy, setDeleteCommentBusy] = useState<Record<string, boolean>>({});
   const [desiredPortions, setDesiredPortions] = useState(1);
 
   const categories = useMemo(() => {
@@ -223,10 +230,13 @@ export default function RecipeDetailsPage() {
     const loadUser = async () => {
       if (!authService.isAuthenticated()) {
         setCurrentUserId(null);
+        setCanModerate(false);
         return;
       }
       const user = await authService.getCurrentUser();
       setCurrentUserId(user?.id || null);
+      const role = user?.role || authService.getRoleFromToken();
+      setCanModerate(canAccessModeration(role));
     };
     loadUser();
   }, []);
@@ -355,6 +365,22 @@ export default function RecipeDetailsPage() {
       alert("Не удалось обновить избранное");
     } finally {
       setFavoriteBusy(false);
+    }
+  };
+
+  const handleDeleteRecipe = async () => {
+    if (!recipeId || deleteRecipeBusy) return;
+    if (!window.confirm("Удалить рецепт?")) return;
+    try {
+      setDeleteRecipeBusy(true);
+      await moderationService.deleteRecipe(recipeId);
+      setRecipeActionsOpen(false);
+      router.back();
+    } catch (error) {
+      console.error("Ошибка удаления рецепта:", error);
+      alert("Не удалось удалить рецепт");
+    } finally {
+      setDeleteRecipeBusy(false);
     }
   };
 
@@ -491,6 +517,22 @@ export default function RecipeDetailsPage() {
       alert("Не удалось поставить лайк на комментарий");
     } finally {
       setCommentLikeBusy((prev) => ({ ...prev, [commentId]: false }));
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!recipeId || deleteCommentBusy[commentId]) return;
+    if (!window.confirm("Удалить комментарий?")) return;
+    try {
+      setDeleteCommentBusy((prev) => ({ ...prev, [commentId]: true }));
+      await moderationService.deleteComment(commentId);
+      setCommentActionsOpenId(null);
+      await loadComments();
+    } catch (error) {
+      console.error("Ошибка удаления комментария:", error);
+      alert("Не удалось удалить комментарий");
+    } finally {
+      setDeleteCommentBusy((prev) => ({ ...prev, [commentId]: false }));
     }
   };
 
@@ -684,6 +726,29 @@ export default function RecipeDetailsPage() {
             <h1 className="min-w-0 flex-1 truncate font-nunito text-2xl font-bold leading-none text-umami-orange">
               {recipe.title}
             </h1>
+            {canModerate && (
+              <div className="relative ml-2">
+                <button
+                  type="button"
+                  onClick={() => setRecipeActionsOpen((prev) => !prev)}
+                  className="h-9 w-9 rounded-full border border-umami-light-gray/60 bg-white flex items-center justify-center"
+                >
+                  <Image width={20} height={20} src="/DotsThreeOutlineVertical.svg" alt="actions" />
+                </button>
+                {recipeActionsOpen && (
+                  <div className="absolute right-0 top-10 z-20 min-w-[160px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
+                    <button
+                      type="button"
+                      disabled={deleteRecipeBusy}
+                      onClick={() => void handleDeleteRecipe()}
+                      className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
+                    >
+                      Удалить рецепт
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             <button
               type="button"
               onClick={handleFavoriteRecipe}
@@ -1235,26 +1300,55 @@ export default function RecipeDetailsPage() {
                             >
                               {comment.Author.username}
                             </Link>
-                            <button
-                              type="button"
-                              onClick={() => void handleToggleCommentLike(comment)}
-                              disabled={Boolean(commentLikeBusy[comment.id])}
-                              className="inline-flex shrink-0 items-center gap-1 disabled:opacity-60"
-                            >
-                              <Image
-                                width={20}
-                                height={20}
-                                src={
-                                  isCommentLikedByCurrentUser(comment)
-                                    ? "/RedHeart.svg"
-                                    : "/HeartGray.svg"
-                                }
-                                alt="comment-like"
-                              />
-                              <span className="font-nunito text-sm text-umami-gray">
-                                {getCommentLikesCount(comment)}
-                              </span>
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void handleToggleCommentLike(comment)}
+                                disabled={Boolean(commentLikeBusy[comment.id])}
+                                className="inline-flex shrink-0 items-center gap-1 disabled:opacity-60"
+                              >
+                                <Image
+                                  width={20}
+                                  height={20}
+                                  src={
+                                    isCommentLikedByCurrentUser(comment)
+                                      ? "/RedHeart.svg"
+                                      : "/HeartGray.svg"
+                                  }
+                                  alt="comment-like"
+                                />
+                                <span className="font-nunito text-sm text-umami-gray">
+                                  {getCommentLikesCount(comment)}
+                                </span>
+                              </button>
+                              {canModerate && (
+                                <div className="relative">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setCommentActionsOpenId((prev) =>
+                                        prev === String(comment.id) ? null : String(comment.id)
+                                      )
+                                    }
+                                    className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-[#f4f1e8]"
+                                  >
+                                    <Image width={18} height={18} src="/DotsThreeOutlineVertical.svg" alt="actions" />
+                                  </button>
+                                  {commentActionsOpenId === String(comment.id) && (
+                                    <div className="absolute right-0 top-8 z-20 min-w-[170px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
+                                      <button
+                                        type="button"
+                                        disabled={Boolean(deleteCommentBusy[String(comment.id)])}
+                                        onClick={() => void handleDeleteComment(String(comment.id))}
+                                        className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
+                                      >
+                                        Удалить комментарий
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                           <p className="font-inter text-sm text-umami-gray">
                             {comment.content}
@@ -1346,26 +1440,55 @@ export default function RecipeDetailsPage() {
                                     >
                                       {reply.Author.username}
                                     </Link>
-                                    <button
-                                      type="button"
-                                      onClick={() => void handleToggleCommentLike(reply)}
-                                      disabled={Boolean(commentLikeBusy[reply.id])}
-                                      className="inline-flex shrink-0 items-center gap-1 disabled:opacity-60"
-                                    >
-                                      <Image
-                                        width={18}
-                                        height={18}
-                                        src={
-                                          isCommentLikedByCurrentUser(reply)
-                                            ? "/RedHeart.svg"
-                                            : "/HeartGray.svg"
-                                        }
-                                        alt="reply-like"
-                                      />
-                                      <span className="font-nunito text-xs text-umami-gray">
-                                        {getCommentLikesCount(reply)}
-                                      </span>
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleToggleCommentLike(reply)}
+                                        disabled={Boolean(commentLikeBusy[reply.id])}
+                                        className="inline-flex shrink-0 items-center gap-1 disabled:opacity-60"
+                                      >
+                                        <Image
+                                          width={18}
+                                          height={18}
+                                          src={
+                                            isCommentLikedByCurrentUser(reply)
+                                              ? "/RedHeart.svg"
+                                              : "/HeartGray.svg"
+                                          }
+                                          alt="reply-like"
+                                        />
+                                        <span className="font-nunito text-xs text-umami-gray">
+                                          {getCommentLikesCount(reply)}
+                                        </span>
+                                      </button>
+                                      {canModerate && (
+                                        <div className="relative">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              setCommentActionsOpenId((prev) =>
+                                                prev === String(reply.id) ? null : String(reply.id)
+                                              )
+                                            }
+                                            className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-[#f4f1e8]"
+                                          >
+                                            <Image width={16} height={16} src="/DotsThreeOutlineVertical.svg" alt="actions" />
+                                          </button>
+                                          {commentActionsOpenId === String(reply.id) && (
+                                            <div className="absolute right-0 top-7 z-20 min-w-[170px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
+                                              <button
+                                                type="button"
+                                                disabled={Boolean(deleteCommentBusy[String(reply.id)])}
+                                                onClick={() => void handleDeleteComment(String(reply.id))}
+                                                className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
+                                              >
+                                                Удалить комментарий
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                   <p className="font-inter text-sm text-umami-gray">
                                     {reply.content}

@@ -7,7 +7,10 @@ import { likeService } from "../services/likeService";
 import { commentService, Comment } from "../services/commentService";
 import { followService } from "../services/followService";
 import { favoriteService } from "../services/favoriteService";
+import { authService } from "../services/authService";
+import { moderationService } from "../services/moderationService";
 import { normalizeImageUrl } from "../utils/imageUrl";
+import { canAccessModeration } from "../utils/role";
 
 interface Recipe {
   id: string;
@@ -68,6 +71,10 @@ export default function FeedCard({
   const [lastComment, setLastComment] = useState<Comment | null>(null);
   const [loadingComment, setLoadingComment] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [canModerate, setCanModerate] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   // Проверяем, является ли текущий пользователь автором поста
   const isOwnPost = currentUserId && currentUserId === recipe.user_id;
@@ -180,6 +187,23 @@ export default function FeedCard({
       window.removeEventListener("recipe-comments-updated", handleRecipeCommentsUpdated);
     };
   }, [recipe.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadRole = async () => {
+      if (!authService.isAuthenticated()) {
+        if (!cancelled) setCanModerate(false);
+        return;
+      }
+      const me = await authService.getCurrentUser();
+      const role = me?.role || authService.getRoleFromToken();
+      if (!cancelled) setCanModerate(canAccessModeration(role));
+    };
+    void loadRole();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -328,6 +352,27 @@ export default function FeedCard({
     return `/recipes/${recipe.id}${query ? `?${query}` : ""}`;
   };
 
+  const handleDeleteRecipe = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (deleteBusy) return;
+    const confirmed = window.confirm("Удалить рецепт?");
+    if (!confirmed) return;
+    try {
+      setDeleteBusy(true);
+      await moderationService.deleteRecipe(String(recipe.id));
+      setActionsOpen(false);
+      setIsDeleted(true);
+    } catch (error) {
+      console.error("Ошибка удаления рецепта:", error);
+      alert("Не удалось удалить рецепт");
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
+
+  if (isDeleted) return null;
+
   return (
     <div className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5">
       {showAuthorHeader && (
@@ -355,6 +400,34 @@ export default function FeedCard({
             </div>
           </Link>
           <div className="flex items-center">
+              {canModerate && (
+                <div className="relative mr-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActionsOpen((prev) => !prev);
+                    }}
+                    className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-[#f4f1e8]"
+                    aria-label="Действия модерации"
+                  >
+                    <Image width={20} height={20} src="/DotsThreeOutlineVertical.svg" alt="actions" />
+                  </button>
+                  {actionsOpen && (
+                    <div className="absolute right-0 top-8 z-20 min-w-[150px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
+                      <button
+                        type="button"
+                        disabled={deleteBusy}
+                        onClick={handleDeleteRecipe}
+                        className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
+                      >
+                        Удалить рецепт
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               {isAuthenticated && !isOwnPost && (
                 <>
                   {/* Показываем "Подписаться" если не подписан и не подписался только что */}

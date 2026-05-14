@@ -22,7 +22,7 @@ import {
 } from "../services/metaService";
 import { normalizeImageUrl } from "../utils/imageUrl";
 import { toolsService } from "../services/toolsService";
-import { canAccessModeration } from "../utils/role";
+import { canAccessModeration, isAdminRole } from "../utils/role";
 
 interface UserStats {
   followingCount: number;
@@ -1367,12 +1367,13 @@ export default function ProfilePage() {
 
   if (!user) return null;
   const canModerate = canAccessModeration(user.role);
+  const moderationLabel = isAdminRole(user.role) ? "Админ-панель" : "Модерация";
   const profileNavItems = canModerate
     ? [
         ...navItems,
         {
           href: "/moderation",
-          label: "Модерация",
+          label: moderationLabel,
           icon: "/WarningCircle.svg",
         },
       ]
