@@ -5,9 +5,11 @@ import { Suspense } from "react";
 import FeedCard from "../../components/FeedCard";
 import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
+import NotFoundState from "../../components/NotFoundState";
 import { authService } from "../../services/authService";
 import { followService } from "../../services/followService";
 import { Recipe, recipeService } from "../../services/recipeService";
+import { isNotFoundErrorMessage } from "../../utils/errorUtils";
 
 const RANDOM_RECIPE_STORAGE_KEY = "random_recipe_page:last_recipe";
 
@@ -94,7 +96,15 @@ export default function RandomRecipePage() {
         </div>
 
         {loading && <div className="text-umami-gray">Загрузка...</div>}
-        {error && !loading && (
+        {error && !loading && isNotFoundErrorMessage(error) && (
+          <NotFoundState
+            title="Ошибка 404"
+            description="Рецепт не найден."
+            actionHref="/recipes/random"
+            actionLabel="Попробовать снова"
+          />
+        )}
+        {error && !loading && !isNotFoundErrorMessage(error) && (
           <div className="rounded-lg border border-umami-light-gray/50 bg-white p-6 text-red-500">{error}</div>
         )}
         {!loading && !error && recipe && (

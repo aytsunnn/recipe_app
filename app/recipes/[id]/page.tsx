@@ -13,6 +13,8 @@ import { recipeService } from "../../services/recipeService";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
+import NotFoundState from "../../components/NotFoundState";
+import { isNotFoundErrorMessage } from "../../utils/errorUtils";
 
 const RECIPE_LIKE_OVERRIDES_KEY = "recipe_like_overrides";
 const RECIPE_COMMENTS_OVERRIDES_KEY = "recipe_comments_overrides";
@@ -602,6 +604,27 @@ export default function RecipeDetailsPage() {
   }
 
   if (error || !recipe) {
+    if (!recipe || isNotFoundErrorMessage(error)) {
+      return (
+        <div className="flex w-full gap-5">
+          <div className="hidden w-55.75 lg:flex">
+            <LeftPart />
+          </div>
+          <div className="w-full lg:w-169.5">
+            <NotFoundState
+              title="Ошибка 404"
+              description="Рецепт не найден или был удален."
+              actionHref="/"
+              actionLabel="Вернуться в ленту"
+            />
+          </div>
+          <div className="hidden w-63.75 lg:flex">
+            <RightPart />
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex w-full gap-5">
         <div className="hidden w-55.75 lg:flex">
@@ -613,7 +636,7 @@ export default function RecipeDetailsPage() {
               Не удалось загрузить рецепт
             </p>
             <p className="mt-2 font-inter text-sm text-umami-gray">
-              {error || "Рецепт не найден"}
+              {error || "Ошибка загрузки"}
             </p>
             <Link
               href="/"
@@ -1346,3 +1369,5 @@ export default function RecipeDetailsPage() {
     </div>
   );
 }
+
+

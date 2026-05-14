@@ -5,11 +5,13 @@ import { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import FeedCard from "../components/FeedCard";
 import LeftPart from "../components/MainScreen/NavigationLeftPart";
+import NotFoundState from "../components/NotFoundState";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import { authService } from "../services/authService";
 import { followService } from "../services/followService";
 import { favoriteService } from "../services/favoriteService";
 import { Recipe } from "../services/recipeService";
+import { isNotFoundErrorMessage } from "../utils/errorUtils";
 
 export default function FavoritesPage() {
   const router = useRouter();
@@ -86,7 +88,16 @@ export default function FavoritesPage() {
             </div>
           )}
 
-          {error && !isLoading && (
+          {error && !isLoading && isNotFoundErrorMessage(error) && (
+            <NotFoundState
+              title="Ошибка 404"
+              description="Страница не найдена или была удалена."
+              actionHref="/"
+              actionLabel="Вернуться на главную"
+            />
+          )}
+
+          {error && !isLoading && !isNotFoundErrorMessage(error) && (
             <div className="bg-white rounded-lg border border-umami-light-gray/50 p-8 text-center">
               <p className="font-nunito font-bold text-lg text-red-500">Ошибка: {error}</p>
             </div>

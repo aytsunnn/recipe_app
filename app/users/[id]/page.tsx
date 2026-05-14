@@ -6,11 +6,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import FeedCard from "../../components/FeedCard";
 import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
+import NotFoundState from "../../components/NotFoundState";
 import ScrollToTopButton from "../../components/ScrollToTopButton";
 import { authService } from "../../services/authService";
 import { followService, FollowUser } from "../../services/followService";
 import { Recipe } from "../../services/recipeService";
 import { userService, User } from "../../services/userService";
+import { isNotFoundErrorMessage } from "../../utils/errorUtils";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 
 interface ProfileStats {
@@ -101,7 +103,16 @@ export default function PublicUserPage() {
           <div className="rounded-[20px] bg-white p-8 text-center font-nunito text-umami-gray">Загрузка...</div>
         )}
 
-        {!loading && error && (
+        {!loading && error && isNotFoundErrorMessage(error) && (
+          <NotFoundState
+            title="Ошибка 404"
+            description="Пользователь не найден или профиль был удален."
+            actionHref="/"
+            actionLabel="Вернуться на главную"
+          />
+        )}
+
+        {!loading && error && !isNotFoundErrorMessage(error) && (
           <div className="rounded-[20px] bg-white p-8 text-center font-nunito text-red-500">{error}</div>
         )}
 

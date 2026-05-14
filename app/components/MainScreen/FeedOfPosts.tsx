@@ -8,6 +8,8 @@ import { useRecipes } from "../../hooks/useRecipes";
 import { authService } from "../../services/authService";
 import { followService } from "../../services/followService";
 import { userService, User } from "../../services/userService";
+import NotFoundState from "../NotFoundState";
+import { isNotFoundErrorMessage } from "../../utils/errorUtils";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 import ScrollToTopButton from "../ScrollToTopButton";
 import Link from "next/link";
@@ -157,6 +159,19 @@ export default function FeedOfPosts() {
   }
 
   if (error) {
+    if (isNotFoundErrorMessage(error)) {
+      return (
+        <div className="w-full py-2">
+          <NotFoundState
+            title="Ошибка 404"
+            description="Страница или данные не найдены."
+            actionHref="/"
+            actionLabel="Вернуться на главную"
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="w-full flex flex-col justify-center items-center py-10 gap-4">
         <div className="text-red-500">Ошибка: {error}</div>
