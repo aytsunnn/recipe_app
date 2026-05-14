@@ -630,11 +630,10 @@ export default function RightPart() {
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`${message.role === "user" ? "ml-auto" : ""
-                      } max-w-[85%]`}
+                    className={`${message.role === "user" ? "ml-auto" : ""} w-fit max-w-[85%]`}
                   >
                     {message.recipeCard || message.recipeDraft ? (
-                      <div className="max-w-[560px] rounded-2xl border border-[#E9E1D2] bg-white p-4">
+                      <div className="w-fit max-w-[560px] rounded-2xl border border-[#E9E1D2] bg-white p-4">
                         <div className="w-full text-left">
                           <p className="line-clamp-2 font-nunito text-lg font-bold text-umami-dark-gray">
                             {message.recipeDraft?.title || message.recipeCard?.title}
@@ -756,7 +755,7 @@ export default function RightPart() {
                       </div>
                     ) : (
                       <div
-                        className={`whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${message.role === "user"
+                        className={`inline-block max-w-full whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${message.role === "user"
                             ? "bg-umami-orange text-white"
                             : "bg-white text-umami-dark-gray"
                           }`}
