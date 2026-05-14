@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -632,33 +632,72 @@ export default function RightPart() {
                 )}
               </div>
 
-              <div className="mt-3 flex gap-2">
+              <div className="mt-2.5 flex items-end gap-2">
                 <textarea
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
+                  onInput={(event) => {
+                    const target = event.currentTarget;
+                    target.style.height = "0px";
+                    const nextHeight = Math.min(target.scrollHeight, 136);
+                    target.style.height = `${Math.max(nextHeight, 38)}px`;
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      if (canSend) {
+                        void handleSendMessage();
+                      }
+                    }
+                  }}
                   placeholder="Например: курица, рис, сливки, чеснок"
-                  className="h-20 flex-1 resize-none rounded-2xl border border-umami-light-gray px-3 py-2 text-sm"
+                  rows={1}
+                  className="modal-thin-scroll max-h-34 min-h-9 flex-1 resize-none overflow-y-auto rounded-xl border border-[#E4DDCF] bg-[#FFFEFC] px-3 py-2 text-sm leading-5 outline-none transition-colors focus:border-[#D9C5A6]"
                 />
                 <button
                   type="button"
                   disabled={!canSend}
                   onClick={handleSendMessage}
-                  className="h-fit self-end rounded-full bg-umami-green px-4 py-2 font-nunito text-sm font-bold text-white disabled:opacity-50"
+                  className="inline-flex h-9 items-center gap-1.5 self-end rounded-full bg-umami-green px-3 py-1.5 font-nunito text-xs font-bold text-white disabled:opacity-50"
                 >
+                  <Image src="/PaperPlane.svg" alt="send" width={12} height={12} />
                   Отправить
                 </button>
               </div>
             </div>
 
-            <aside className="h-full rounded-[20px] border border-[#eaeaea] bg-white p-4">
-              <p className="font-nunito text-base font-bold text-umami-dark-gray">
+            <aside className="h-full rounded-[20px] border border-[#ECE5D8] bg-[#FFFCF7] p-4">
+              <p className="font-nunito text-base font-bold text-[#4D3E2E]">
                 Как спросить
               </p>
-              <ul className="mt-2 space-y-1 text-sm text-umami-gray">
-                <li>Продукты через запятую.</li>
-                <li>Можно добавить ограничения.</li>
-                <li>Например: без сахара, острое, на 2 порции.</li>
-              </ul>
+              <p className="mt-1 text-xs text-[#8B7A67]">
+                Короткий формат запроса дает лучший результат.
+              </p>
+
+              <div className="mt-3 space-y-2">
+                <div className="rounded-xl border border-[#EFE5D6] bg-white px-3 py-2">
+                  <p className="font-nunito text-[11px] font-bold uppercase tracking-wide text-[#9A846B]">
+                    Шаг 1
+                  </p>
+                  <p className="mt-1 text-sm text-[#5E5142]">Продукты через запятую</p>
+                </div>
+
+                <div className="rounded-xl border border-[#EFE5D6] bg-white px-3 py-2">
+                  <p className="font-nunito text-[11px] font-bold uppercase tracking-wide text-[#9A846B]">
+                    Шаг 2
+                  </p>
+                  <p className="mt-1 text-sm text-[#5E5142]">Добавьте условия, если нужно</p>
+                </div>
+
+                <div className="rounded-xl border border-[#E6D6BE] bg-[#FFF5E7] px-3 py-2">
+                  <p className="font-nunito text-[11px] font-bold uppercase tracking-wide text-[#B07534]">
+                    Пример
+                  </p>
+                  <p className="mt-1 text-sm text-[#6A533A]">
+                    курица, рис, томаты, без сахара, на 2 порции
+                  </p>
+                </div>
+              </div>
             </aside>
           </div>
         </div>
