@@ -120,7 +120,7 @@ export default function FeedOfPosts() {
         const ids = new Set(following.map((f: { id: string }) => f.id));
         setFollowingIds(ids);
       } catch (loadError) {
-        console.error("РћС€РёР±РєР° РїСЂРё Р·Р°РіСЂСѓР·РєРµ РїРѕРґРїРёСЃРѕРє:", loadError);
+        console.error("Ошибка при загрузке подписок:", loadError);
       }
     };
 
@@ -145,7 +145,7 @@ export default function FeedOfPosts() {
   if (loading) {
     return (
       <div className="w-full flex justify-center items-center py-10">
-        <div className="text-umami-gray">Р—Р°РіСЂСѓР·РєР° СЂРµС†РµРїС‚РѕРІ...</div>
+        <div className="text-umami-gray">Загрузка рецептов...</div>
       </div>
     );
   }
@@ -155,10 +155,10 @@ export default function FeedOfPosts() {
       return (
         <div className="w-full py-2">
           <NotFoundState
-            title="РћС€РёР±РєР° 404"
-            description="РЎС‚СЂР°РЅРёС†Р° РёР»Рё РґР°РЅРЅС‹Рµ РЅРµ РЅР°Р№РґРµРЅС‹."
+            title="Ошибка 404"
+            description="Страница или данные не найдены."
             actionHref="/"
-            actionLabel="Р’РµСЂРЅСѓС‚СЊСЃСЏ РЅР° РіР»Р°РІРЅСѓСЋ"
+            actionLabel="Вернуться на главную"
           />
         </div>
       );
@@ -166,12 +166,12 @@ export default function FeedOfPosts() {
 
     return (
       <div className="w-full flex flex-col justify-center items-center py-10 gap-4">
-        <div className="text-red-500">РћС€РёР±РєР°: {error}</div>
+        <div className="text-red-500">Ошибка: {error}</div>
         <button
           onClick={refetch}
           className="px-4 py-2 bg-umami-green text-white rounded-full hover:bg-[#6A805E] transition-colors"
         >
-          РџРѕРІС‚РѕСЂРёС‚СЊ
+          Повторить
         </button>
       </div>
     );
@@ -183,10 +183,10 @@ export default function FeedOfPosts() {
       {searchQuery && (foundUsers.length > 0 || isUsersLoading) && (
         <div className="bg-white rounded-[20px] border border-umami-light-gray/50 p-5 mb-2 flex flex-col gap-4">
           <h3 className="font-nunito font-bold text-lg text-umami-dark-gray flex items-center gap-2">
-            РџРѕР»СЊР·РѕРІР°С‚РµР»Рё
+            Пользователи
             {isUsersLoading && (
               <span className="text-xs font-normal text-umami-gray animate-pulse">
-                (РёС‰РµРј...)
+                (ищем...)
               </span>
             )}
           </h3>
@@ -220,7 +220,7 @@ export default function FeedOfPosts() {
       {recipes.length === 0 && !loading && (
         <div className="bg-white rounded-lg border border-umami-light-gray/50 p-8 text-center">
           <p className="font-nunito font-bold text-lg text-umami-gray">
-            {searchQuery ? "РќРёС‡РµРіРѕ РЅРµ РЅР°Р№РґРµРЅРѕ" : "РќРµС‚ СЂРµС†РµРїС‚РѕРІ"}
+            {searchQuery ? "Ничего не найдено" : "Нет рецептов"}
           </p>
         </div>
       )}
@@ -242,8 +242,8 @@ export default function FeedOfPosts() {
       {hasMore && (
         <p className="py-2 text-center text-sm text-umami-gray">
           {loadingMore
-            ? "Р—Р°РіСЂСѓР¶Р°РµРј РµС‰Рµ..."
-            : "РџСЂРѕРєСЂСѓС‚РёС‚Рµ РІРЅРёР·, С‡С‚РѕР±С‹ Р·Р°РіСЂСѓР·РёС‚СЊ РµС‰Рµ"}
+            ? "Загружаем еще..."
+            : "Прокрутите вниз, чтобы загрузить еще"}
         </p>
       )}
       <ScrollToTopButton anchorRef={feedColumnRef} />
