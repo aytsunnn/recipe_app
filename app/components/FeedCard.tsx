@@ -137,7 +137,12 @@ export default function FeedCard({
   useEffect(() => {
     const next = resolveCommentsCount();
     setCommentsCountState(next);
-  }, [recipe._count?.Comments, recipe.total_reviews, recipe.comments_count, recipe.Comments?.length]);
+  }, [
+    recipe._count?.Comments,
+    recipe.total_reviews,
+    recipe.comments_count,
+    recipe.Comments?.length,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,9 +187,15 @@ export default function FeedCard({
       setCommentsCountState(Math.max(0, customEvent.detail.commentsCount));
     };
 
-    window.addEventListener("recipe-comments-updated", handleRecipeCommentsUpdated);
+    window.addEventListener(
+      "recipe-comments-updated",
+      handleRecipeCommentsUpdated
+    );
     return () => {
-      window.removeEventListener("recipe-comments-updated", handleRecipeCommentsUpdated);
+      window.removeEventListener(
+        "recipe-comments-updated",
+        handleRecipeCommentsUpdated
+      );
     };
   }, [recipe.id]);
 
@@ -400,57 +411,62 @@ export default function FeedCard({
             </div>
           </Link>
           <div className="flex items-center">
-              {canModerate && (
-                <div className="relative mr-2">
+            {isAuthenticated && !isOwnPost && (
+              <>
+                {/* Показываем "Подписаться" если не подписан и не подписался только что */}
+                {!following && !justFollowed && (
                   <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setActionsOpen((prev) => !prev);
-                    }}
-                    className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-[#f4f1e8]"
-                    aria-label="Действия модерации"
+                    onClick={handleFollow}
+                    className="custom-button bg-umami-green font-inter font-medium text-xs h-7"
                   >
-                    <Image width={20} height={20} src="/DotsThreeOutlineVertical.svg" alt="actions" />
+                    Подписаться
                   </button>
-                  {actionsOpen && (
-                    <div className="absolute right-0 top-8 z-20 min-w-[150px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
-                      <button
-                        type="button"
-                        disabled={deleteBusy}
-                        onClick={handleDeleteRecipe}
-                        className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
-                      >
-                        Удалить рецепт
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-              {isAuthenticated && !isOwnPost && (
-                <>
-                  {/* Показываем "Подписаться" если не подписан и не подписался только что */}
-                  {!following && !justFollowed && (
+                )}
+                {/* Показываем "Подписки" если только что подписался в ленте */}
+                {justFollowed && (
+                  <button
+                    onClick={handleFollow}
+                    className="custom-button bg-umami-gray font-inter font-medium text-xs h-7"
+                  >
+                    Подписки
+                  </button>
+                )}
+                {/* Если был подписан изначально (following && !justFollowed) - ничего не показываем */}
+              </>
+            )}
+            {canModerate && (
+              <div className="relative ml-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActionsOpen((prev) => !prev);
+                  }}
+                  className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-[#f4f1e8]"
+                  aria-label="Действия модерации"
+                >
+                  <Image
+                    width={20}
+                    height={20}
+                    src="/DotsThreeOutlineVertical.svg"
+                    alt="actions"
+                  />
+                </button>
+                {actionsOpen && (
+                  <div className="absolute right-0 top-8 z-20 min-w-[150px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
                     <button
-                      onClick={handleFollow}
-                      className="custom-button bg-umami-green font-inter font-medium text-xs h-7"
+                      type="button"
+                      disabled={deleteBusy}
+                      onClick={handleDeleteRecipe}
+                      className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
                     >
-                      Подписаться
+                      Удалить рецепт
                     </button>
-                  )}
-                  {/* Показываем "Подписки" если только что подписался в ленте */}
-                  {justFollowed && (
-                    <button
-                      onClick={handleFollow}
-                      className="custom-button bg-umami-gray font-inter font-medium text-xs h-7"
-                    >
-                      Подписки
-                    </button>
-                  )}
-                  {/* Если был подписан изначально (following && !justFollowed) - ничего не показываем */}
-                </>
-              )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -533,10 +549,14 @@ export default function FeedCard({
                 alt="comments"
               />
             </Link>
-            <p className="font-inter text-sm text-umami-gray">{commentsCount}</p>
+            <p className="font-inter text-sm text-umami-gray">
+              {commentsCount}
+            </p>
           </div>
         </div>
-        {footerRightSlot ? <div className="flex items-center gap-2">{footerRightSlot}</div> : null}
+        {footerRightSlot ? (
+          <div className="flex items-center gap-2">{footerRightSlot}</div>
+        ) : null}
       </div>
 
       {/* Блок последнего комментария */}
@@ -552,7 +572,10 @@ export default function FeedCard({
                 <Image
                   width={32}
                   height={32}
-                  src={normalizeImageUrl(lastComment.Author.avatar_url, "/avatar.jpg")}
+                  src={normalizeImageUrl(
+                    lastComment.Author.avatar_url,
+                    "/avatar.jpg"
+                  )}
                   className="w-full h-full object-cover"
                   alt="avatar"
                 />
