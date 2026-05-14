@@ -1,9 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import FeedCard from "../FeedCard";
-import FiltersPanel, { FilterValues } from "./FiltersPanel";
 import { useRecipes } from "../../hooks/useRecipes";
 import { authService } from "../../services/authService";
 import { followService } from "../../services/followService";
@@ -21,8 +20,6 @@ const firstFromCsv = (csvValue: string | null) =>
 export default function FeedOfPosts() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams?.get("search") || "";
-  const showFilters = searchParams?.get("filters") === "true";
-
   const firstKitchenId = firstFromCsv(searchParams?.get("kitchen_id") || null);
   const firstCategoryId = firstFromCsv(
     searchParams?.get("category_id") || null
@@ -123,17 +120,12 @@ export default function FeedOfPosts() {
         const ids = new Set(following.map((f: { id: string }) => f.id));
         setFollowingIds(ids);
       } catch (loadError) {
-        console.error("Ошибка при загрузке подписок:", loadError);
+        console.error("РћС€РёР±РєР° РїСЂРё Р·Р°РіСЂСѓР·РєРµ РїРѕРґРїРёСЃРѕРє:", loadError);
       }
     };
 
     loadUser();
   }, []);
-
-  const handleApplyFilters = (newFilters: FilterValues) => {
-    void newFilters;
-  };
-
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
@@ -153,7 +145,7 @@ export default function FeedOfPosts() {
   if (loading) {
     return (
       <div className="w-full flex justify-center items-center py-10">
-        <div className="text-umami-gray">Загрузка рецептов...</div>
+        <div className="text-umami-gray">Р—Р°РіСЂСѓР·РєР° СЂРµС†РµРїС‚РѕРІ...</div>
       </div>
     );
   }
@@ -163,10 +155,10 @@ export default function FeedOfPosts() {
       return (
         <div className="w-full py-2">
           <NotFoundState
-            title="Ошибка 404"
-            description="Страница или данные не найдены."
+            title="РћС€РёР±РєР° 404"
+            description="РЎС‚СЂР°РЅРёС†Р° РёР»Рё РґР°РЅРЅС‹Рµ РЅРµ РЅР°Р№РґРµРЅС‹."
             actionHref="/"
-            actionLabel="Вернуться на главную"
+            actionLabel="Р’РµСЂРЅСѓС‚СЊСЃСЏ РЅР° РіР»Р°РІРЅСѓСЋ"
           />
         </div>
       );
@@ -174,12 +166,12 @@ export default function FeedOfPosts() {
 
     return (
       <div className="w-full flex flex-col justify-center items-center py-10 gap-4">
-        <div className="text-red-500">Ошибка: {error}</div>
+        <div className="text-red-500">РћС€РёР±РєР°: {error}</div>
         <button
           onClick={refetch}
           className="px-4 py-2 bg-umami-green text-white rounded-full hover:bg-[#6A805E] transition-colors"
         >
-          Повторить
+          РџРѕРІС‚РѕСЂРёС‚СЊ
         </button>
       </div>
     );
@@ -187,21 +179,14 @@ export default function FeedOfPosts() {
 
   return (
     <div ref={feedColumnRef} className="w-full flex flex-col gap-2">
-      {showFilters && (
-        <FiltersPanel
-          onApplyFilters={handleApplyFilters}
-          resultsCount={recipes.length}
-        />
-      )}
-
-      {/* Результаты поиска пользователей */}
+      {/* Р РµР·СѓР»СЊС‚Р°С‚С‹ РїРѕРёСЃРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ */}
       {searchQuery && (foundUsers.length > 0 || isUsersLoading) && (
         <div className="bg-white rounded-[20px] border border-umami-light-gray/50 p-5 mb-2 flex flex-col gap-4">
           <h3 className="font-nunito font-bold text-lg text-umami-dark-gray flex items-center gap-2">
-            Пользователи
+            РџРѕР»СЊР·РѕРІР°С‚РµР»Рё
             {isUsersLoading && (
               <span className="text-xs font-normal text-umami-gray animate-pulse">
-                (ищем...)
+                (РёС‰РµРј...)
               </span>
             )}
           </h3>
@@ -235,7 +220,7 @@ export default function FeedOfPosts() {
       {recipes.length === 0 && !loading && (
         <div className="bg-white rounded-lg border border-umami-light-gray/50 p-8 text-center">
           <p className="font-nunito font-bold text-lg text-umami-gray">
-            {searchQuery ? "Ничего не найдено" : "Нет рецептов"}
+            {searchQuery ? "РќРёС‡РµРіРѕ РЅРµ РЅР°Р№РґРµРЅРѕ" : "РќРµС‚ СЂРµС†РµРїС‚РѕРІ"}
           </p>
         </div>
       )}
@@ -257,11 +242,12 @@ export default function FeedOfPosts() {
       {hasMore && (
         <p className="py-2 text-center text-sm text-umami-gray">
           {loadingMore
-            ? "Загружаем еще..."
-            : "Прокрутите вниз, чтобы загрузить еще"}
+            ? "Р—Р°РіСЂСѓР¶Р°РµРј РµС‰Рµ..."
+            : "РџСЂРѕРєСЂСѓС‚РёС‚Рµ РІРЅРёР·, С‡С‚РѕР±С‹ Р·Р°РіСЂСѓР·РёС‚СЊ РµС‰Рµ"}
         </p>
       )}
       <ScrollToTopButton anchorRef={feedColumnRef} />
     </div>
   );
 }
+

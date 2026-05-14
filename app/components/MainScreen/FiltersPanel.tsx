@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -55,7 +55,7 @@ const difficultyOptions: Option[] = [
 
 export default function FiltersPanel({
   onApplyFilters,
-  resultsCount = 0,
+  resultsCount,
 }: FiltersPanelProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -340,10 +340,13 @@ export default function FiltersPanel({
         </div>
       )}
 
-      <p className="mt-2 text-center font-nunito text-sm font-bold text-umami-gray">
-        Найдено <span className="text-umami-green">{resultsCount}</span>{" "}
-        {getRecipeWord(resultsCount)}
-      </p>
+      {typeof resultsCount === "number" && (
+        <p className="mt-2 text-center font-nunito text-sm font-bold text-umami-gray">
+          Найдено <span className="text-umami-green">{resultsCount}</span>{" "}
+          {getRecipeWord(resultsCount)}
+        </p>
+      )}
     </div>
   );
 }
+
