@@ -1376,7 +1376,7 @@ function ProfilePageContent() {
         {
           href: "/moderation",
           label: moderationLabel,
-          icon: "/WarningCircle.svg",
+          icon: "/Shield.svg",
         },
       ]
     : navItems;

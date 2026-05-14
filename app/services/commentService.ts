@@ -122,6 +122,10 @@ class CommentService {
     return apiClient.delete(`/recipes/${recipeId}/comments/${commentId}`);
   }
 
+  async deleteOwn(commentId: string): Promise<void> {
+    await apiClient.delete(`/comments/${commentId}`);
+  }
+
   async update(recipeId: string, commentId: string, data: CreateCommentData): Promise<Comment> {
     const comment = await apiClient.put<Comment>(`/recipes/${recipeId}/comments/${commentId}`, data);
     return this.fixCommentImages(comment);

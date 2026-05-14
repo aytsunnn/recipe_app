@@ -91,6 +91,10 @@ class ModerationService {
     await apiClient.post(`/admin/users/${id}/block`);
   }
 
+  async deleteUser(id: string): Promise<void> {
+    await apiClient.delete(`/admin/users/${id}`);
+  }
+
   async bulkBlockUsers(userIds: number[], isBlocked = true): Promise<void> {
     await apiClient.post("/admin/users/bulk-block", {
       userIds,

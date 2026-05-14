@@ -33,6 +33,9 @@ export default function ModerationPage() {
   const [reportsFilter, setReportsFilter] = useState<
     "in_work" | "resolved_group"
   >("in_work");
+  const [resolvedActionByReport, setResolvedActionByReport] = useState<
+    Record<string, "accept" | "block-user">
+  >({});
 
   const loadData = async () => {
     setLoading(true);
@@ -184,6 +187,22 @@ export default function ModerationPage() {
     return null;
   };
 
+  const getReportedUserId = (report: ModerationReport): string | null => {
+    if (
+      report.reported_user_id !== null &&
+      report.reported_user_id !== undefined
+    ) {
+      return String(report.reported_user_id);
+    }
+    if (
+      report.ReportedUser?.id !== null &&
+      report.ReportedUser?.id !== undefined
+    ) {
+      return String(report.ReportedUser.id);
+    }
+    return null;
+  };
+
   const getUnavailableTargetMessage = (
     report: ModerationReport
   ): string | null => {
@@ -222,10 +241,35 @@ export default function ModerationPage() {
     return match?.[1] || null;
   };
 
-  const runAction = async (key: string, action: () => Promise<void>) => {
+  const patchReportStatus = (reportId: string, status: string) => {
+    setReports((prev) =>
+      prev.map((item) =>
+        String(item.id) === String(reportId)
+          ? { ...item, status, updatedAt: new Date().toISOString() }
+          : item
+      )
+    );
+  };
+
+  const patchResolvedAction = (
+    reportId: string,
+    action: "accept" | "block-user"
+  ) => {
+    setResolvedActionByReport((prev) => ({
+      ...prev,
+      [String(reportId)]: action,
+    }));
+  };
+
+  const runAction = async (
+    key: string,
+    action: () => Promise<void>,
+    onSuccess?: () => void
+  ) => {
     try {
       setActionLoading(key);
       await action();
+      onSuccess?.();
       await loadData();
     } catch (error) {
       console.error("Ошибка действия модерации:", error);
@@ -237,6 +281,33 @@ export default function ModerationPage() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleAcceptReport = async (report: ModerationReport) => {
+    const reportType = (report.type || "").toLowerCase();
+    const commentId = getReportCommentId(report);
+    const recipeId = report.recipe_id ? String(report.recipe_id) : null;
+    const reportedUserId = getReportedUserId(report);
+
+    if (commentId) {
+      await moderationService.deleteComment(commentId);
+      await moderationService.updateReportStatus(report.id, "resolved");
+      return;
+    }
+
+    if (reportType === "recipe" && recipeId) {
+      await moderationService.deleteRecipe(recipeId);
+      await moderationService.updateReportStatus(report.id, "resolved");
+      return;
+    }
+
+    if ((reportType === "user" || reportType === "profile") && reportedUserId) {
+      await moderationService.blockUser(reportedUserId);
+      await moderationService.updateReportStatus(report.id, "resolved");
+      return;
+    }
+
+    await moderationService.updateReportStatus(report.id, "resolved");
   };
 
   if (isAllowed === false) {
@@ -362,39 +433,115 @@ export default function ModerationPage() {
                       </div>
                     )}
 
-                    <div className="mt-2 flex gap-2">
-                      {(
-                        [
-                          { key: "reviewed", label: "В работе" },
-                          { key: "resolved", label: "Принято" },
-                          { key: "dismissed", label: "Отказано" },
-                        ] as const
-                      ).map((status) => {
-                        const isActive =
-                          (report.status || "").toLowerCase() === status.key;
-                        return (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={actionLoading === `report-${report.id}`}
+                        onClick={() =>
+                          void runAction(
+                            `report-${report.id}`,
+                            () =>
+                              moderationService.updateReportStatus(
+                                report.id,
+                                "reviewed"
+                              ),
+                            () => patchReportStatus(report.id, "reviewed")
+                          )
+                        }
+                        className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${
+                          (report.status || "").toLowerCase() === "reviewed"
+                            ? "bg-umami-orange text-white ring-2 ring-umami-orange/35"
+                            : "bg-gray-100 text-umami-dark-gray hover:bg-gray-200"
+                        }`}
+                      >
+                        В работе
+                      </button>
+
+                      {["user", "profile"].includes(
+                        (report.type || "").toLowerCase()
+                      ) ? (
+                        <>
                           <button
-                            key={status.key}
                             type="button"
-                            disabled={actionLoading === `report-${report.id}`}
+                            disabled={
+                              actionLoading === `report-${report.id}-block`
+                            }
                             onClick={() =>
-                              void runAction(`report-${report.id}`, () =>
-                                moderationService.updateReportStatus(
-                                  report.id,
-                                  status.key
-                                )
+                              void runAction(
+                                `report-${report.id}-block`,
+                                () => handleAcceptReport(report),
+                                () => {
+                                  patchReportStatus(report.id, "resolved");
+                                  patchResolvedAction(report.id, "block-user");
+                                }
                               )
                             }
-                            className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${
-                              isActive
+                            className={`rounded-full px-3 py-1 text-xs font-bold transition-colors disabled:opacity-60 ${
+                              (report.status || "").toLowerCase() ===
+                                "resolved" &&
+                              resolvedActionByReport[String(report.id)] ===
+                                "block-user"
                                 ? "bg-umami-orange text-white ring-2 ring-umami-orange/35"
                                 : "bg-gray-100 text-umami-dark-gray hover:bg-gray-200"
                             }`}
                           >
-                            {status.label}
+                            Заблокировать пользователя
                           </button>
-                        );
-                      })}
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={
+                            actionLoading === `report-${report.id}-accept`
+                          }
+                          onClick={() =>
+                            void runAction(
+                              `report-${report.id}-accept`,
+                              () => handleAcceptReport(report),
+                              () => {
+                                patchReportStatus(report.id, "resolved");
+                                patchResolvedAction(report.id, "accept");
+                              }
+                            )
+                          }
+                          className={`rounded-full px-3 py-1 text-xs font-bold transition-colors disabled:opacity-60 ${
+                            (report.status || "").toLowerCase() === "resolved"
+                              ? "bg-umami-orange text-white ring-2 ring-umami-orange/35"
+                              : "bg-gray-100 text-umami-dark-gray hover:bg-gray-200"
+                          }`}
+                        >
+                          {getReportCommentId(report)
+                            ? "Принять и удалить комментарий"
+                            : (report.type || "").toLowerCase() === "recipe"
+                            ? "Принять и удалить рецепт"
+                            : "Принять"}
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        disabled={
+                          actionLoading === `report-${report.id}-dismiss`
+                        }
+                        onClick={() =>
+                          void runAction(
+                            `report-${report.id}-dismiss`,
+                            () =>
+                              moderationService.updateReportStatus(
+                                report.id,
+                                "dismissed"
+                              ),
+                            () => patchReportStatus(report.id, "dismissed")
+                          )
+                        }
+                        className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${
+                          (report.status || "").toLowerCase() === "dismissed"
+                            ? "bg-red-500 text-white ring-2 ring-red-300"
+                            : "bg-gray-100 text-umami-dark-gray hover:bg-gray-200"
+                        }`}
+                      >
+                        Отказать
+                      </button>
                     </div>
 
                     <p className="mt-3 text-xs text-umami-light-gray">
@@ -449,147 +596,6 @@ export default function ModerationPage() {
                 ))}
               </div>
             )}
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
-              <h3 className="font-nunito text-base font-bold text-umami-dark-gray">
-                Удаление постов / рецептов
-              </h3>
-              <div className="mt-3 flex gap-2">
-                <input
-                  value={recipeId}
-                  onChange={(e) => setRecipeId(e.target.value)}
-                  placeholder="ID рецепта"
-                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                />
-                <button
-                  type="button"
-                  disabled={!recipeId || actionLoading === "delete-recipe"}
-                  onClick={() =>
-                    void runAction("delete-recipe", () =>
-                      moderationService.deleteRecipe(recipeId.trim())
-                    )
-                  }
-                  className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
-                >
-                  Удалить
-                </button>
-              </div>
-
-              {isAdmin ? (
-                <div className="mt-3 flex gap-2">
-                  <input
-                    value={bulkRecipeIds}
-                    onChange={(e) => setBulkRecipeIds(e.target.value)}
-                    placeholder="ID рецептов через запятую"
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                  />
-                  <button
-                    type="button"
-                    disabled={
-                      toIdList(bulkRecipeIds).length === 0 ||
-                      actionLoading === "bulk-delete-recipes"
-                    }
-                    onClick={() =>
-                      void runAction("bulk-delete-recipes", () =>
-                        moderationService.bulkDeleteRecipes(
-                          toIdList(bulkRecipeIds)
-                        )
-                      )
-                    }
-                    className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
-                  >
-                    Массово
-                  </button>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
-              <h3 className="font-nunito text-base font-bold text-umami-dark-gray">
-                Удаление комментариев
-              </h3>
-              <div className="mt-3 flex gap-2">
-                <input
-                  value={commentId}
-                  onChange={(e) => setCommentId(e.target.value)}
-                  placeholder="ID комментария"
-                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                />
-                <button
-                  type="button"
-                  disabled={!commentId || actionLoading === "delete-comment"}
-                  onClick={() =>
-                    void runAction("delete-comment", () =>
-                      moderationService.deleteComment(commentId.trim())
-                    )
-                  }
-                  className="rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
-                >
-                  Удалить
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
-              <h3 className="font-nunito text-base font-bold text-umami-dark-gray">
-                Блокировка пользователей
-              </h3>
-              <div className="mt-3 flex gap-2">
-                <input
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  placeholder="ID пользователя"
-                  className="w-full rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                />
-                <button
-                  type="button"
-                  disabled={!userId || actionLoading === "block-user"}
-                  onClick={() =>
-                    void runAction("block-user", () =>
-                      moderationService.blockUser(userId.trim())
-                    )
-                  }
-                  className="rounded-full bg-umami-orange px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
-                >
-                  Заблокировать
-                </button>
-              </div>
-            </div>
-
-            {isAdmin ? (
-              <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
-                <h3 className="font-nunito text-base font-bold text-umami-dark-gray">
-                  Массовая блокировка пользователей
-                </h3>
-                <div className="mt-3 flex gap-2">
-                  <input
-                    value={bulkUserIds}
-                    onChange={(e) => setBulkUserIds(e.target.value)}
-                    placeholder="ID пользователей через запятую"
-                    className="w-full rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                  />
-                  <button
-                    type="button"
-                    disabled={
-                      toIdList(bulkUserIds).length === 0 ||
-                      actionLoading === "bulk-block-users"
-                    }
-                    onClick={() =>
-                      void runAction("bulk-block-users", () =>
-                        moderationService.bulkBlockUsers(toIdList(bulkUserIds))
-                      )
-                    }
-                    className="rounded-full bg-umami-orange px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
-                  >
-                    Массово
-                  </button>
-                </div>
-              </div>
-            ) : null}
           </div>
         </div>
       </div>

@@ -624,14 +624,43 @@ export default function RecipeDetailsPage() {
     }
   };
 
-  const handleDeleteComment = async (commentId: string) => {
+  const handleDeleteComment = async (
+    commentId: string,
+    canDeleteAsModerator: boolean
+  ) => {
     if (!recipeId || deleteCommentBusy[commentId]) return;
     if (!window.confirm("Удалить комментарий?")) return;
     try {
       setDeleteCommentBusy((prev) => ({ ...prev, [commentId]: true }));
-      await moderationService.deleteComment(commentId);
+      if (canDeleteAsModerator) {
+        await moderationService.deleteComment(commentId);
+      } else {
+        await commentService.deleteOwn(commentId);
+      }
       setCommentActionsOpenId(null);
-      await loadComments();
+      setComments((prev) => {
+        const targetId = String(commentId);
+        const filterTree = (items: Comment[]): Comment[] =>
+          items
+            .filter((item) => String(item.id) !== targetId)
+            .map((item) => {
+              const current = item as Comment & { Replies?: Comment[] };
+              if (Array.isArray(current.Replies)) {
+                return {
+                  ...current,
+                  Replies: filterTree(current.Replies),
+                } as Comment;
+              }
+              return current;
+            });
+        return filterTree(prev);
+      });
+      setCommentsCountState((prev) => Math.max(0, prev - 1));
+      try {
+        await loadComments();
+      } catch (refreshError) {
+        console.warn("Комментарий удален, но не удалось обновить список:", refreshError);
+      }
     } catch (error) {
       console.error("Ошибка удаления комментария:", error);
       alert("Не удалось удалить комментарий");
@@ -1520,7 +1549,7 @@ export default function RecipeDetailsPage() {
                                       >
                                         Пожаловаться
                                       </button>
-                                      {canModerate ? (
+                                      {canModerate || String(comment.user_id) === String(currentUserId) ? (
                                         <button
                                           type="button"
                                           disabled={Boolean(
@@ -1530,7 +1559,8 @@ export default function RecipeDetailsPage() {
                                           )}
                                           onClick={() =>
                                             void handleDeleteComment(
-                                              String(comment.id)
+                                              String(comment.id),
+                                              canModerate
                                             )
                                           }
                                           className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
@@ -1710,7 +1740,7 @@ export default function RecipeDetailsPage() {
                                               >
                                                 Пожаловаться
                                               </button>
-                                              {canModerate ? (
+                                              {canModerate || String(reply.user_id) === String(currentUserId) ? (
                                                 <button
                                                   type="button"
                                                   disabled={Boolean(
@@ -1720,7 +1750,8 @@ export default function RecipeDetailsPage() {
                                                   )}
                                                   onClick={() =>
                                                     void handleDeleteComment(
-                                                      String(reply.id)
+                                                      String(reply.id),
+                                                      canModerate
                                                     )
                                                   }
                                                   className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
