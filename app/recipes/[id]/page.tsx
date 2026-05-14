@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useRecipe } from "../../hooks/useRecipe";
 import { authService } from "../../services/authService";
@@ -81,6 +81,8 @@ export default function RecipeDetailsPage() {
   const [deleteRecipeBusy, setDeleteRecipeBusy] = useState(false);
   const [deleteCommentBusy, setDeleteCommentBusy] = useState<Record<string, boolean>>({});
   const [desiredPortions, setDesiredPortions] = useState(1);
+  const recipeActionsRef = useRef<HTMLDivElement | null>(null);
+  const commentActionsRef = useRef<HTMLDivElement | null>(null);
 
   const categories = useMemo(() => {
     if (!recipe?.Categories) return [];
@@ -240,6 +242,29 @@ export default function RecipeDetailsPage() {
     };
     loadUser();
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        recipeActionsOpen &&
+        recipeActionsRef.current &&
+        !recipeActionsRef.current.contains(target)
+      ) {
+        setRecipeActionsOpen(false);
+      }
+      if (
+        commentActionsOpenId &&
+        commentActionsRef.current &&
+        !commentActionsRef.current.contains(target)
+      ) {
+        setCommentActionsOpenId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [recipeActionsOpen, commentActionsOpenId]);
 
   useEffect(() => {
     const tab = searchParams?.get("tab");
@@ -776,7 +801,7 @@ export default function RecipeDetailsPage() {
               {recipe.title}
             </h1>
             {(canModerate || Boolean(currentUserId)) && (
-              <div className="relative ml-2">
+              <div ref={recipeActionsRef} className="relative ml-2">
                 <button
                   type="button"
                   onClick={() => setRecipeActionsOpen((prev) => !prev)}
@@ -1380,7 +1405,14 @@ export default function RecipeDetailsPage() {
                                 </span>
                               </button>
                               {(canModerate || Boolean(currentUserId)) && (
-                                <div className="relative">
+                                <div
+                                  ref={
+                                    commentActionsOpenId === String(comment.id)
+                                      ? commentActionsRef
+                                      : null
+                                  }
+                                  className="relative"
+                                >
                                   <button
                                     type="button"
                                     onClick={() =>
@@ -1529,7 +1561,14 @@ export default function RecipeDetailsPage() {
                                         </span>
                                       </button>
                                       {(canModerate || Boolean(currentUserId)) && (
-                                        <div className="relative">
+                                        <div
+                                          ref={
+                                            commentActionsOpenId === String(reply.id)
+                                              ? commentActionsRef
+                                              : null
+                                          }
+                                          className="relative"
+                                        >
                                           <button
                                             type="button"
                                             onClick={() =>

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import LeftPart from "../components/MainScreen/NavigationLeftPart";
-import RightPart from "../components/MainScreen/NewsRightPart";
 import { authService } from "../services/authService";
 import {
   moderationService,
@@ -97,7 +96,7 @@ export default function ModerationPage() {
         <LeftPart />
       </div>
 
-      <div className="w-full pb-10 lg:w-169.5">
+      <div className="w-full pb-10 lg:w-[calc(100%-223px-20px)]">
         <div className="flex flex-col gap-4">
           <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
             <h1 className="font-nunito text-2xl font-bold text-umami-dark-gray">
@@ -297,10 +296,6 @@ export default function ModerationPage() {
             ) : null}
           </div>
         </div>
-      </div>
-
-      <div className="hidden w-63.75 lg:flex">
-        <RightPart />
       </div>
     </div>
   );

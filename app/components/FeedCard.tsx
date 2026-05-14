@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { likeService } from "../services/likeService";
 import { commentService, Comment } from "../services/commentService";
 import { followService } from "../services/followService";
@@ -75,6 +75,7 @@ export default function FeedCard({
   const [isDeleted, setIsDeleted] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Проверяем, является ли текущий пользователь автором поста
   const isOwnPost = currentUserId && currentUserId === recipe.user_id;
@@ -215,6 +216,19 @@ export default function FeedCard({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!actionsOpen) return;
+      const target = event.target as Node;
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(target)) {
+        setActionsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [actionsOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -461,7 +475,7 @@ export default function FeedCard({
               </>
             )}
             {(canModerate || isAuthenticated) && (
-              <div className="relative ml-2">
+              <div ref={actionsMenuRef} className="relative ml-2">
                 <button
                   type="button"
                   onClick={(e) => {
