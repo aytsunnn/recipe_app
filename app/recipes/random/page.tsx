@@ -81,7 +81,7 @@ export default function RandomRecipePage() {
         </Suspense>
       </div>
 
-      <div className="w-full lg:w-169.5">
+      <div className="w-full pb-10 lg:w-169.5">
         <div className="mb-4 rounded-lg border border-umami-light-gray/50 bg-white p-4">
           <div className="flex items-center justify-between">
             <h1 className="font-nunito text-2xl font-bold text-umami-dark-gray">Случайный рецепт</h1>

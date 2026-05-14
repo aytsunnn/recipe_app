@@ -76,7 +76,7 @@ export default function FavoritesPage() {
       </div>
 
       <div className="flex w-169.5">
-        <div ref={feedColumnRef} className="w-full flex flex-col gap-4">
+        <div ref={feedColumnRef} className="w-full flex flex-col gap-4 pb-10">
           <div className="bg-white rounded-lg border border-umami-light-gray/50 p-4">
             <h1 className="font-nunito font-bold text-2xl text-umami-dark-gray">Избранное</h1>
             <p className="font-inter text-sm text-umami-gray mt-1">Сохраненные рецепты: {recipes.length}</p>

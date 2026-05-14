@@ -106,7 +106,12 @@ export interface RecipeMutationData {
   fats?: number;
   carbohydrates?: number;
   categories?: number[];
-  ingredients?: Array<{ id: number; quantity: number; note?: string }>;
+  ingredients?: Array<{
+    id: number;
+    quantity: number;
+    unit_of_measurement?: string;
+    note?: string;
+  }>;
   steps?: Array<{ description: string; image_url?: string }>;
 }
 

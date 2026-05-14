@@ -98,7 +98,7 @@ export default function PublicUserPage() {
         <LeftPart />
       </div>
 
-      <div className="w-full lg:w-169.5">
+      <div className="w-full pb-10 lg:w-169.5">
         {loading && (
           <div className="rounded-[20px] bg-white p-8 text-center font-nunito text-umami-gray">Загрузка...</div>
         )}
@@ -151,7 +151,7 @@ export default function PublicUserPage() {
             {recipes.length === 0 ? (
               <div className="rounded-[20px] bg-white p-8 text-center font-nunito text-umami-gray">У автора пока нет рецептов</div>
             ) : (
-              <div ref={feedColumnRef} className="flex flex-col gap-3">
+              <div ref={feedColumnRef} className="flex flex-col gap-3 pb-10">
                 {recipes.map((recipe) => (
                   <FeedCard
                     key={recipe.id}

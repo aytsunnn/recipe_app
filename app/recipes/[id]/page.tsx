@@ -610,7 +610,7 @@ export default function RecipeDetailsPage() {
           <div className="hidden w-55.75 lg:flex">
             <LeftPart />
           </div>
-          <div className="w-full lg:w-169.5">
+          <div className="w-full pb-10 lg:w-169.5">
             <NotFoundState
               title="Ошибка 404"
               description="Рецепт не найден или был удален."
@@ -630,7 +630,7 @@ export default function RecipeDetailsPage() {
         <div className="hidden w-55.75 lg:flex">
           <LeftPart />
         </div>
-        <div className="w-full lg:w-169.5">
+        <div className="w-full pb-10 lg:w-169.5">
           <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-8">
             <p className="font-nunito text-lg font-bold text-umami-dark-gray">
               Не удалось загрузить рецепт

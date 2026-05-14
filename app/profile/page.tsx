@@ -1051,6 +1051,9 @@ export default function ProfilePage() {
         .map((item) => ({
           id: Number(item.ingredient_id),
           quantity: Number(item.quantity),
+          ...(item.unit_of_measurement.trim()
+            ? { unit_of_measurement: item.unit_of_measurement.trim() }
+            : {}),
           ...(item.note.trim() ? { note: item.note.trim() } : {}),
         }));
 
@@ -1501,7 +1504,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 ) : recipes.length > 0 ? (
-                  <div ref={feedColumnRef} className="flex flex-col gap-2.5">
+                  <div ref={feedColumnRef} className="flex flex-col gap-2.5 pb-10">
                     {/* Фильтры рецептов */}
                     <div className="flex gap-2.5 mb-2.5">
                       <button
