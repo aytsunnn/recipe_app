@@ -35,7 +35,6 @@ export default function PublicUserPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [stats, setStats] = useState<ProfileStats>({ recipes: 0, followers: 0, following: 0 });
   const [isFollowing, setIsFollowing] = useState(false);
-  const [profileActionsOpen, setProfileActionsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const feedColumnRef = useRef<HTMLDivElement | null>(null);
@@ -110,7 +109,6 @@ export default function PublicUserPage() {
         description: description.trim(),
         reported_user_id: Number(profile.id),
       });
-      setProfileActionsOpen(false);
       alert("Жалоба отправлена");
     } catch (error) {
       console.error("Ошибка отправки жалобы на профиль:", error);
@@ -159,41 +157,29 @@ export default function PublicUserPage() {
                   <p className="mt-2 font-inter text-sm text-umami-gray">
                     {stats.recipes} рецептов • {stats.followers} подписчиков • {stats.following} подписок
                   </p>
-                </div>
-                {!isOwnProfile && authService.isAuthenticated() && (
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
+                  {!isOwnProfile && authService.isAuthenticated() && (
+                    <div className="mt-2 flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setProfileActionsOpen((prev) => !prev)}
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-umami-light-gray/60 bg-white"
-                        aria-label="Действия профиля"
+                        onClick={() => void toggleFollow()}
+                        className={`rounded-full px-3 py-1 font-nunito text-xs font-bold ${
+                          isFollowing ? "bg-[#f1ebdb] text-umami-dark-gray" : "bg-umami-green text-white"
+                        }`}
                       >
-                        <Image width={20} height={20} src="/DotsThreeOutlineVertical.svg" alt="actions" />
+                        {isFollowing ? "Вы подписаны" : "Подписаться"}
                       </button>
-                      {profileActionsOpen && (
-                        <div className="absolute right-0 top-10 z-20 min-w-[170px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
-                          <button
-                            type="button"
-                            onClick={() => void handleReportProfile()}
-                            className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
-                          >
-                            Пожаловаться
-                          </button>
-                        </div>
-                      )}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => void handleReportProfile()}
+                          className="rounded-full border border-umami-light-gray/60 bg-white px-3 py-1 font-nunito text-xs font-bold text-umami-dark-gray hover:bg-[#f7f4ea]"
+                        >
+                          Пожаловаться
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => void toggleFollow()}
-                      className={`rounded-full px-4 py-2 font-nunito text-sm font-bold ${
-                        isFollowing ? "bg-[#f1ebdb] text-umami-dark-gray" : "bg-umami-green text-white"
-                      }`}
-                    >
-                      {isFollowing ? "Вы подписаны" : "Подписаться"}
-                    </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 
