@@ -7,9 +7,27 @@ export interface ModerationReport {
   reason?: string;
   description?: string;
   recipe_id?: string | number | null;
+  comment_id?: string | number | null;
   reported_user_id?: string | number | null;
+  reporter_user_id?: string | number | null;
+  target_type?: string | null;
+  target_id?: string | number | null;
   createdAt?: string;
   updatedAt?: string;
+  Recipe?: {
+    id?: string | number;
+    title?: string;
+  } | null;
+  Comment?: {
+    id?: string | number;
+    content?: string;
+  } | null;
+  ReportedUser?: {
+    id?: string | number;
+    username?: string;
+    name?: string;
+    is_blocked?: boolean;
+  } | null;
   Reporter?: {
     id: string;
     username?: string;
