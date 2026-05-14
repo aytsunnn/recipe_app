@@ -18,6 +18,7 @@ import { isNotFoundErrorMessage } from "../../utils/errorUtils";
 
 const RECIPE_LIKE_OVERRIDES_KEY = "recipe_like_overrides";
 const RECIPE_COMMENTS_OVERRIDES_KEY = "recipe_comments_overrides";
+const UNIT_OVERRIDE_MARKER = "__unit_override:";
 
 function normalizeCategoryName(category: unknown): string | null {
   if (typeof category === "string") return category;
@@ -26,6 +27,17 @@ function normalizeCategoryName(category: unknown): string | null {
     if (typeof entry.name === "string") return entry.name;
   }
   return null;
+}
+
+function parseUnitOverrideFromNote(note: string | null | undefined): string | null {
+  const raw = (note || "").trim();
+  if (!raw) return null;
+  const marker = raw
+    .split(/\s+/)
+    .find((part) => part.startsWith(UNIT_OVERRIDE_MARKER));
+  if (!marker) return null;
+  const unit = marker.slice(UNIT_OVERRIDE_MARKER.length).trim();
+  return unit || null;
 }
 
 export default function RecipeDetailsPage() {
@@ -1002,6 +1014,14 @@ export default function RecipeDetailsPage() {
                     ingredient.RecipeIngredient?.quantity ?? "—"
                   );
                   const unit =
+                    parseUnitOverrideFromNote(
+                      ingredient.RecipeIngredient?.note ?? ""
+                    ) ||
+                    ingredient.RecipeIngredient?.unit_of_measurement ||
+                    ingredient.RecipeIngredient?.unit_short_name ||
+                    ingredient.RecipeIngredient?.unit_name ||
+                    ingredient.RecipeIngredient?.unit ||
+                    ingredient.RecipeIngredient?.measure ||
                     ingredient.Unit?.short_name ||
                     ingredient.Unit?.name ||
                     ingredient.unit_of_measurement ||

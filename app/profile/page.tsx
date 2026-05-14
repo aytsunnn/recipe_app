@@ -22,6 +22,7 @@ import {
 } from "../services/metaService";
 import { normalizeImageUrl } from "../utils/imageUrl";
 import { toolsService } from "../services/toolsService";
+import { canAccessModeration } from "../utils/role";
 
 interface UserStats {
   followingCount: number;
@@ -67,6 +68,40 @@ interface RecipeFormData {
   source_url: string;
   parsed_from_url: boolean;
 }
+
+const UNIT_OVERRIDE_MARKER = "__unit_override:";
+
+const parseUnitOverrideFromNote = (
+  note: string | null | undefined
+): { cleanNote: string; unitOverride: string | null } => {
+  const raw = (note || "").trim();
+  if (!raw) return { cleanNote: "", unitOverride: null };
+  const parts = raw.split(/\s+/);
+  const marker = parts.find((part) => part.startsWith(UNIT_OVERRIDE_MARKER));
+  const unitOverride = marker
+    ? marker.slice(UNIT_OVERRIDE_MARKER.length).trim() || null
+    : null;
+  const cleanNote = parts
+    .filter((part) => !part.startsWith(UNIT_OVERRIDE_MARKER))
+    .join(" ")
+    .trim();
+  return { cleanNote, unitOverride };
+};
+
+const mergeNoteWithUnitOverride = (
+  note: string,
+  selectedUnit: string,
+  linkedUnit: string
+): string => {
+  const unit = selectedUnit.trim();
+  const linked = linkedUnit.trim();
+  const baseNote = parseUnitOverrideFromNote(note).cleanNote;
+  const needsOverride =
+    Boolean(unit) &&
+    (!linked || unit.toLowerCase() !== linked.toLowerCase());
+  if (!needsOverride) return baseNote;
+  return `${baseNote} ${UNIT_OVERRIDE_MARKER}${unit}`.trim();
+};
 
 interface MicrochefPrefill {
   title?: string;
@@ -652,15 +687,48 @@ export default function ProfilePage() {
       ingredients:
         (fullRecipe.Ingredients || []).length > 0
           ? (fullRecipe.Ingredients || []).map((ingredient) => ({
+              ...(function () {
+                const parsed = parseUnitOverrideFromNote(
+                  ingredient.RecipeIngredient?.note || ""
+                );
+                const linkedUnit =
+                  ingredient.RecipeIngredient?.unit_of_measurement ||
+                  ingredient.RecipeIngredient?.unit_short_name ||
+                  ingredient.RecipeIngredient?.unit_name ||
+                  ingredient.RecipeIngredient?.unit ||
+                  ingredient.RecipeIngredient?.measure ||
+                  ingredient.Unit?.short_name ||
+                  ingredient.Unit?.name ||
+                  ingredient.unit_of_measurement ||
+                  "";
+                return {
+                  resolvedNote: parsed.cleanNote,
+                  resolvedUnit: parsed.unitOverride || linkedUnit,
+                };
+              })(),
               ingredient_id: Number(ingredient.id),
               ingredient_name: ingredient.name || "",
               quantity: Number(ingredient.RecipeIngredient?.quantity) || 1,
-              unit_of_measurement:
-                ingredient.Unit?.short_name ||
-                ingredient.Unit?.name ||
-                ingredient.unit_of_measurement ||
-                "",
-              note: ingredient.RecipeIngredient?.note || "",
+              unit_of_measurement: (function () {
+                const parsed = parseUnitOverrideFromNote(
+                  ingredient.RecipeIngredient?.note || ""
+                );
+                return (
+                  parsed.unitOverride ||
+                  ingredient.RecipeIngredient?.unit_of_measurement ||
+                  ingredient.RecipeIngredient?.unit_short_name ||
+                  ingredient.RecipeIngredient?.unit_name ||
+                  ingredient.RecipeIngredient?.unit ||
+                  ingredient.RecipeIngredient?.measure ||
+                  ingredient.Unit?.short_name ||
+                  ingredient.Unit?.name ||
+                  ingredient.unit_of_measurement ||
+                  ""
+                );
+              })(),
+              note: parseUnitOverrideFromNote(
+                ingredient.RecipeIngredient?.note || ""
+              ).cleanNote,
             }))
           : [
               {
@@ -765,10 +833,60 @@ export default function ProfilePage() {
         )
       : null;
 
+    const normalize = (value: string) => value.trim().toLowerCase();
+    const selectedAny = selected as unknown as Record<string, unknown> | null;
+    const toStringSafe = (value: unknown): string =>
+      typeof value === "string" ? value.trim() : "";
+
+    const unitIdRaw =
+      selectedAny && (selectedAny.unit_id ?? selectedAny.unitId ?? null);
+    const unitId =
+      typeof unitIdRaw === "number"
+        ? unitIdRaw
+        : typeof unitIdRaw === "string" && unitIdRaw.trim()
+        ? Number(unitIdRaw)
+        : null;
+
+    const byId = Number.isFinite(Number(unitId))
+      ? units.find((unit) => Number(unit.id) === Number(unitId))
+      : null;
+
+    const unitFromNested =
+      selectedAny && selectedAny.Unit && typeof selectedAny.Unit === "object"
+        ? (selectedAny.Unit as Record<string, unknown>)
+        : null;
+
+    const unitCandidates = [
+      toStringSafe(selected?.unit_of_measurement),
+      toStringSafe(selectedAny?.unit_of_measurement),
+      toStringSafe(selectedAny?.unit),
+      toStringSafe(selectedAny?.unit_name),
+      toStringSafe(selectedAny?.unit_short_name),
+      toStringSafe(unitFromNested?.short_name),
+      toStringSafe(unitFromNested?.name),
+    ].filter(Boolean);
+
+    const byName =
+      unitCandidates
+        .map((candidate) =>
+          units.find(
+            (unit) =>
+              normalize(unit.name) === normalize(candidate) ||
+              normalize(unit.short_name || unit.name) === normalize(candidate)
+          )
+        )
+        .find(Boolean) || null;
+
+    const resolvedUnit =
+      (byId?.short_name || byId?.name || "").trim() ||
+      (byName?.short_name || byName?.name || "").trim() ||
+      unitCandidates[0] ||
+      "";
+
     setIngredient(index, {
       ingredient_id: ingredientId,
       ingredient_name: selected?.name || "",
-      unit_of_measurement: selected?.unit_of_measurement || "",
+      unit_of_measurement: resolvedUnit,
     });
   };
 
@@ -1048,14 +1166,40 @@ export default function ProfilePage() {
         .filter(
           (item) => Number(item.ingredient_id) > 0 && Number(item.quantity) > 0
         )
-        .map((item) => ({
-          id: Number(item.ingredient_id),
-          quantity: Number(item.quantity),
-          ...(item.unit_of_measurement.trim()
-            ? { unit_of_measurement: item.unit_of_measurement.trim() }
-            : {}),
-          ...(item.note.trim() ? { note: item.note.trim() } : {}),
-        }));
+        .map((item) => {
+          const unitRaw = item.unit_of_measurement.trim();
+          const normalizedUnit = unitRaw.toLowerCase();
+          const matchedUnit = unitRaw
+            ? units.find(
+                (unit) =>
+                  (unit.short_name || unit.name).trim().toLowerCase() ===
+                    normalizedUnit ||
+                  unit.name.trim().toLowerCase() === normalizedUnit
+              ) || null
+            : null;
+
+          const linkedIngredient = ingredientsCatalog.find(
+            (entry) => Number(entry.id) === Number(item.ingredient_id)
+          );
+          const linkedUnit = (linkedIngredient?.unit_of_measurement || "").trim();
+          const finalNote = mergeNoteWithUnitOverride(
+            item.note,
+            unitRaw,
+            linkedUnit
+          );
+
+          return {
+            id: Number(item.ingredient_id),
+            quantity: Number(item.quantity),
+            ...(unitRaw ? { unit_of_measurement: unitRaw } : {}),
+            ...(unitRaw ? { unit: unitRaw } : {}),
+            ...(unitRaw ? { unit_name: unitRaw } : {}),
+            ...(unitRaw ? { unit_short_name: unitRaw } : {}),
+            ...(unitRaw ? { measure: unitRaw } : {}),
+            ...(matchedUnit ? { unit_id: Number(matchedUnit.id) } : {}),
+            ...(finalNote ? { note: finalNote } : {}),
+          };
+        });
 
       const normalizedDifficulty = normalizeDifficulty(recipeForm.difficulty);
 
@@ -1222,12 +1366,23 @@ export default function ProfilePage() {
   }
 
   if (!user) return null;
+  const canModerate = canAccessModeration(user.role);
+  const profileNavItems = canModerate
+    ? [
+        ...navItems,
+        {
+          href: "/moderation",
+          label: "Модерация",
+          icon: "/WarningCircle.svg",
+        },
+      ]
+    : navItems;
 
   return (
     <>
       <div className="grid w-full grid-cols-[223px_minmax(0,1fr)] gap-5">
         <aside className="flex flex-col gap-1">
-          {navItems.map((item) => (
+          {profileNavItems.map((item) => (
             <Link
               key={item.label}
               href={item.href}

@@ -57,6 +57,24 @@ window.onload = function() {
           }
         }
       },
+      "/admin/analytics": {
+        "get": {
+          "summary": "Детальная аналитика для графиков",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Данные для графиков (регистрации, рецепты, категории, топ пользователей и т.д.)"
+            }
+          }
+        }
+      },
       "/admin/users": {
         "get": {
           "summary": "Список всех пользователей",
@@ -99,6 +117,110 @@ window.onload = function() {
           "responses": {
             "200": {
               "description": "Пользователь заблокирован"
+            }
+          }
+        }
+      },
+      "/admin/roles": {
+        "get": {
+          "summary": "Список всех ролей",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Список ролей"
+            }
+          }
+        }
+      },
+      "/admin/users/{id}": {
+        "patch": {
+          "summary": "Редактировать пользователя",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "bio": {
+                      "type": "string"
+                    },
+                    "avatar_url": {
+                      "type": "string"
+                    },
+                    "role_id": {
+                      "type": "integer"
+                    },
+                    "is_blocked": {
+                      "type": "boolean"
+                    },
+                    "is_verified": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Пользователь обновлён"
+            }
+          }
+        },
+        "delete": {
+          "summary": "Удалить пользователя полностью",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Пользователь удалён"
             }
           }
         }
@@ -155,6 +277,276 @@ window.onload = function() {
           "responses": {
             "200": {
               "description": "Комментарий удалён"
+            }
+          }
+        }
+      },
+      "/admin/menu-of-week": {
+        "get": {
+          "summary": "Получить меню недели",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Меню недели"
+            }
+          }
+        },
+        "post": {
+          "summary": "Добавить рецепт в меню недели",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "day_of_week": {
+                      "type": "integer",
+                      "description": "1-7 (Пн-Вс)"
+                    },
+                    "recipe_id": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Добавлено"
+            }
+          }
+        }
+      },
+      "/admin/menu-of-week/{id}": {
+        "delete": {
+          "summary": "Удалить рецепт из меню недели",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Удалено"
+            }
+          }
+        }
+      },
+      "/admin/notifications/broadcast": {
+        "post": {
+          "summary": "Отправить массовое уведомление",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Уведомления отправлены"
+            }
+          }
+        }
+      },
+      "/admin/verifications": {
+        "get": {
+          "summary": "Список заявок на верификацию",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Заявки"
+            }
+          }
+        }
+      },
+      "/admin/verifications/{id}": {
+        "patch": {
+          "summary": "Обработать заявку на верификацию",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "approved",
+                        "rejected"
+                      ]
+                    },
+                    "admin_notes": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Заявка обработана"
+            }
+          }
+        }
+      },
+      "/admin/audit-logs": {
+        "get": {
+          "summary": "Логи действий администраторов",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Логи"
+            }
+          }
+        }
+      },
+      "/admin/users/bulk-block": {
+        "post": {
+          "summary": "Массовая блокировка пользователей",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "userIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    },
+                    "is_blocked": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Пользователи заблокированы"
+            }
+          }
+        }
+      },
+      "/admin/recipes/bulk-delete": {
+        "post": {
+          "summary": "Массовое удаление рецептов",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "recipeIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Рецепты удалены"
             }
           }
         }
@@ -1158,6 +1550,171 @@ window.onload = function() {
           "responses": {
             "200": {
               "description": "Сообщение об удалении"
+            }
+          }
+        }
+      },
+      "/notifications": {
+        "get": {
+          "summary": "Список уведомлений (с пагинацией)",
+          "tags": [
+            "Notifications"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "query",
+              "name": "page",
+              "schema": {
+                "type": "integer",
+                "default": 1
+              }
+            },
+            {
+              "in": "query",
+              "name": "limit",
+              "schema": {
+                "type": "integer",
+                "default": 20,
+                "maximum": 50
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Список уведомлений с пагинацией"
+            }
+          }
+        },
+        "delete": {
+          "summary": "Удалить все уведомления",
+          "tags": [
+            "Notifications"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Все уведомления удалены"
+            }
+          }
+        }
+      },
+      "/notifications/unread-count": {
+        "get": {
+          "summary": "Количество непрочитанных уведомлений",
+          "tags": [
+            "Notifications"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Количество непрочитанных",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "count": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/notifications/read-all": {
+        "patch": {
+          "summary": "Пометить все уведомления как прочитанные",
+          "tags": [
+            "Notifications"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Все помечены как прочитанные"
+            }
+          }
+        }
+      },
+      "/notifications/{id}/read": {
+        "patch": {
+          "summary": "Пометить одно уведомление как прочитанное",
+          "tags": [
+            "Notifications"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Прочитано"
+            }
+          }
+        }
+      },
+      "/notifications/register-device": {
+        "post": {
+          "summary": "Зарегистрировать FCM токен устройства для пуш-уведомлений",
+          "tags": [
+            "Notifications"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    },
+                    "device_type": {
+                      "type": "string",
+                      "example": "android"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Устройство зарегистрировано"
             }
           }
         }
@@ -2464,6 +3021,10 @@ window.onload = function() {
       {
         "name": "Meta",
         "description": "Справочники для фильтров и выпадающих списков"
+      },
+      {
+        "name": "Notifications",
+        "description": "Уведомления пользователя"
       },
       {
         "name": "Recipes",

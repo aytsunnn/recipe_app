@@ -51,6 +51,22 @@ export interface User {
 }
 
 class AuthService {
+  getRoleFromToken(): string | undefined {
+    const token = this.getToken();
+    if (!token) return undefined;
+    try {
+      const parts = token.split(".");
+      if (parts.length < 2) return undefined;
+      const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+      const decoded = atob(padded);
+      const payload = JSON.parse(decoded) as { role?: string };
+      return payload.role;
+    } catch {
+      return undefined;
+    }
+  }
+
   // Р—Р°РјРµРЅСЏРµС‚ localhost URL РЅР° РїСѓР±Р»РёС‡РЅС‹Р№ Р°РґСЂРµСЃ
   private fixImageUrl(url: string | null): string | null {
     if (!url) return null;
@@ -125,6 +141,7 @@ class AuthService {
       // РСЃРїСЂР°РІР»СЏРµРј URL Р°РІР°С‚Р°СЂР°
       return {
         ...user,
+        role: user.role || this.getRoleFromToken(),
         avatar_url: this.fixImageUrl(user.avatar_url),
       };
     } catch (error) {

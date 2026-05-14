@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { metaService, Category } from "../../services/metaService";
 import { authService, User } from "../../services/authService";
 import { normalizeImageUrl } from "../../utils/imageUrl";
+import { canAccessModeration } from "../../utils/role";
 
 const navItems = [
   { href: "/", label: "Главная", icon: "/House.svg" },
@@ -76,13 +77,10 @@ export default function LeftPart() {
     };
   }, []);
 
-  const role = (currentUser?.role || "").toLowerCase();
-  const isAdmin = role === "admin";
-  const isModerator = role === "moderator";
-  const roleNavItem = isAdmin
-    ? { href: "/admin", label: "Панель администратора", icon: "/User.svg" }
-    : isModerator
-    ? { href: "/moderator", label: "Панель модератора", icon: "/User.svg" }
+  const effectiveRole = currentUser?.role || authService.getRoleFromToken();
+  const canModerate = canAccessModeration(effectiveRole);
+  const roleNavItem = canModerate
+    ? { href: "/moderation", label: "Модерация", icon: "/Shield.svg" }
     : null;
   const resolvedNavItems = roleNavItem ? [...navItems, roleNavItem] : navItems;
 

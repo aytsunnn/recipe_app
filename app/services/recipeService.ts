@@ -44,6 +44,12 @@ export interface Recipe {
     name: string;
     RecipeIngredient?: {
       quantity?: string | number | null;
+      unit?: string | null;
+      unit_id?: string | number | null;
+      unit_name?: string | null;
+      unit_short_name?: string | null;
+      measure?: string | null;
+      unit_of_measurement?: string | null;
       note?: string | null;
     };
     Unit?: {
@@ -109,6 +115,11 @@ export interface RecipeMutationData {
   ingredients?: Array<{
     id: number;
     quantity: number;
+    unit_id?: number;
+    unit?: string;
+    unit_name?: string;
+    unit_short_name?: string;
+    measure?: string;
     unit_of_measurement?: string;
     note?: string;
   }>;
