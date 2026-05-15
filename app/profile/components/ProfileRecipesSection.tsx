@@ -1,12 +1,14 @@
 "use client";
 
 import { RefObject } from "react";
+import Image from "next/image";
 import FeedCard from "../../components/FeedCard";
 import ScrollToTopButton from "../../components/ScrollToTopButton";
 import { Recipe } from "../../services/recipeService";
 import RecipeActionsMenu from "./RecipeActionsMenu";
 import RecipeVisibilityFilter from "./RecipeVisibilityFilter";
 import ProfileRecipesEmptyState from "./ProfileRecipesEmptyState";
+import { div } from "framer-motion/client";
 
 interface ProfileRecipesSectionProps {
   recipes: Recipe[];
@@ -58,9 +60,17 @@ export default function ProfileRecipesSection({
             detailsQuery="from=profile"
             headerLeftSlot={
               recipe.is_private ? (
-                <span className="rounded-full bg-[#333]/90 px-3 py-1 font-nunito text-xs font-bold text-white">
-                  Приватный
-                </span>
+                <div className="flex gap-2 justify-center items-center">
+                  <Image
+                    width={20}
+                    height={20}
+                    src="/LockSimple.svg"
+                    alt="lock"
+                  />
+                  <span className="font-nunito text-sm font-semibold text-umami-gray">
+                    Приватный
+                  </span>
+                </div>
               ) : null
             }
             headerRightSlot={

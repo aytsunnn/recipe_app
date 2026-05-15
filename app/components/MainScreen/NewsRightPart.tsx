@@ -9,6 +9,10 @@ import { favoriteService } from "../../services/favoriteService";
 import { followService } from "../../services/followService";
 import { Recipe, recipeService } from "../../services/recipeService";
 import { aiService } from "../../services/aiService";
+import MicrochefLauncherCard from "./MicrochefLauncherCard";
+import PopularAuthorsCard from "./PopularAuthorsCard";
+import MicrochefHelpSidebar from "./MicrochefHelpSidebar";
+import MicrochefChatComposer from "./MicrochefChatComposer";
 
 type RecipeDraft = {
   title: string;
@@ -609,87 +613,22 @@ export default function RightPart() {
   return (
     <>
       <div className="flex w-full flex-col gap-4">
-        {isAuthenticated && (
-          <div className="rounded-[15px] border border-[#eaeaea] bg-white p-3">
-            <p className="font-nunito text-base font-bold text-umami-dark-gray">
-              Микро-шеф
-            </p>
-            <p className="mt-1 font-inter text-sm text-umami-gray">
-              Подскажет рецепт по вашим продуктам.
-            </p>
-            <button
-              type="button"
-              onClick={() => setIsChatOpen(true)}
-              className="mt-3 w-full rounded-full bg-umami-orange px-3 py-2 font-nunito text-sm font-bold text-white hover:bg-[#dd8c45]"
-            >
-              Открыть чат
-            </button>
-          </div>
-        )}
+        <MicrochefLauncherCard
+          isVisible={isAuthenticated}
+          onOpen={() => setIsChatOpen(true)}
+        />
 
-        <div className="rounded-[15px] border border-[#eaeaea] bg-white p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="font-nunito text-base font-bold text-umami-dark-gray">
-              Популярные авторы
-            </p>
-          </div>
-
-          {isLoadingAuthors ? (
-            <p className="py-3 text-sm text-umami-gray">Загрузка...</p>
-          ) : (
-            <div className="flex flex-col gap-2.5">
-              {popularAuthors.map((author) => {
-                const isOwn = currentUser?.id === author.id;
-                const isFollowing = followingIds.has(author.id);
-                return (
-                  <Link
-                    key={author.id}
-                    href={`/users/${author.id}`}
-                    className="rounded-[10px] border border-[#ececec] p-2.5 transition-colors hover:bg-[#fcfaf5]"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Image
-                        src={getSafeImageUrl(author.avatar_url)}
-                        width={36}
-                        height={36}
-                        alt={author.name}
-                        className="h-9 w-9 rounded-full object-cover"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-nunito text-sm font-bold text-umami-dark-gray">
-                          {author.name}
-                        </p>
-                        <p className="truncate font-inter text-xs text-umami-gray">
-                          @{author.username}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="mt-2 font-inter text-xs text-umami-gray">
-                      {author.recipesCount} рецептов • {author.likesCount}{" "}
-                      лайков
-                    </p>
-                    {isAuthenticated && !isOwn && (
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          void handleToggleFollow(author.id);
-                        }}
-                        className={`mt-2 w-full rounded-full px-3 py-1.5 font-nunito text-xs font-bold ${
-                          isFollowing
-                            ? "bg-[#f1ebdb] text-umami-dark-gray"
-                            : "bg-umami-green text-white"
-                        }`}
-                      >
-                        {isFollowing ? "Вы подписаны" : "Подписаться"}
-                      </button>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <PopularAuthorsCard
+          isLoading={isLoadingAuthors}
+          authors={popularAuthors}
+          currentUserId={currentUser?.id}
+          isAuthenticated={isAuthenticated}
+          followingIds={followingIds}
+          getSafeImageUrl={getSafeImageUrl}
+          onToggleFollow={(authorId) => {
+            void handleToggleFollow(authorId);
+          }}
+        />
       </div>
 
       {isChatOpen && (
@@ -893,83 +832,17 @@ export default function RightPart() {
                 )}
               </div>
 
-              <div className="mt-2.5 flex items-end gap-2">
-                <textarea
-                  ref={chatInputRef}
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onInput={(event) => {
-                    const target = event.currentTarget;
-                    target.style.height = "0px";
-                    const nextHeight = Math.min(target.scrollHeight, 136);
-                    target.style.height = `${Math.max(nextHeight, 38)}px`;
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && !event.shiftKey) {
-                      event.preventDefault();
-                      if (canSend) {
-                        void handleSendMessage();
-                      }
-                    }
-                  }}
-                  placeholder="Например: курица, рис, сливки, чеснок"
-                  rows={1}
-                  className="modal-thin-scroll max-h-34 min-h-9 flex-1 resize-none overflow-y-auto rounded-xl border border-[#E4DDCF] bg-[#FFFEFC] px-3 py-2 text-sm leading-5 outline-none transition-colors focus:border-[#D9C5A6]"
-                />
-                <button
-                  type="button"
-                  disabled={!canSend}
-                  onClick={handleSendMessage}
-                  className="inline-flex h-9 items-center gap-1.5 self-end rounded-full bg-umami-green px-3 py-1.5 font-nunito text-xs font-bold text-white disabled:opacity-50"
-                >
-                  Отправить
-                  <Image
-                    src="/PaperPlane.svg"
-                    alt="send"
-                    width={16}
-                    height={16}
-                  />
-                </button>
-              </div>
+              <MicrochefChatComposer
+                inputRef={chatInputRef}
+                value={chatInput}
+                canSend={canSend}
+                onChange={setChatInput}
+                onSend={() => {
+                  void handleSendMessage();
+                }}
+              />
             </div>
-
-            <aside className="h-full rounded-[20px] border border-[#ECE5D8] bg-[#FFFCF7] p-4">
-              <p className="font-nunito text-base font-bold text-[#4D3E2E]">
-                Как спросить
-              </p>
-              <p className="mt-1 text-xs text-[#8B7A67]">
-                Короткий формат запроса дает лучший результат.
-              </p>
-
-              <div className="mt-3 space-y-2">
-                <div className="rounded-xl border border-[#EFE5D6] bg-white px-3 py-2">
-                  <p className="font-nunito text-[11px] font-bold uppercase tracking-wide text-[#9A846B]">
-                    Шаг 1
-                  </p>
-                  <p className="mt-1 text-sm text-[#5E5142]">
-                    Продукты через запятую
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-[#EFE5D6] bg-white px-3 py-2">
-                  <p className="font-nunito text-[11px] font-bold uppercase tracking-wide text-[#9A846B]">
-                    Шаг 2
-                  </p>
-                  <p className="mt-1 text-sm text-[#5E5142]">
-                    Добавьте условия, если нужно
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-[#E6D6BE] bg-[#FFF5E7] px-3 py-2">
-                  <p className="font-nunito text-[11px] font-bold uppercase tracking-wide text-[#B07534]">
-                    Пример
-                  </p>
-                  <p className="mt-1 text-sm text-[#6A533A]">
-                    курица, рис, томаты, без сахара, на 2 порции
-                  </p>
-                </div>
-              </div>
-            </aside>
+            <MicrochefHelpSidebar />
           </div>
         </div>
       )}

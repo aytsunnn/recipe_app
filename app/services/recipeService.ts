@@ -80,6 +80,7 @@ export interface Recipe {
   comments_count?: number | string | null;
   is_ai_pfc?: boolean | null;
   parsed_from_url?: boolean | null;
+  is_parsed?: boolean | null;
   source_url?: string | null;
 }
 
@@ -111,6 +112,7 @@ export interface RecipeMutationData {
   proteins?: number;
   fats?: number;
   carbohydrates?: number;
+  is_parsed?: boolean;
   categories?: number[];
   ingredients?: Array<{
     id: number;

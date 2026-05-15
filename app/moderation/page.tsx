@@ -1,8 +1,6 @@
 ﻿"use client";
 
-import Image from "next/image";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import LeftPart from "../components/MainScreen/NavigationLeftPart";
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import { authService } from "../services/authService";
@@ -15,6 +13,8 @@ import { canAccessModeration, isAdminRole } from "../utils/role";
 import { useUiFeedback } from "../components/UiFeedbackProvider";
 import ModerationTabs from "./components/ModerationTabs";
 import ReportsHeader from "./components/ReportsHeader";
+import ModerationUserCard from "./components/ModerationUserCard";
+import ModerationReportCard from "./components/ModerationReportCard";
 
 const toIdList = (value: string): number[] =>
   value
@@ -409,227 +409,65 @@ export default function ModerationPage() {
             ) : (
               <div className="mt-3 space-y-2">
                 {filteredReports.map((report) => (
-                  <div
+                  <ModerationReportCard
                     key={report.id}
-                    className="rounded-xl border border-umami-light-gray/50 bg-[#fffdfa] p-4"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-bold text-umami-dark-gray">
-                        Жалоба #{report.id}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-[#f3efe2] px-2 py-0.5 text-xs font-bold text-umami-dark-gray">
-                          {getTypeRu(report.type)}
-                        </span>
-                        <span className="rounded-full bg-[#eaf2e6] px-2 py-0.5 text-xs font-bold text-umami-dark-gray">
-                          {getStatusRu(report.status)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {report.Reporter?.id || report.reporter_user_id ? (
-                      <Link
-                        href={`/users/${
-                          report.Reporter?.id || report.reporter_user_id
-                        }`}
-                        className="mt-3 flex items-center gap-3 rounded-lg border border-umami-light-gray/40 bg-white p-2 hover:bg-[#faf7ef]"
-                      >
-                        <Image
-                          width={40}
-                          height={40}
-                          src={"/avatar.jpg"}
-                          alt="reporter-avatar"
-                          className="h-10 w-10 rounded-full object-cover"
-                        />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-umami-dark-gray">
-                            @{report.Reporter?.username || "unknown"}
-                          </p>
-                          <p className="truncate text-sm text-umami-gray">
-                            {report.Reporter?.name || getReporterLabel(report)}
-                          </p>
-                        </div>
-                      </Link>
-                    ) : (
-                      <div className="mt-3 flex items-center gap-3 rounded-lg border border-umami-light-gray/40 bg-white p-2">
-                        <Image
-                          width={40}
-                          height={40}
-                          src={"/avatar.jpg"}
-                          alt="reporter-avatar"
-                          className="h-10 w-10 rounded-full object-cover"
-                        />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-umami-dark-gray">
-                            @{report.Reporter?.username || "unknown"}
-                          </p>
-                          <p className="truncate text-sm text-umami-gray">
-                            {report.Reporter?.name || getReporterLabel(report)}
-                          </p>
-                        </div>
-                      </div>
+                    report={report}
+                    actionLoading={actionLoading}
+                    resolvedAction={resolvedActionByReport[String(report.id)]}
+                    typeLabel={getTypeRu(report.type)}
+                    statusLabel={getStatusRu(report.status)}
+                    reporterLabel={getReporterLabel(report)}
+                    targetLabel={getTargetLabel(report)}
+                    targetHref={getTargetHref(report)}
+                    unavailableTargetMessage={getUnavailableTargetMessage(report)}
+                    createdAtLabel={formatDate(report.createdAt)}
+                    updatedAtLabel={formatDate(report.updatedAt)}
+                    showUpdatedAt={!isSameMoment(report.createdAt, report.updatedAt)}
+                    isUserTarget={["user", "profile"].includes(
+                      (report.type || "").toLowerCase()
                     )}
-
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        disabled={actionLoading === `report-${report.id}`}
-                        onClick={() =>
-                          void runAction(
-                            `report-${report.id}`,
-                            () =>
-                              moderationService.updateReportStatus(
-                                report.id,
-                                "reviewed"
-                              ),
-                            () => patchReportStatus(report.id, "reviewed")
-                          )
+                    commentActionLabel={
+                      getReportCommentId(report)
+                        ? "Принять и удалить комментарий"
+                        : (report.type || "").toLowerCase() === "recipe"
+                          ? "Принять и удалить рецепт"
+                          : "Принять"
+                    }
+                    onSetReviewed={() =>
+                      void runAction(
+                        `report-${report.id}`,
+                        () => moderationService.updateReportStatus(report.id, "reviewed"),
+                        () => patchReportStatus(report.id, "reviewed")
+                      )
+                    }
+                    onAccept={() =>
+                      void runAction(
+                        `report-${report.id}-accept`,
+                        () => handleAcceptReport(report),
+                        () => {
+                          patchReportStatus(report.id, "resolved");
+                          patchResolvedAction(report.id, "accept");
                         }
-                        className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${
-                          (report.status || "").toLowerCase() === "reviewed"
-                            ? "bg-umami-orange text-white ring-2 ring-umami-orange/35"
-                            : "bg-gray-100 text-umami-dark-gray hover:bg-gray-200"
-                        }`}
-                      >
-                        В работе
-                      </button>
-
-                      {["user", "profile"].includes(
-                        (report.type || "").toLowerCase()
-                      ) ? (
-                        <>
-                          <button
-                            type="button"
-                            disabled={
-                              actionLoading === `report-${report.id}-block`
-                            }
-                            onClick={() =>
-                              void runAction(
-                                `report-${report.id}-block`,
-                                () => handleAcceptReport(report),
-                                () => {
-                                  patchReportStatus(report.id, "resolved");
-                                  patchResolvedAction(report.id, "block-user");
-                                }
-                              )
-                            }
-                            className={`rounded-full px-3 py-1 text-xs font-bold transition-colors disabled:opacity-60 ${
-                              (report.status || "").toLowerCase() ===
-                                "resolved" &&
-                              resolvedActionByReport[String(report.id)] ===
-                                "block-user"
-                                ? "bg-umami-orange text-white ring-2 ring-umami-orange/35"
-                                : "bg-gray-100 text-umami-dark-gray hover:bg-gray-200"
-                            }`}
-                          >
-                            Заблокировать пользователя
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled={
-                            actionLoading === `report-${report.id}-accept`
-                          }
-                          onClick={() =>
-                            void runAction(
-                              `report-${report.id}-accept`,
-                              () => handleAcceptReport(report),
-                              () => {
-                                patchReportStatus(report.id, "resolved");
-                                patchResolvedAction(report.id, "accept");
-                              }
-                            )
-                          }
-                          className={`rounded-full px-3 py-1 text-xs font-bold transition-colors disabled:opacity-60 ${
-                            (report.status || "").toLowerCase() === "resolved"
-                              ? "bg-umami-orange text-white ring-2 ring-umami-orange/35"
-                              : "bg-gray-100 text-umami-dark-gray hover:bg-gray-200"
-                          }`}
-                        >
-                          {getReportCommentId(report)
-                            ? "Принять и удалить комментарий"
-                            : (report.type || "").toLowerCase() === "recipe"
-                            ? "Принять и удалить рецепт"
-                            : "Принять"}
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        disabled={
-                          actionLoading === `report-${report.id}-dismiss`
+                      )
+                    }
+                    onBlockUser={() =>
+                      void runAction(
+                        `report-${report.id}-block`,
+                        () => handleAcceptReport(report),
+                        () => {
+                          patchReportStatus(report.id, "resolved");
+                          patchResolvedAction(report.id, "block-user");
                         }
-                        onClick={() =>
-                          void runAction(
-                            `report-${report.id}-dismiss`,
-                            () =>
-                              moderationService.updateReportStatus(
-                                report.id,
-                                "dismissed"
-                              ),
-                            () => patchReportStatus(report.id, "dismissed")
-                          )
-                        }
-                        className={`rounded-full px-3 py-1 text-xs font-bold transition-colors ${
-                          (report.status || "").toLowerCase() === "dismissed"
-                            ? "bg-red-500 text-white ring-2 ring-red-300"
-                            : "bg-gray-100 text-umami-dark-gray hover:bg-gray-200"
-                        }`}
-                      >
-                        Отказать
-                      </button>
-                    </div>
-
-                    <p className="mt-3 text-xs text-umami-light-gray">
-                      Причина
-                    </p>
-                    <p className="text-sm font-semibold text-umami-dark-gray">
-                      {report.reason || "Без причины"}
-                    </p>
-
-                    {report.description ? (
-                      <>
-                        <p className="mt-2 text-xs text-umami-light-gray">
-                          Описание
-                        </p>
-                        <p className="whitespace-pre-wrap text-sm text-umami-dark-gray">
-                          {report.description}
-                        </p>
-                      </>
-                    ) : null}
-
-                    <p className="mt-2 text-xs text-umami-light-gray">
-                      Объект жалобы
-                    </p>
-                    {getUnavailableTargetMessage(report) ? (
-                      <p className="text-sm font-semibold text-red-500">
-                        {getUnavailableTargetMessage(report)}
-                      </p>
-                    ) : getTargetHref(report) ? (
-                      <Link
-                        href={getTargetHref(report)!}
-                        className="text-sm font-semibold text-umami-orange hover:underline"
-                      >
-                        {getTargetLabel(report)}
-                      </Link>
-                    ) : (
-                      <p className="text-sm font-semibold text-umami-dark-gray">
-                        {getTargetLabel(report)}
-                      </p>
-                    )}
-
-                    <div className="mt-2 flex items-center justify-between gap-3 text-sm text-umami-gray">
-                      <p>Создано: {formatDate(report.createdAt)}</p>
-                      {!isSameMoment(report.createdAt, report.updatedAt) ? (
-                        <p className="text-right">
-                          Обновлено: {formatDate(report.updatedAt)}
-                        </p>
-                      ) : (
-                        <span />
-                      )}
-                    </div>
-                  </div>
+                      )
+                    }
+                    onDismiss={() =>
+                      void runAction(
+                        `report-${report.id}-dismiss`,
+                        () => moderationService.updateReportStatus(report.id, "dismissed"),
+                        () => patchReportStatus(report.id, "dismissed")
+                      )
+                    }
+                  />
                 ))}
               </div>
             )}
@@ -685,65 +523,12 @@ export default function ModerationPage() {
                     {users.map((user) => {
                       const selected = selectedUserIds.includes(String(user.id));
                       return (
-                        <div
+                        <ModerationUserCard
                           key={user.id}
-                          className="rounded-xl border border-umami-light-gray/50 bg-[#fffdfa] p-4"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-sm font-bold text-umami-dark-gray">
-                              Пользователь #{user.id}
-                            </p>
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-                                user.is_blocked
-                                  ? "bg-red-100 text-red-600"
-                                  : "bg-green-100 text-green-600"
-                              }`}
-                            >
-                              {user.is_blocked ? "Заблокирован" : "Активен"}
-                            </span>
-                          </div>
-
-                          <div className="mt-3 flex items-center justify-between gap-3">
-                            <Link
-                              href={`/users/${user.id}`}
-                              className="flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-umami-light-gray/40 bg-white p-2 hover:bg-[#faf7ef]"
-                            >
-                              <Image
-                                width={40}
-                                height={40}
-                                src={user.avatar_url || "/avatar.jpg"}
-                                alt="user-avatar"
-                                className="h-10 w-10 rounded-full object-cover"
-                              />
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-bold text-umami-dark-gray">
-                                  {user.name || "Без имени"}
-                                </p>
-                                <p className="truncate text-sm text-umami-gray">
-                                  @{user.username || "unknown"}
-                                </p>
-                              </div>
-                            </Link>
-                            <label className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-[#f3efe2] px-3 py-1">
-                              <input
-                                type="checkbox"
-                                checked={selected}
-                                onChange={() => toggleUserSelection(String(user.id))}
-                                className="h-4 w-4 accent-umami-orange"
-                              />
-                              <span className="text-xs font-bold text-umami-dark-gray">
-                                Выбрать
-                              </span>
-                            </label>
-                          </div>
-
-                          <div className="mt-2">
-                            <span className="rounded-full bg-[#f3efe2] px-2 py-0.5 text-xs font-bold text-umami-dark-gray">
-                              Роль: {user.role || "User"}
-                            </span>
-                          </div>
-                        </div>
+                          user={user}
+                          selected={selected}
+                          onToggleSelect={() => toggleUserSelection(String(user.id))}
+                        />
                       );
                     })}
                   </div>

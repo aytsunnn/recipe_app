@@ -1215,6 +1215,7 @@ function ProfilePageContent() {
         fats: Number(recipeForm.fats) || 0,
         carbohydrates: Number(recipeForm.carbohydrates) || 0,
         is_private: recipeForm.parsed_from_url ? true : recipeForm.is_private,
+        is_parsed: recipeForm.parsed_from_url,
         ...(Number.isFinite(Number(recipeForm.kitchen_id)) &&
         recipeForm.kitchen_id
           ? { kitchen_id: Number(recipeForm.kitchen_id) }
