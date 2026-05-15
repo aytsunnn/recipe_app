@@ -12,6 +12,8 @@ import { moderationService } from "../services/moderationService";
 import { normalizeImageUrl } from "../utils/imageUrl";
 import { canAccessModeration } from "../utils/role";
 
+const FEED_RETURN_STATE_KEY = "feed_return_state_v1";
+
 interface Recipe {
   id: string;
   user_id: string;
@@ -27,6 +29,7 @@ interface Recipe {
   calorific: number | null;
   cooking_time: number;
   createdAt: string;
+  views_count?: number;
   User: {
     id: string;
     username: string;
@@ -66,6 +69,59 @@ export default function FeedCard({
   detailsQuery,
   footerRightSlot,
 }: FeedCardProps) {
+  const saveFeedReturnState = () => {
+    if (typeof window === "undefined") return;
+    try {
+      const payload = {
+        path: `${window.location.pathname}${window.location.search}`,
+        recipeId: String(recipe.id),
+        scrollY: window.scrollY,
+        savedAt: Date.now(),
+      };
+      window.sessionStorage.setItem(FEED_RETURN_STATE_KEY, JSON.stringify(payload));
+    } catch {
+      // ignore
+    }
+  };
+  const formatPublishedAgo = (createdAt?: string) => {
+    if (!createdAt) return "";
+    const created = new Date(createdAt).getTime();
+    if (Number.isNaN(created)) return "";
+    const diffMs = Date.now() - created;
+    const minute = 60 * 1000;
+    const hour = 60 * minute;
+    const day = 24 * hour;
+    const month = 30 * day;
+    const year = 365 * day;
+
+    if (diffMs < minute) return "только что";
+    if (diffMs < hour) return `${Math.max(1, Math.floor(diffMs / minute))} минут назад`;
+    if (diffMs < day) return `${Math.max(1, Math.floor(diffMs / hour))} ч назад`;
+    if (diffMs < month) return `${Math.max(1, Math.floor(diffMs / day))} д назад`;
+    if (diffMs < year) return `${Math.max(1, Math.floor(diffMs / month))} м назад`;
+    if (diffMs >= year) {
+      return new Intl.DateTimeFormat("ru-RU", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(new Date(created));
+    }
+
+    return "";
+  };
+
+  const publishedAgo = formatPublishedAgo(recipe.createdAt);
+  const exactPublishedAt = (() => {
+    const date = new Date(recipe.createdAt);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Intl.DateTimeFormat("ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  })();
   const [following, setFollowing] = useState(isFollowing);
   const [justFollowed, setJustFollowed] = useState(false); // Отслеживаем подписку в текущей сессии
   const [lastComment, setLastComment] = useState<Comment | null>(null);
@@ -74,8 +130,10 @@ export default function FeedCard({
   const [canModerate, setCanModerate] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [metaInfoOpen, setMetaInfoOpen] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement | null>(null);
+  const metaInfoRef = useRef<HTMLDivElement | null>(null);
 
   // Проверяем, является ли текущий пользователь автором поста
   const isOwnPost = currentUserId && currentUserId === recipe.user_id;
@@ -231,6 +289,19 @@ export default function FeedCard({
   }, [actionsOpen]);
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!metaInfoOpen) return;
+      const target = event.target as Node;
+      if (metaInfoRef.current && !metaInfoRef.current.contains(target)) {
+        setMetaInfoOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [metaInfoOpen]);
+
+  useEffect(() => {
     let cancelled = false;
     const loadFavoriteState = async () => {
       if (!isAuthenticated) {
@@ -249,6 +320,43 @@ export default function FeedCard({
       cancelled = true;
     };
   }, [isAuthenticated, recipe.id]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem(FEED_RETURN_STATE_KEY);
+      if (!raw) return;
+      const state = JSON.parse(raw) as {
+        path?: string;
+        recipeId?: string;
+        scrollY?: number;
+        savedAt?: number;
+      };
+      const currentPath = `${window.location.pathname}${window.location.search}`;
+      const isSamePath = state.path === currentPath;
+      const isSameRecipe = String(state.recipeId || "") === String(recipe.id);
+      if (!isSamePath || !isSameRecipe) return;
+
+      const scrollTarget = document.getElementById(`feed-card-${recipe.id}`);
+      if (!scrollTarget) return;
+
+      window.requestAnimationFrame(() => {
+        if (typeof state.scrollY === "number" && Number.isFinite(state.scrollY)) {
+          window.scrollTo({ top: Math.max(0, state.scrollY), behavior: "auto" });
+        } else {
+          scrollTarget.scrollIntoView({ behavior: "auto", block: "start" });
+        }
+        scrollTarget.classList.add("ring-2", "ring-umami-orange/40");
+        window.setTimeout(() => {
+          scrollTarget.classList.remove("ring-2", "ring-umami-orange/40");
+        }, 1400);
+      });
+
+      window.sessionStorage.removeItem(FEED_RETURN_STATE_KEY);
+    } catch {
+      // ignore
+    }
+  }, [recipe.id]);
 
   // Загружаем последний комментарий, если нужно показывать комментарии
   useEffect(() => {
@@ -425,11 +533,15 @@ export default function FeedCard({
   if (isDeleted) return null;
 
   return (
-    <div className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5">
+    <div
+      id={`feed-card-${recipe.id}`}
+      className="rounded-lg w-full flex flex-col bg-white border border-umami-light-gray/50 p-4 gap-2.5 transition-shadow"
+    >
       {showAuthorHeader && (
         <div className="flex items-start gap-2.5">
           <Link
             href={`/users/${recipe.user_id}`}
+            onClick={saveFeedReturnState}
             className="flex min-w-0 flex-1 items-center gap-2.5"
           >
             <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
@@ -520,7 +632,7 @@ export default function FeedCard({
         </div>
       )}
 
-      <Link href={buildRecipeLink()} className="block">
+      <Link href={buildRecipeLink()} onClick={saveFeedReturnState} className="block">
         <div className="relative w-full overflow-hidden rounded-lg bg-[#d9d9d9]">
           <Image
             width={600}
@@ -589,7 +701,7 @@ export default function FeedCard({
             <p className="font-inter text-sm text-umami-gray">{likesCount}</p>
           </div>
           <div className="flex gap-1 items-center">
-            <Link href={buildRecipeLink("comments")}>
+            <Link href={buildRecipeLink("comments")} onClick={saveFeedReturnState}>
               <Image
                 width={24}
                 height={24}
@@ -603,9 +715,30 @@ export default function FeedCard({
             </p>
           </div>
         </div>
-        {footerRightSlot ? (
-          <div className="flex items-center gap-2">{footerRightSlot}</div>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {publishedAgo ? (
+            <div ref={metaInfoRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setMetaInfoOpen((prev) => !prev)}
+                className="font-inter text-xs text-umami-light-gray hover:text-umami-dark-gray"
+              >
+                {publishedAgo}
+              </button>
+              {metaInfoOpen ? (
+                <div className="absolute bottom-6 right-0 z-20 min-w-[180px] rounded-xl border border-umami-light-gray/60 bg-white p-2 shadow-md">
+                  <p className="font-inter text-xs text-umami-dark-gray">
+                    {exactPublishedAt}
+                  </p>
+                  <p className="mt-1 font-inter text-xs text-umami-gray">
+                    Просмотров: {recipe.views_count ?? 0}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {footerRightSlot}
+        </div>
       </div>
 
       {/* Блок последнего комментария */}
