@@ -10,10 +10,11 @@ interface ModerationUserCardProps {
   isAdmin: boolean;
   selected: boolean;
   onToggleSelect: () => void;
+  onBlock: () => void;
   onUnblock: () => void;
   onDelete: () => void;
   onUpdateRole: (role: "Admin" | "Moderator" | "User") => void;
-  onEdit: (payload: { name?: string; username?: string; email?: string }) => void;
+  onEdit: () => void;
   actionLoading?: string | null;
 }
 
@@ -22,6 +23,7 @@ export default function ModerationUserCard({
   isAdmin,
   selected,
   onToggleSelect,
+  onBlock,
   onUnblock,
   onDelete,
   onUpdateRole,
@@ -34,12 +36,13 @@ export default function ModerationUserCard({
   const actionsMenuRef = useRef<HTMLDivElement | null>(null);
 
   const normalizedRole = (user.role || "User").toLowerCase();
-  const currentRole: "Admin" | "Moderator" | "User" =
-    normalizedRole.includes("admin")
-      ? "Admin"
-      : normalizedRole.includes("moderator")
-      ? "Moderator"
-      : "User";
+  const currentRole: "Admin" | "Moderator" | "User" = normalizedRole.includes(
+    "admin"
+  )
+    ? "Admin"
+    : normalizedRole.includes("moderator")
+    ? "Moderator"
+    : "User";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -56,22 +59,6 @@ export default function ModerationUserCard({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleEdit = () => {
-    const nextName = window.prompt("Имя пользователя", user.name || "");
-    if (nextName === null) return;
-    const nextUsername = window.prompt("Никнейм", user.username || "");
-    if (nextUsername === null) return;
-    const nextEmail = window.prompt("Email", user.email || "");
-    if (nextEmail === null) return;
-
-    onEdit({
-      name: nextName.trim(),
-      username: nextUsername.trim(),
-      email: nextEmail.trim(),
-    });
-    setIsActionsMenuOpen(false);
-  };
-
   return (
     <div className="rounded-xl border border-umami-light-gray/50 bg-[#fffdfa] p-4">
       <div className="flex items-center justify-between gap-3">
@@ -83,7 +70,9 @@ export default function ModerationUserCard({
             className="h-4 w-4 accent-umami-orange"
             aria-label={`Выбрать пользователя ${user.id}`}
           />
-          <p className="text-sm font-bold text-umami-dark-gray">Пользователь #{user.id}</p>
+          <p className="text-sm font-bold text-umami-dark-gray">
+            Пользователь #{user.id}
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -180,11 +169,39 @@ export default function ModerationUserCard({
                 <button
                   type="button"
                   disabled={actionLoading === `user-${user.id}-edit`}
-                  onClick={handleEdit}
+                  onClick={() => {
+                    onEdit();
+                    setIsActionsMenuOpen(false);
+                  }}
                   className="w-full rounded-lg px-3 py-2 text-left text-sm text-umami-dark-gray hover:bg-[#f8f4ea] disabled:opacity-60"
                 >
                   Редактировать
                 </button>
+                {user.is_blocked ? (
+                  <button
+                    type="button"
+                    disabled={actionLoading === `user-${user.id}-unblock`}
+                    onClick={() => {
+                      onUnblock();
+                      setIsActionsMenuOpen(false);
+                    }}
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm text-umami-dark-gray hover:bg-[#f8f4ea] disabled:opacity-60"
+                  >
+                    Разблокировать
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={actionLoading === `user-${user.id}-block`}
+                    onClick={() => {
+                      onBlock();
+                      setIsActionsMenuOpen(false);
+                    }}
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm text-umami-dark-gray hover:bg-[#f8f4ea] disabled:opacity-60"
+                  >
+                    Заблокировать
+                  </button>
+                )}
                 <button
                   type="button"
                   disabled={actionLoading === `user-${user.id}-delete`}
@@ -202,26 +219,7 @@ export default function ModerationUserCard({
         ) : null}
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        {user.email ? (
-          <span className="truncate rounded-full bg-[#f3efe2] px-2 py-0.5 text-xs text-umami-gray">
-            {user.email}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {user.is_blocked ? (
-          <button
-            type="button"
-            disabled={actionLoading === `user-${user.id}-unblock`}
-            onClick={onUnblock}
-            className="rounded-full bg-[#f3efe2] px-3 py-1 text-xs font-bold text-umami-dark-gray hover:bg-[#ece4cf] disabled:opacity-60"
-          >
-            Разблокировать
-          </button>
-        ) : null}
-      </div>
+      <div className="mt-1" />
     </div>
   );
 }

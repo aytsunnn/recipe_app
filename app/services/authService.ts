@@ -135,8 +135,9 @@ class AuthService {
     } catch (error) {
       console.error('Failed to get current user:', error);
 
-      // Сбрасываем токен только если он реально невалиден.
-      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+      // Сбрасываем токен только если он реально невалиден (401).
+      // 403 может прилетать из-за прав на конкретный роут, токен при этом валидный.
+      if (error instanceof ApiError && error.status === 401) {
         this.removeToken();
       }
 

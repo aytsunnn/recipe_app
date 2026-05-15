@@ -1,4 +1,4 @@
-import { apiClient } from "./api";
+import { ApiError, apiClient } from "./api";
 
 export interface ModerationReport {
   id: string;
@@ -40,9 +40,12 @@ export interface ModerationUser {
   username: string;
   name: string;
   email?: string;
+  bio?: string | null;
   avatar_url?: string | null;
   role?: string;
+  role_id?: number;
   is_blocked?: boolean;
+  is_verified?: boolean;
 }
 
 export interface ModerationUsersPage {
@@ -108,6 +111,12 @@ class ModerationService {
               : typeof raw.avatar_url === "string"
               ? raw.avatar_url
               : null,
+          bio:
+            typeof source.bio === "string"
+              ? source.bio
+              : typeof raw.bio === "string"
+              ? raw.bio
+              : null,
           role:
             typeof source.role === "string"
               ? source.role
@@ -118,12 +127,24 @@ class ModerationService {
               : typeof (raw.Role as { name?: string } | undefined)?.name === "string"
               ? String((raw.Role as { name?: string }).name)
               : undefined,
+          role_id:
+            typeof source.role_id === "number"
+              ? source.role_id
+              : typeof raw.role_id === "number"
+              ? raw.role_id
+              : undefined,
           is_blocked:
             typeof source.is_blocked === "boolean"
               ? source.is_blocked
               : typeof raw.is_blocked === "boolean"
               ? raw.is_blocked
               : false,
+          is_verified:
+            typeof source.is_verified === "boolean"
+              ? source.is_verified
+              : typeof raw.is_verified === "boolean"
+              ? raw.is_verified
+              : undefined,
         } as ModerationUser;
       })
       .filter((user): user is ModerationUser => Boolean(user));
@@ -176,7 +197,22 @@ class ModerationService {
   }
 
   async getReports(): Promise<ModerationReport[]> {
-    return apiClient.get<ModerationReport[]>("/reports");
+    const endpoints = ["/reports", "/admin/reports"];
+    let lastError: unknown = null;
+    for (const endpoint of endpoints) {
+      try {
+        return await apiClient.get<ModerationReport[]>(endpoint);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    if (lastError instanceof ApiError && lastError.status === 403) {
+      throw new Error(
+        "У текущей роли нет прав на просмотр жалоб. Проверьте права роли на backend и выполните повторный вход."
+      );
+    }
+    if (lastError instanceof Error) throw lastError;
+    throw new Error("Не удалось загрузить жалобы");
   }
 
   async updateReportStatus(
@@ -187,7 +223,39 @@ class ModerationService {
   }
 
   async getUsers(page = 1, limit = 20): Promise<ModerationUsersPage> {
-    const response = await apiClient.get<unknown>("/admin/users");
+    const endpoints = [
+      "/admin/users",
+      `/users?page=${page}&limit=${limit}`,
+      "/users",
+      "/users/search?q=",
+      "/users/search?q=%20",
+      "/users/search?q=a",
+      "/users/search?q=%D0%B0",
+    ];
+    let response: unknown = null;
+    let lastError: unknown = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        response = await apiClient.get<unknown>(endpoint);
+        break;
+      } catch (error) {
+        lastError = error;
+        if (error instanceof ApiError && error.status === 403) {
+          continue;
+        }
+      }
+    }
+
+    if (response === null) {
+      if (lastError instanceof ApiError && lastError.status === 403) {
+        throw new Error(
+          "У текущей роли нет прав на получение списка пользователей. Проверьте права роли на backend и выполните повторный вход."
+        );
+      }
+      if (lastError instanceof Error) throw lastError;
+      throw new Error("Не удалось получить список пользователей");
+    }
 
     if (Array.isArray(response)) {
       const full = this.normalizeUsers(response as unknown[]);
@@ -279,17 +347,26 @@ class ModerationService {
   }
 
   async updateUserRole(id: string, role: "Admin" | "Moderator" | "User"): Promise<void> {
-    try {
-      await apiClient.patch(`/admin/users/${id}/role`, { role });
-      return;
-    } catch {
-      await apiClient.patch(`/admin/users/${id}`, { role });
-    }
+    const roleIdMap: Record<"Admin" | "Moderator" | "User", number> = {
+      Admin: 1,
+      User: 2,
+      Moderator: 3,
+    };
+    const role_id = roleIdMap[role];
+    await apiClient.patch(`/admin/users/${id}`, { role_id });
   }
 
   async updateUser(
     id: string,
-    payload: { name?: string; username?: string; email?: string }
+    payload: {
+      name?: string;
+      username?: string;
+      bio?: string | null;
+      avatar_url?: string | null;
+      role_id?: number;
+      is_blocked?: boolean;
+      is_verified?: boolean;
+    }
   ): Promise<void> {
     await apiClient.patch(`/admin/users/${id}`, payload);
   }

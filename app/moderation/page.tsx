@@ -9,6 +9,8 @@ import {
   ModerationReport,
   ModerationUser,
 } from "../services/moderationService";
+import { uploadService } from "../services/uploadService";
+import { normalizeImageUrl } from "../utils/imageUrl";
 import { canAccessModeration, isAdminRole } from "../utils/role";
 import { useUiFeedback } from "../components/UiFeedbackProvider";
 import ModerationTabs from "./components/ModerationTabs";
@@ -44,6 +46,15 @@ export default function ModerationPage() {
   const [resolvedActionByReport, setResolvedActionByReport] = useState<
     Record<string, "accept" | "block-user">
   >({});
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editUsername, setEditUsername] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(null);
+  const [editRoleId, setEditRoleId] = useState<number>(2);
+  const [editIsVerified, setEditIsVerified] = useState(false);
+  const [editIsBlocked, setEditIsBlocked] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const moderationColumnRef = useRef<HTMLDivElement | null>(null);
 
   const loadReports = async () => {
@@ -353,6 +364,17 @@ export default function ModerationPage() {
     });
   };
 
+  const handleBlockUser = async (userId: string) => {
+    await runAction(`user-${userId}-block`, async () => {
+      await moderationService.blockUser(userId);
+      setUsers((prev) =>
+        prev.map((user) =>
+          String(user.id) === String(userId) ? { ...user, is_blocked: true } : user
+        )
+      );
+    });
+  };
+
   const handleDeleteUser = async (userId: string) => {
     const confirmed = window.confirm("Удалить пользователя? Это действие нельзя отменить.");
     if (!confirmed) return;
@@ -366,11 +388,17 @@ export default function ModerationPage() {
     userId: string,
     role: "Admin" | "Moderator" | "User"
   ) => {
+    const roleIdMap: Record<"Admin" | "Moderator" | "User", number> = {
+      Admin: 1,
+      User: 2,
+      Moderator: 3,
+    };
+    const role_id = roleIdMap[role];
     await runAction(`user-${userId}-role`, async () => {
       await moderationService.updateUserRole(userId, role);
       setUsers((prev) =>
         prev.map((user) =>
-          String(user.id) === String(userId) ? { ...user, role } : user
+          String(user.id) === String(userId) ? { ...user, role, role_id } : user
         )
       );
     });
@@ -378,7 +406,15 @@ export default function ModerationPage() {
 
   const handleEditUser = async (
     userId: string,
-    payload: { name?: string; username?: string; email?: string }
+    payload: {
+      name?: string;
+      username?: string;
+      bio?: string | null;
+      avatar_url?: string | null;
+      role_id?: number;
+      is_verified?: boolean;
+      is_blocked?: boolean;
+    }
   ) => {
     await runAction(`user-${userId}-edit`, async () => {
       await moderationService.updateUser(userId, payload);
@@ -389,12 +425,71 @@ export default function ModerationPage() {
                 ...user,
                 name: payload.name ?? user.name,
                 username: payload.username ?? user.username,
-                email: payload.email ?? user.email,
+                bio: payload.bio ?? user.bio,
+                avatar_url:
+                  payload.avatar_url === undefined
+                    ? user.avatar_url
+                    : payload.avatar_url,
+                role_id: payload.role_id ?? user.role_id,
+                role:
+                  payload.role_id === 1
+                    ? "Admin"
+                    : payload.role_id === 3
+                    ? "Moderator"
+                    : payload.role_id === 2
+                    ? "User"
+                    : user.role,
+                is_verified: payload.is_verified ?? user.is_verified,
+                is_blocked: payload.is_blocked ?? user.is_blocked,
               }
             : user
         )
       );
     });
+  };
+
+  const openEditUserModal = (user: ModerationUser) => {
+    setEditingUserId(String(user.id));
+    setEditName(user.name || "");
+    setEditUsername(user.username || "");
+    setEditBio(user.bio || "");
+    setEditAvatarUrl(user.avatar_url || null);
+    setEditRoleId(user.role_id || (user.role?.toLowerCase().includes("admin") ? 1 : user.role?.toLowerCase().includes("moderator") ? 3 : 2));
+    setEditIsVerified(Boolean(user.is_verified));
+    setEditIsBlocked(Boolean(user.is_blocked));
+  };
+
+  const closeEditUserModal = () => {
+    setEditingUserId(null);
+  };
+
+  const submitEditUserModal = async () => {
+    if (!editingUserId) return;
+    await handleEditUser(editingUserId, {
+      name: editName.trim(),
+      username: editUsername.trim(),
+      bio: editBio.trim() || null,
+      avatar_url: editAvatarUrl,
+      role_id: editRoleId,
+      is_verified: editIsVerified,
+      is_blocked: editIsBlocked,
+    });
+    closeEditUserModal();
+  };
+
+  const handleEditAvatarFile = async (file: File) => {
+    setAvatarUploading(true);
+    try {
+      const url = await uploadService.uploadImage(file, "avatars");
+      setEditAvatarUrl(url);
+    } catch (error) {
+      toast(
+        error instanceof Error ? error.message : "Не удалось загрузить аватар",
+        "error"
+      );
+    } finally {
+      setAvatarUploading(false);
+    }
   };
 
   const handleAcceptReport = async (report: ModerationReport) => {
@@ -584,10 +679,11 @@ export default function ModerationPage() {
                           isAdmin={isAdmin}
                           selected={selected}
                           onToggleSelect={() => toggleUserSelection(String(user.id))}
+                          onBlock={() => void handleBlockUser(String(user.id))}
                           onUnblock={() => void handleUnblockUser(String(user.id))}
                           onDelete={() => void handleDeleteUser(String(user.id))}
                           onUpdateRole={(role) => void handleRoleUpdate(String(user.id), role)}
-                          onEdit={(payload) => void handleEditUser(String(user.id), payload)}
+                          onEdit={() => openEditUserModal(user)}
                           actionLoading={actionLoading}
                         />
                       );
@@ -629,6 +725,133 @@ export default function ModerationPage() {
         </div>
         <ScrollToTopButton anchorRef={moderationColumnRef} />
       </div>
+
+      {editingUserId ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-umami-light-gray/50 bg-white p-5">
+            <h3 className="font-nunito text-lg font-bold text-umami-dark-gray">
+              Редактирование пользователя
+            </h3>
+            <div className="mt-4 space-y-3">
+              <label className="block">
+                <span className="mb-1 block text-sm text-umami-gray">Аватар</span>
+                <div className="flex items-center gap-3">
+                  <img
+                    src={normalizeImageUrl(editAvatarUrl, "/avatar.jpg")}
+                    alt="avatar-preview"
+                    className="h-14 w-14 rounded-full border border-umami-light-gray/50 object-cover"
+                  />
+                  <label className="cursor-pointer rounded-full bg-[#f3efe2] px-3 py-1 text-xs font-bold text-umami-dark-gray hover:bg-[#ece4cf]">
+                    {avatarUploading ? "Загрузка..." : "Изменить фото"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) {
+                          void handleEditAvatarFile(file);
+                        }
+                      }}
+                    />
+                  </label>
+                  {editAvatarUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => setEditAvatarUrl(null)}
+                      className="rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-600"
+                    >
+                      Удалить фото
+                    </button>
+                  ) : null}
+                </div>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm text-umami-gray">Имя</span>
+                <input
+                  value={editName}
+                  onChange={(event) => setEditName(event.target.value)}
+                  className="h-10 w-full rounded-xl border border-umami-light-gray/50 px-3 text-sm focus:outline-none"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm text-umami-gray">Никнейм</span>
+                <input
+                  value={editUsername}
+                  onChange={(event) => setEditUsername(event.target.value)}
+                  className="h-10 w-full rounded-xl border border-umami-light-gray/50 px-3 text-sm focus:outline-none"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm text-umami-gray">Bio</span>
+                <textarea
+                  value={editBio}
+                  onChange={(event) => setEditBio(event.target.value)}
+                  rows={3}
+                  className="w-full rounded-xl border border-umami-light-gray/50 px-3 py-2 text-sm focus:outline-none"
+                />
+              </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <label className="block">
+                  <span className="mb-1 block text-sm text-umami-gray">Роль</span>
+                  <select
+                    value={editRoleId}
+                    onChange={(event) => setEditRoleId(Number(event.target.value))}
+                    className="h-10 w-full rounded-xl border border-umami-light-gray/50 px-3 text-sm focus:outline-none"
+                  >
+                    <option value={2}>User</option>
+                    <option value={3}>Moderator</option>
+                    <option value={1}>Admin</option>
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 pt-7">
+                  <input
+                    type="checkbox"
+                    checked={editIsVerified}
+                    onChange={(event) => setEditIsVerified(event.target.checked)}
+                    className="h-4 w-4 accent-umami-orange"
+                  />
+                  <span className="text-sm text-umami-dark-gray">Верифицирован</span>
+                </label>
+                <label className="flex items-center gap-2 pt-7">
+                  <input
+                    type="checkbox"
+                    checked={editIsBlocked}
+                    onChange={(event) => setEditIsBlocked(event.target.checked)}
+                    className="h-4 w-4 accent-umami-orange"
+                  />
+                  <span className="text-sm text-umami-dark-gray">Заблокирован</span>
+                </label>
+              </div>
+              <label className="block">
+                <span className="mb-1 block text-sm text-umami-gray">Email</span>
+                <input
+                  value={users.find((u) => String(u.id) === String(editingUserId))?.email || ""}
+                  disabled
+                  className="h-10 w-full rounded-xl border border-umami-light-gray/50 bg-[#f8f8f8] px-3 text-sm text-umami-gray"
+                />
+              </label>
+            </div>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeEditUserModal}
+                className="rounded-full bg-[#f3efe2] px-4 py-2 text-sm font-bold text-umami-dark-gray"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={() => void submitEditUserModal()}
+                disabled={actionLoading === `user-${editingUserId}-edit`}
+                className="rounded-full bg-umami-orange px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+              >
+                Сохранить
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

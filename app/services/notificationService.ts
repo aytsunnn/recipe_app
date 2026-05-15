@@ -44,6 +44,14 @@ class NotificationService {
     if (type.includes("follow") || type.includes("subscribe")) {
       return "подписался(ась) на вас";
     }
+    if (
+      type.includes("recipe") ||
+      type.includes("post") ||
+      type.includes("publish") ||
+      type.includes("created")
+    ) {
+      return `опубликовал(а) новый рецепт${recipeTitle}`;
+    }
     return "новое действие";
   }
 

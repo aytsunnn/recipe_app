@@ -551,6 +551,73 @@ window.onload = function() {
           }
         }
       },
+      "/admin/appeals": {
+        "get": {
+          "summary": "Список апелляций",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Список апелляций"
+            }
+          }
+        }
+      },
+      "/admin/appeals/{id}": {
+        "patch": {
+          "summary": "Обработать апелляцию",
+          "tags": [
+            "Admin"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "reviewed",
+                        "resolved"
+                      ]
+                    },
+                    "admin_notes": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Апелляция обработана"
+            }
+          }
+        }
+      },
       "/auth/register": {
         "post": {
           "summary": "Регистрация",
@@ -2153,6 +2220,29 @@ window.onload = function() {
           }
         }
       },
+      "/recipes/{id}/likes": {
+        "get": {
+          "summary": "Список пользователей, лайкнувших рецепт",
+          "tags": [
+            "Recipes"
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "integer"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Список пользователей"
+            }
+          }
+        }
+      },
       "/recipes/{id}/personal-note": {
         "patch": {
           "summary": "Создать или обновить личную заметку к рецепту",
@@ -3152,6 +3242,38 @@ window.onload = function() {
           "responses": {
             "201": {
               "description": "Заявка создана"
+            }
+          }
+        }
+      },
+      "/users/me/appeal": {
+        "post": {
+          "summary": "Подать апелляцию на блокировку",
+          "tags": [
+            "Users"
+          ],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Апелляция создана"
             }
           }
         }

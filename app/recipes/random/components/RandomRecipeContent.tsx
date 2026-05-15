@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import FeedCard from "../../../components/feed-card/FeedCard";
 import LeftPart from "../../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../../components/MainScreen/NewsRightPart";
@@ -44,7 +44,11 @@ export default function RandomRecipeContent() {
       }
       await syncUserContext(nextRecipe);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ СЃР»СѓС‡Р°Р№РЅС‹Р№ СЂРµС†РµРїС‚");
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Не удалось загрузить случайный рецепт"
+      );
       setRecipe(null);
     } finally {
       setLoading(false);
@@ -69,13 +73,14 @@ export default function RandomRecipeContent() {
       }
       await loadRandom();
     };
+
     void bootstrap();
   }, []);
 
   return (
-    <div className="w-full gap-5 flex flex-row">
+    <div className="flex w-full flex-row gap-5">
       <div className="hidden w-55.75 lg:flex">
-        <Suspense fallback={<div className="text-umami-gray">Р—Р°РіСЂСѓР·РєР°...</div>}>
+        <Suspense fallback={<div className="text-umami-gray">Загрузка...</div>}>
           <LeftPart />
         </Suspense>
       </div>
@@ -83,29 +88,36 @@ export default function RandomRecipeContent() {
       <div className="w-full pb-10 lg:w-169.5">
         <div className="mb-4 rounded-lg border border-umami-light-gray/50 bg-white p-4">
           <div className="flex items-center justify-between">
-            <h1 className="font-nunito text-2xl font-bold text-umami-dark-gray">РЎР»СѓС‡Р°Р№РЅС‹Р№ СЂРµС†РµРїС‚</h1>
+            <h1 className="font-nunito text-2xl font-bold text-umami-dark-gray">
+              Случайный рецепт
+            </h1>
             <button
               type="button"
               onClick={() => void loadRandom()}
               className="rounded-full bg-umami-green px-4 py-2 font-inter text-sm font-medium text-white transition-colors hover:bg-[#6A805E]"
             >
-              Р”СЂСѓРіРѕР№ СЂРµС†РµРїС‚
+              Другой рецепт
             </button>
           </div>
         </div>
 
-        {loading && <div className="text-umami-gray">Р—Р°РіСЂСѓР·РєР°...</div>}
+        {loading && <div className="text-umami-gray">Загрузка...</div>}
+
         {error && !loading && isNotFoundErrorMessage(error) && (
           <NotFoundState
-            title="РћС€РёР±РєР° 404"
-            description="Р РµС†РµРїС‚ РЅРµ РЅР°Р№РґРµРЅ."
+            title="Ошибка 404"
+            description="Рецепт не найден."
             actionHref="/recipes/random"
-            actionLabel="РџРѕРїСЂРѕР±РѕРІР°С‚СЊ СЃРЅРѕРІР°"
+            actionLabel="Попробовать снова"
           />
         )}
+
         {error && !loading && !isNotFoundErrorMessage(error) && (
-          <div className="rounded-lg border border-umami-light-gray/50 bg-white p-6 text-red-500">{error}</div>
+          <div className="rounded-lg border border-umami-light-gray/50 bg-white p-6 text-red-500">
+            {error}
+          </div>
         )}
+
         {!loading && !error && recipe && (
           <FeedCard
             recipe={recipe}
