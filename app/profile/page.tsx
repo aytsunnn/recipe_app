@@ -574,6 +574,7 @@ function ProfilePageContent() {
         fats: Math.max(0, Math.round(toNum(prefill.fats, 0))),
         carbohydrates: Math.max(0, Math.round(toNum(prefill.carbohydrates, 0))),
         is_private: true,
+        parsed_from_url: true,
         kitchen_id: matchByName(kitchens, prefill.kitchen),
         celebration_id: matchByName(celebrations, prefill.celebration),
         cooking_id: matchByName(cookings, prefill.cookingType),
@@ -1297,7 +1298,10 @@ function ProfilePageContent() {
     if (!user) return;
 
     if (isParsedRecipe(recipe)) {
-      toast("Для спаршенного рецепта видимость изменить нельзя", "error");
+      toast(
+        "Для скопированного рецепта и рецепта от микро-шефа видимость изменить нельзя",
+        "error"
+      );
       return;
     }
 
@@ -2082,6 +2086,11 @@ function ProfilePageContent() {
                       Приватный
                     </button>
                   </div>
+                  {recipeForm.parsed_from_url ? (
+                    <p className="col-span-2 mt-1 font-inter text-xs text-umami-gray">
+                      Для скопированного рецепта и рецепта от микро-шефа видимость изменить нельзя
+                    </p>
+                  ) : null}
                 </div>
 
               <div className="mt-6 flex gap-3 border-t border-[#efefef] pt-3">
