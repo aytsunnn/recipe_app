@@ -72,7 +72,13 @@ export default function ProfileRecipesSection({
                   alt="visibility"
                 />
                 <span className="font-nunito text-sm font-semibold text-umami-gray">
-                  {recipe.is_private ? "Приватный" : "Публичный"}
+                  <span
+                    className={
+                      recipe.is_private ? "text-umami-gray" : "text-umami-green"
+                    }
+                  >
+                    {recipe.is_private ? "Приватный" : "Публичный"}
+                  </span>
                 </span>
               </button>
             }
