@@ -6,16 +6,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import FeedCard from "../components/FeedCard";
-import ScrollToTopButton from "../components/ScrollToTopButton";
 import LeftPart from "../components/MainScreen/NavigationLeftPart";
 import FollowUsersModal from "./components/FollowUsersModal";
 import ProfileHeaderCard from "./components/ProfileHeaderCard";
-import RecipeVisibilityFilter from "./components/RecipeVisibilityFilter";
-import EditProfileModal from "./components/EditProfileModal";
-import FriendsSidebar from "./components/FriendsSidebar";
-import RecipeActionsMenu from "./components/RecipeActionsMenu";
-import ProfileRecipesEmptyState from "./components/ProfileRecipesEmptyState";
+import ProfileOverviewSection from "./components/ProfileOverviewSection";
 import { authService, User } from "../services/authService";
 import { followService, FollowUser } from "../services/followService";
 import { Recipe, recipeService } from "../services/recipeService";
@@ -1408,82 +1402,42 @@ function ProfilePageContent() {
           />
 
           {!isRecipeEditorOpen && (
-            <div className="grid grid-cols-[678px_255px] gap-5">
-              <div className="flex min-w-0 flex-col gap-2.5">
-                {isEditModalOpen ? (
-                  <EditProfileModal
-                    isOpen={isEditModalOpen}
-                    isVerificationStep={isEditVerificationStep}
-                    isLoading={isEditProfileLoading}
-                    message={editProfileMessage}
-                    formData={editFormData}
-                    onChange={setEditFormData}
-                    onSave={handleSaveProfile}
-                    onResendCode={handleResendEditVerificationCode}
-                    onClose={() => {
-                      setIsEditModalOpen(false);
-                      setIsEditVerificationStep(false);
-                      setEditProfileMessage(null);
-                    }}
-                  />
-                ) : recipes.length > 0 ? (
-                  <div ref={feedColumnRef} className="flex flex-col gap-2.5 pb-10">
-                    <RecipeVisibilityFilter
-                      value={recipeFilter}
-                      totalCount={recipes.length}
-                      publicCount={recipes.filter((r) => !r.is_private).length}
-                      privateCount={recipes.filter((r) => r.is_private).length}
-                      onChange={setRecipeFilter}
-                    />
-
-                    {filteredRecipes.length > 0 ? (
-                      filteredRecipes.map((recipe) => (
-                        <FeedCard
-                          key={recipe.id}
-                          recipe={recipe}
-                          currentUserId={user.id}
-                          isFollowing={false}
-                          showAuthorHeader={false}
-                          detailsQuery="from=profile"
-                          headerLeftSlot={
-                            recipe.is_private ? (
-                              <span className="rounded-full bg-[#333]/90 px-3 py-1 font-nunito text-xs font-bold text-white">
-                                Приватный
-                              </span>
-                            ) : null
-                          }
-                          headerRightSlot={
-                            <RecipeActionsMenu
-                              isOpen={openRecipeActionsId === recipe.id}
-                              onToggle={() =>
-                                setOpenRecipeActionsId((prev) =>
-                                  prev === recipe.id ? null : recipe.id
-                                )
-                              }
-                              onEdit={() => {
-                                setOpenRecipeActionsId(null);
-                                void openEditRecipeEditor(recipe);
-                              }}
-                              onDelete={() => {
-                                setOpenRecipeActionsId(null);
-                                void handleDeleteRecipe(recipe.id);
-                              }}
-                            />
-                          }
-                        />
-                      ))
-                    ) : (
-                      <ProfileRecipesEmptyState variant="filtered" />
-                    )}
-                    <ScrollToTopButton anchorRef={feedColumnRef} />
-                  </div>
-                ) : (
-                  <ProfileRecipesEmptyState variant="empty" />
-                )}
-              </div>
-
-              <FriendsSidebar friends={friends} maxVisible={6} />
-            </div>
+            <ProfileOverviewSection
+              isEditModalOpen={isEditModalOpen}
+              isEditVerificationStep={isEditVerificationStep}
+              isEditProfileLoading={isEditProfileLoading}
+              editProfileMessage={editProfileMessage}
+              editFormData={editFormData}
+              setEditFormData={setEditFormData}
+              handleSaveProfile={handleSaveProfile}
+              handleResendEditVerificationCode={handleResendEditVerificationCode}
+              closeEditModal={() => {
+                setIsEditModalOpen(false);
+                setIsEditVerificationStep(false);
+                setEditProfileMessage(null);
+              }}
+              recipes={recipes}
+              filteredRecipes={filteredRecipes}
+              recipeFilter={recipeFilter}
+              setRecipeFilter={setRecipeFilter}
+              currentUserId={user.id}
+              openRecipeActionsId={openRecipeActionsId}
+              onToggleRecipeActions={(recipeId) =>
+                setOpenRecipeActionsId((prev) =>
+                  prev === recipeId ? null : recipeId
+                )
+              }
+              onEditRecipe={(recipe) => {
+                setOpenRecipeActionsId(null);
+                void openEditRecipeEditor(recipe);
+              }}
+              onDeleteRecipe={(recipeId) => {
+                setOpenRecipeActionsId(null);
+                void handleDeleteRecipe(recipeId);
+              }}
+              feedColumnRef={feedColumnRef}
+              friends={friends}
+            />
           )}
 
           {isRecipeEditorOpen && (

@@ -13,6 +13,8 @@ import {
 } from "../services/moderationService";
 import { canAccessModeration, isAdminRole } from "../utils/role";
 import { useUiFeedback } from "../components/UiFeedbackProvider";
+import ModerationTabs from "./components/ModerationTabs";
+import ReportsHeader from "./components/ReportsHeader";
 
 const toIdList = (value: string): number[] =>
   value
@@ -390,70 +392,16 @@ export default function ModerationPage() {
         className="relative w-full pb-10 lg:w-[calc(100%-223px-20px)]"
       >
         <div className="flex flex-col gap-4">
-          <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-3">
-            <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap no-scrollbar">
-              <button
-                type="button"
-                onClick={() => setActiveTab("reports")}
-                className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
-                  activeTab === "reports"
-                    ? "bg-umami-orange text-white"
-                    : "bg-[#f3efe2] text-umami-dark-gray hover:bg-[#ece4cf]"
-                }`}
-              >
-                Жалобы
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("users")}
-                className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
-                  activeTab === "users"
-                    ? "bg-umami-orange text-white"
-                    : "bg-[#f3efe2] text-umami-dark-gray hover:bg-[#ece4cf]"
-                }`}
-              >
-                Пользователи
-              </button>
-            </div>
-          </div>
+          <ModerationTabs activeTab={activeTab} onChange={setActiveTab} />
 
           <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
             {activeTab === "reports" ? (
               <>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="font-nunito text-lg font-bold text-umami-dark-gray">
-                  Жалобы
-                </h2>
-                <p className="mt-1 text-sm text-umami-gray">
-                  Всего: {reports.length}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setReportsFilter("in_work")}
-                  className={`rounded-full px-3 py-1 text-xs font-bold ${
-                    reportsFilter === "in_work"
-                      ? "bg-umami-orange text-white"
-                      : "bg-gray-100 text-umami-dark-gray"
-                  }`}
-                >
-                  В работе
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setReportsFilter("resolved_group")}
-                  className={`rounded-full px-3 py-1 text-xs font-bold ${
-                    reportsFilter === "resolved_group"
-                      ? "bg-umami-orange text-white"
-                      : "bg-gray-100 text-umami-dark-gray"
-                  }`}
-                >
-                  Решенные
-                </button>
-              </div>
-            </div>
+            <ReportsHeader
+              reportsCount={reports.length}
+              reportsFilter={reportsFilter}
+              onFilterChange={setReportsFilter}
+            />
             {loading ? (
               <p className="mt-3 text-sm text-umami-gray">Загрузка...</p>
             ) : filteredReports.length === 0 ? (
