@@ -1,5 +1,5 @@
 ﻿// app/services/authService.ts
-import { apiClient } from './api';
+import { ApiError, apiClient } from './api';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
 export interface LoginData {
@@ -55,10 +55,10 @@ class AuthService {
     const token = this.getToken();
     if (!token) return undefined;
     try {
-      const parts = token.split(".");
+      const parts = token.split('.');
       if (parts.length < 2) return undefined;
-      const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-      const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
       const decoded = atob(padded);
       const payload = JSON.parse(decoded) as { role?: string };
       return payload.role;
@@ -67,51 +67,42 @@ class AuthService {
     }
   }
 
-  // Р—Р°РјРµРЅСЏРµС‚ localhost URL РЅР° РїСѓР±Р»РёС‡РЅС‹Р№ Р°РґСЂРµСЃ
   private fixImageUrl(url: string | null): string | null {
     if (!url) return null;
-    const normalized = normalizeImageUrl(url, "");
+    const normalized = normalizeImageUrl(url, '');
     return normalized || null;
   }
 
-  // Р’С…РѕРґ
   async login(data: LoginData): Promise<AuthResponse> {
     return apiClient.post<AuthResponse>('/auth/login', data);
   }
 
-  // Р РµРіРёСЃС‚СЂР°С†РёСЏ
   async register(data: RegisterData): Promise<RegisterResponse> {
     return apiClient.post<RegisterResponse>('/auth/register', data);
   }
 
-  // РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ email
   async verifyEmail(data: VerifyEmailData): Promise<{ message: string }> {
     return apiClient.post<{ message: string }>('/auth/verify-email', data);
   }
 
-  // РџРѕРІС‚РѕСЂРЅР°СЏ РѕС‚РїСЂР°РІРєР° РєРѕРґР° РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ
   async requestEmailCode(email: string): Promise<{ message: string }> {
     return apiClient.post<{ message: string }>('/auth/password-recovery', { email });
   }
 
-  // РћР±РЅРѕРІР»РµРЅРёРµ РїР°СЂРѕР»СЏ РїРѕ РєРѕРґСѓ
   async resetPassword(data: ResetPasswordData): Promise<{ message: string }> {
     return apiClient.post<{ message: string }>('/auth/reset-password', data);
   }
 
-  // Р’С‹С…РѕРґ
   async logout(): Promise<void> {
     return apiClient.post('/auth/logout');
   }
 
-  // РЎРѕС…СЂР°РЅРµРЅРёРµ С‚РѕРєРµРЅР°
   saveToken(token: string): void {
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', token);
     }
   }
 
-  // РџРѕР»СѓС‡РµРЅРёРµ С‚РѕРєРµРЅР°
   getToken(): string | null {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('auth_token');
@@ -119,26 +110,23 @@ class AuthService {
     return null;
   }
 
-  // РЈРґР°Р»РµРЅРёРµ С‚РѕРєРµРЅР°
   removeToken(): void {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
     }
   }
 
-  // РџСЂРѕРІРµСЂРєР° Р°РІС‚РѕСЂРёР·Р°С†РёРё
   isAuthenticated(): boolean {
     return !!this.getToken();
   }
 
-  // РџРѕР»СѓС‡РµРЅРёРµ РґР°РЅРЅС‹С… С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
   async getCurrentUser(): Promise<User | null> {
     if (!this.isAuthenticated()) {
       return null;
     }
+
     try {
       const user = await apiClient.get<User>('/users/me');
-      // РСЃРїСЂР°РІР»СЏРµРј URL Р°РІР°С‚Р°СЂР°
       return {
         ...user,
         role: user.role || this.getRoleFromToken(),
@@ -146,12 +134,16 @@ class AuthService {
       };
     } catch (error) {
       console.error('Failed to get current user:', error);
-      this.removeToken();
+
+      // Сбрасываем токен только если он реально невалиден.
+      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+        this.removeToken();
+      }
+
       return null;
     }
   }
 
-  // РЈРІРµРґРѕРјР»РµРЅРёРµ РѕР± РёР·РјРµРЅРµРЅРёРё СЃРѕСЃС‚РѕСЏРЅРёСЏ Р°РІС‚РѕСЂРёР·Р°С†РёРё
   dispatchAuthChange(): void {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('auth-change'));
@@ -160,5 +152,3 @@ class AuthService {
 }
 
 export const authService = new AuthService();
-
-
