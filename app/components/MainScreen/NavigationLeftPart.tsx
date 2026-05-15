@@ -116,7 +116,7 @@ export default function LeftPart() {
 
   if (isLoading) {
     return (
-      <div className="w-full flex flex-col">
+      <div className="sticky top-[150px] self-start w-full">
         <div className="flex flex-col gap-1.25">
           <p className="font-nunito font-bold text-xl text-umami-orange">
             Категории
@@ -128,7 +128,7 @@ export default function LeftPart() {
   }
 
   return (
-    <div className="w-full flex flex-col">
+    <div className="sticky top-[150px] self-start w-full">
       <div className="flex flex-col gap-1.25">
         {isAuthenticated && (
           <div className="mb-5 flex flex-col gap-1">

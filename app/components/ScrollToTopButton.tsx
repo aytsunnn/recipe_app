@@ -50,7 +50,7 @@ export default function ScrollToTopButton({
     <button
       type="button"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="fixed top-24 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-umami-light-gray bg-white shadow-md transition hover:bg-umami-light-gray/20"
+      className="fixed top-[160px] z-40 flex h-11 w-11 items-center justify-center rounded-full border border-umami-light-gray bg-white shadow-md transition hover:bg-umami-light-gray/20"
       style={{ left: leftOffset }}
       aria-label="Наверх"
       title="Наверх"
