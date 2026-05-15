@@ -1,6 +1,5 @@
 ﻿"use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,9 +10,7 @@ import { Recipe, recipeService } from "../../services/recipeService";
 import { aiService } from "../../services/aiService";
 import MicrochefLauncherCard from "./MicrochefLauncherCard";
 import PopularAuthorsCard from "./PopularAuthorsCard";
-import MicrochefHelpSidebar from "./MicrochefHelpSidebar";
-import MicrochefChatComposer from "./MicrochefChatComposer";
-import MicrochefMessageList from "./MicrochefMessageList";
+import MicrochefChatModal from "./MicrochefChatModal";
 
 type RecipeDraft = {
   title: string;
@@ -634,61 +631,32 @@ export default function RightPart() {
         />
       </div>
 
-      {isChatOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
-          onClick={() => setIsChatOpen(false)}
-        >
-          <div
-            className="grid h-[80vh] w-full max-w-[1080px] grid-cols-[minmax(0,1fr)_320px] gap-5"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex h-full flex-col overflow-hidden rounded-[20px] border border-[#eaeaea] bg-white p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-nunito text-xl font-bold text-umami-dark-gray">
-                  Чат с микро-шефом
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsChatOpen(false)}
-                  aria-label="Закрыть чат"
-                >
-                  <Image src="/X.svg" alt="close" width={24} height={24} />
-                </button>
-              </div>
-
-              <MicrochefMessageList
-                messages={messages}
-                chatLoading={chatLoading}
-                savingDraftId={savingDraftId}
-                expandedDraftIds={expandedDraftIds}
-                onSaveDraft={(messageId, draft) => {
-                  void handleSaveDraftAsPrivateRecipe(messageId, draft);
-                }}
-                onToggleExpanded={(messageId) =>
-                  setExpandedDraftIds((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(messageId)) next.delete(messageId);
-                    else next.add(messageId);
-                    return next;
-                  })
-                }
-              />
-
-              <MicrochefChatComposer
-                inputRef={chatInputRef}
-                value={chatInput}
-                canSend={canSend}
-                onChange={setChatInput}
-                onSend={() => {
-                  void handleSendMessage();
-                }}
-              />
-            </div>
-            <MicrochefHelpSidebar />
-          </div>
-        </div>
-      )}
+      <MicrochefChatModal
+        isOpen={isChatOpen}
+        messages={messages}
+        chatLoading={chatLoading}
+        savingDraftId={savingDraftId}
+        expandedDraftIds={expandedDraftIds}
+        chatInputRef={chatInputRef}
+        chatInput={chatInput}
+        canSend={canSend}
+        onClose={() => setIsChatOpen(false)}
+        onSaveDraft={(messageId, draft) => {
+          void handleSaveDraftAsPrivateRecipe(messageId, draft);
+        }}
+        onToggleExpanded={(messageId) =>
+          setExpandedDraftIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(messageId)) next.delete(messageId);
+            else next.add(messageId);
+            return next;
+          })
+        }
+        onInputChange={setChatInput}
+        onSend={() => {
+          void handleSendMessage();
+        }}
+      />
     </>
   );
 }

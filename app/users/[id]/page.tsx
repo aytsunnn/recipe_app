@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import FeedCard from "../../components/FeedCard";
+import FeedCard from "../../components/feed-card/FeedCard";
 import LeftPart from "../../components/MainScreen/NavigationLeftPart";
 import RightPart from "../../components/MainScreen/NewsRightPart";
 import NotFoundState from "../../components/NotFoundState";

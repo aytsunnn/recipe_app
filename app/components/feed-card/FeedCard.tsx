@@ -3,15 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ReactNode, useState, useEffect, useRef } from "react";
-import { likeService } from "../services/likeService";
-import { commentService, Comment } from "../services/commentService";
-import { followService } from "../services/followService";
-import { favoriteService } from "../services/favoriteService";
-import { authService } from "../services/authService";
-import { moderationService } from "../services/moderationService";
-import { normalizeImageUrl } from "../utils/imageUrl";
-import { canAccessModeration } from "../utils/role";
-import { useUiFeedback } from "./UiFeedbackProvider";
+import { likeService } from "../../services/likeService";
+import { commentService, Comment } from "../../services/commentService";
+import { followService } from "../../services/followService";
+import { favoriteService } from "../../services/favoriteService";
+import { authService } from "../../services/authService";
+import { moderationService } from "../../services/moderationService";
+import { normalizeImageUrl } from "../../utils/imageUrl";
+import { canAccessModeration } from "../../utils/role";
+import { useUiFeedback } from "../UiFeedbackProvider";
+import FeedCardEngagementFooter from "./FeedCardEngagementFooter";
 
 const FEED_RETURN_STATE_KEY = "feed_return_state_v1";
 
@@ -420,9 +421,9 @@ export default function FeedCard({
     }
   };
 
-  const handleLike = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleLike = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
 
     if (!isAuthenticated) {
       toast("РќРµРѕР±С…РѕРґРёРјРѕ Р°РІС‚РѕСЂРёР·РѕРІР°С‚СЊСЃСЏ", "error");
@@ -697,60 +698,23 @@ export default function FeedCard({
           </p>
         </div>
       </Link>
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex flex-row gap-2">
-          <div className="flex gap-1 items-center">
-            <button onClick={handleLike} className="cursor-pointer">
-              <Image
-                width={24}
-                height={24}
-                src={isLiked ? "/RedHeart.svg" : "/Heart.svg"}
-                className="w-6 h-6"
-                alt="like"
-              />
-            </button>
-            <p className="font-inter text-sm text-umami-gray">{likesCount}</p>
-          </div>
-          <div className="flex gap-1 items-center">
-            <Link href={buildRecipeLink("comments")} onClick={saveFeedReturnState}>
-              <Image
-                width={24}
-                height={24}
-                src="/ChatCircle.svg"
-                className="w-6 h-6"
-                alt="comments"
-              />
-            </Link>
-            <p className="font-inter text-sm text-umami-gray">
-              {commentsCount}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {publishedAgo ? (
-            <div ref={metaInfoRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setMetaInfoOpen((prev) => !prev)}
-                className="font-inter text-xs text-umami-light-gray hover:text-umami-dark-gray"
-              >
-                {publishedAgo}
-              </button>
-              {metaInfoOpen ? (
-                <div className="absolute bottom-6 right-0 z-20 min-w-[180px] rounded-xl border border-umami-light-gray/60 bg-white p-2 shadow-md">
-                  <p className="font-inter text-xs text-umami-dark-gray">
-                    {exactPublishedAt}
-                  </p>
-                  <p className="mt-1 font-inter text-xs text-umami-gray">
-                    Просмотров: {recipe.views_count ?? 0}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-          {footerRightSlot}
-        </div>
-      </div>
+      <FeedCardEngagementFooter
+        isLiked={isLiked}
+        likesCount={likesCount}
+        commentsCount={commentsCount}
+        publishedAgo={publishedAgo}
+        exactPublishedAt={exactPublishedAt}
+        viewsCount={recipe.views_count}
+        metaInfoOpen={metaInfoOpen}
+        footerRightSlot={footerRightSlot}
+        metaInfoRef={metaInfoRef}
+        onLike={() => {
+          void handleLike();
+        }}
+        onCommentsClick={saveFeedReturnState}
+        onToggleMetaInfo={() => setMetaInfoOpen((prev) => !prev)}
+        commentsHref={buildRecipeLink("comments")}
+      />
 
       {/* Р‘Р»РѕРє РїРѕСЃР»РµРґРЅРµРіРѕ РєРѕРјРјРµРЅС‚Р°СЂРёСЏ */}
       {showComments && commentsCount > 0 && (

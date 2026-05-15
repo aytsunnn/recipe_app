@@ -2,7 +2,7 @@
 
 import { RefObject } from "react";
 import Image from "next/image";
-import FeedCard from "../../components/FeedCard";
+import FeedCard from "../../components/feed-card/FeedCard";
 import ScrollToTopButton from "../../components/ScrollToTopButton";
 import { Recipe } from "../../services/recipeService";
 import RecipeActionsMenu from "./RecipeActionsMenu";

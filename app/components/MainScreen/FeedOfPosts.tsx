@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import FeedCard from "../FeedCard";
+import FeedCard from "../feed-card/FeedCard";
 import { useRecipes } from "../../hooks/useRecipes";
 import { authService } from "../../services/authService";
 import { followService } from "../../services/followService";

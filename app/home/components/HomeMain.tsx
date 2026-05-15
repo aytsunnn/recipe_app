@@ -2,10 +2,10 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import LeftPart from "./MainScreen/NavigationLeftPart";
-import RightPart from "./MainScreen/NewsRightPart";
-import MainPart from "./MainScreen/FeedOfPosts";
-import FiltersPanel, { FilterValues } from "./MainScreen/FiltersPanel";
+import LeftPart from "../../components/MainScreen/NavigationLeftPart";
+import RightPart from "../../components/MainScreen/NewsRightPart";
+import MainPart from "../../components/MainScreen/FeedOfPosts";
+import FiltersPanel, { FilterValues } from "../../components/MainScreen/FiltersPanel";
 
 function MainFilters() {
   const searchParams = useSearchParams();
@@ -20,7 +20,7 @@ function MainFilters() {
   return <FiltersPanel onApplyFilters={handleApplyFilters} />;
 }
 
-export default function Main() {
+export default function HomeMain() {
   return (
     <div className="w-full flex flex-row gap-5">
       <div className="flex w-55.75">
