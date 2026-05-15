@@ -9,6 +9,7 @@ export interface User {
   avatar_url: string | null;
   email?: string;
   role?: string;
+  is_blocked?: boolean;
 }
 
 class UserService {
