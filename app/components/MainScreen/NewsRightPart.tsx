@@ -51,6 +51,14 @@ interface ChatMessage {
   recipeCard?: Recipe;
 }
 
+const MICROCHEF_CACHE_KEY = "microchef_chat_cache_v1";
+const MAX_CACHED_MESSAGES = 80;
+const DEFAULT_WELCOME_MESSAGE: ChatMessage = {
+  id: "welcome",
+  role: "assistant",
+  text: "Привет! Я микро-шеф. Напишите продукты через запятую, и я придумаю рецепт.",
+};
+
 const toDifficultyValue = (value?: string): string => {
   if (!value) return "1";
   const lowered = value.toLowerCase();
@@ -297,12 +305,61 @@ export default function RightPart() {
     new Set()
   );
   const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      text: "Привет! Я микро-шеф. Напишите продукты через запятую, и я придумаю рецепт.",
-    },
+    DEFAULT_WELCOME_MESSAGE,
   ]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem(MICROCHEF_CACHE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        messages?: ChatMessage[];
+        expandedDraftIds?: string[];
+      };
+
+      if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
+        const normalized = parsed.messages.filter(
+          (message): message is ChatMessage =>
+            Boolean(
+              message &&
+                typeof message === "object" &&
+                typeof message.id === "string" &&
+                (message.role === "user" || message.role === "assistant")
+            )
+        );
+        setMessages(
+          normalized.length > 0 ? normalized : [DEFAULT_WELCOME_MESSAGE]
+        );
+      }
+
+      if (Array.isArray(parsed.expandedDraftIds)) {
+        setExpandedDraftIds(
+          new Set(
+            parsed.expandedDraftIds.filter(
+              (id): id is string => typeof id === "string" && id.length > 0
+            )
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Ошибка чтения кэша чата микро-шефа:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const trimmedMessages = messages.slice(-MAX_CACHED_MESSAGES);
+      const payload = JSON.stringify({
+        messages: trimmedMessages,
+        expandedDraftIds: Array.from(expandedDraftIds),
+      });
+      window.sessionStorage.setItem(MICROCHEF_CACHE_KEY, payload);
+    } catch (error) {
+      console.error("Ошибка сохранения кэша чата микро-шефа:", error);
+    }
+  }, [messages, expandedDraftIds]);
 
   useEffect(() => {
     const syncAuth = async () => {

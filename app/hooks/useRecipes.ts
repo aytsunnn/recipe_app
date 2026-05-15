@@ -117,7 +117,7 @@ const hasActiveParams = (params: GetRecipesParams) =>
   Object.values(params).some((value) => value !== undefined && value !== null && value !== '');
 
 export function useRecipes(options: UseRecipesOptions = {}) {
-  const { initialParams = {}, autoFetch = true, useRecommendations = false, pageSize = 8 } = options;
+  const { initialParams = {}, autoFetch = true, useRecommendations = false, pageSize = 20 } = options;
   
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,19 +170,28 @@ export function useRecipes(options: UseRecipesOptions = {}) {
         
       if (isMounted.current) {
         let resolvedRecipes: Recipe[] = [];
+        let appendedCount = 0;
         setRecipes((prev) => {
-          resolvedRecipes = replace
-            ? data
-            : (() => {
-                const existingIds = new Set(prev.map((item) => item.id));
-                const nextChunk = data.filter((item) => !existingIds.has(item.id));
-                return [...prev, ...nextChunk];
-              })();
+          if (replace) {
+            resolvedRecipes = data;
+            appendedCount = data.length;
+          } else {
+            const existingIds = new Set(prev.map((item) => item.id));
+            const nextChunk = data.filter((item) => !existingIds.has(item.id));
+            appendedCount = nextChunk.length;
+            resolvedRecipes = [...prev, ...nextChunk];
+          }
           return applyCommentOverridesFromStorage(
             applyLikeOverridesFromStorage(resolvedRecipes)
           );
         });
-        const nextHasMore = data.length === pageSize;
+        const nextHasMore = shouldUseRecommendations
+          ? replace
+            ? data.length > 0
+            : data.length > 0 && appendedCount > 0
+          : replace
+          ? data.length >= pageSize
+          : data.length >= pageSize && appendedCount > 0;
         setHasMore(nextHasMore);
         setPage(pageToLoad);
 
