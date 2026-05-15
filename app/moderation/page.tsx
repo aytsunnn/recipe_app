@@ -137,6 +137,19 @@ export default function ModerationPage() {
     });
   }, [reports, reportsFilter]);
 
+  useEffect(() => {
+    if (reports.length === 0) return;
+    if (filteredReports.length === 0 && reportsFilter === "in_work") {
+      const hasResolved = reports.some((report) => {
+        const status = (report.status || "").toLowerCase();
+        return status === "resolved" || status === "dismissed";
+      });
+      if (hasResolved) {
+        setReportsFilter("resolved_group");
+      }
+    }
+  }, [reports, filteredReports.length, reportsFilter]);
+
   const formatDate = (value?: string) => {
     if (!value) return "—";
     const date = new Date(value);
