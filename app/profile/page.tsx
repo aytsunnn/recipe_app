@@ -181,7 +181,7 @@ const emptyRecipeForm: RecipeFormData = {
 };
 
 function ProfilePageContent() {
-  const { confirm } = useUiFeedback();
+  const { confirm, toast } = useUiFeedback();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
@@ -1275,6 +1275,48 @@ function ProfilePageContent() {
     }
   };
 
+  const isParsedRecipe = (recipe: Recipe): boolean => {
+    const anyRecipe = recipe as unknown as Record<string, unknown>;
+    const toBool = (value: unknown) =>
+      value === true || value === "true" || value === 1 || value === "1";
+
+    const sourceUrl =
+      typeof recipe.source_url === "string" ? recipe.source_url.trim() : "";
+
+    return (
+      toBool(recipe.parsed_from_url) ||
+      toBool(recipe.is_parsed) ||
+      toBool(anyRecipe.parsedFromUrl) ||
+      toBool(anyRecipe.isParsed) ||
+      toBool(anyRecipe.parsed) ||
+      sourceUrl.length > 0
+    );
+  };
+
+  const handleToggleRecipeVisibility = async (recipe: Recipe) => {
+    if (!user) return;
+
+    if (isParsedRecipe(recipe)) {
+      toast("Для спаршенного рецепта видимость изменить нельзя", "error");
+      return;
+    }
+
+    const nextIsPrivate = !recipe.is_private;
+    const nextLabel = nextIsPrivate ? "приватный" : "публичный";
+    const confirmed = await confirm(
+      `Вы точно хотите изменить видимость на ${nextLabel}?`
+    );
+    if (!confirmed) return;
+
+    try {
+      await recipeService.update(recipe.id, { is_private: nextIsPrivate });
+      await loadProfile(user);
+    } catch (error) {
+      console.error("Ошибка изменения видимости рецепта:", error);
+      toast("Не удалось изменить видимость рецепта", "error");
+    }
+  };
+
   const handleAvatarFileChange = async (
     event: ChangeEvent<HTMLInputElement>
   ) => {
@@ -1435,6 +1477,9 @@ function ProfilePageContent() {
               onDeleteRecipe={(recipeId) => {
                 setOpenRecipeActionsId(null);
                 void handleDeleteRecipe(recipeId);
+              }}
+              onToggleRecipeVisibility={(recipe) => {
+                void handleToggleRecipeVisibility(recipe);
               }}
               feedColumnRef={feedColumnRef}
               friends={friends}

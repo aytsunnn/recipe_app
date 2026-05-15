@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { RefObject } from "react";
 import Image from "next/image";
@@ -8,7 +8,6 @@ import { Recipe } from "../../services/recipeService";
 import RecipeActionsMenu from "./RecipeActionsMenu";
 import RecipeVisibilityFilter from "./RecipeVisibilityFilter";
 import ProfileRecipesEmptyState from "./ProfileRecipesEmptyState";
-import { div } from "framer-motion/client";
 
 interface ProfileRecipesSectionProps {
   recipes: Recipe[];
@@ -20,6 +19,7 @@ interface ProfileRecipesSectionProps {
   onToggleRecipeActions: (recipeId: string) => void;
   onEditRecipe: (recipe: Recipe) => void;
   onDeleteRecipe: (recipeId: string) => void;
+  onToggleVisibility: (recipe: Recipe) => void;
   feedColumnRef: RefObject<HTMLDivElement | null>;
 }
 
@@ -33,6 +33,7 @@ export default function ProfileRecipesSection({
   onToggleRecipeActions,
   onEditRecipe,
   onDeleteRecipe,
+  onToggleVisibility,
   feedColumnRef,
 }: ProfileRecipesSectionProps) {
   if (recipes.length === 0) {
@@ -59,19 +60,21 @@ export default function ProfileRecipesSection({
             showAuthorHeader={false}
             detailsQuery="from=profile"
             headerLeftSlot={
-              recipe.is_private ? (
-                <div className="flex gap-2 justify-center items-center">
-                  <Image
-                    width={20}
-                    height={20}
-                    src="/LockSimple.svg"
-                    alt="lock"
-                  />
-                  <span className="font-nunito text-sm font-semibold text-umami-gray">
-                    Приватный
-                  </span>
-                </div>
-              ) : null
+              <button
+                type="button"
+                onClick={() => onToggleVisibility(recipe)}
+                className="inline-flex items-center gap-2 rounded-full px-2 py-1 hover:bg-[#f3efe2]"
+              >
+                <Image
+                  width={20}
+                  height={20}
+                  src={recipe.is_private ? "/LockSimple.svg" : "/LockSimpleOpen.svg"}
+                  alt="visibility"
+                />
+                <span className="font-nunito text-sm font-semibold text-umami-gray">
+                  {recipe.is_private ? "Приватный" : "Публичный"}
+                </span>
+              </button>
             }
             headerRightSlot={
               <RecipeActionsMenu
