@@ -100,11 +100,11 @@ export default function FeedCard({
     const month = 30 * day;
     const year = 365 * day;
 
-    if (diffMs < minute) return "С‚РѕР»СЊРєРѕ С‡С‚Рѕ";
-    if (diffMs < hour) return `${Math.max(1, Math.floor(diffMs / minute))} РјРёРЅСѓС‚ РЅР°Р·Р°Рґ`;
-    if (diffMs < day) return `${Math.max(1, Math.floor(diffMs / hour))} С‡ РЅР°Р·Р°Рґ`;
-    if (diffMs < month) return `${Math.max(1, Math.floor(diffMs / day))} Рґ РЅР°Р·Р°Рґ`;
-    if (diffMs < year) return `${Math.max(1, Math.floor(diffMs / month))} Рј РЅР°Р·Р°Рґ`;
+    if (diffMs < minute) return "только что";
+    if (diffMs < hour) return `${Math.max(1, Math.floor(diffMs / minute))} минут назад`;
+    if (diffMs < day) return `${Math.max(1, Math.floor(diffMs / hour))} ч назад`;
+    if (diffMs < month) return `${Math.max(1, Math.floor(diffMs / day))} д назад`;
+    if (diffMs < year) return `${Math.max(1, Math.floor(diffMs / month))} м назад`;
     if (diffMs >= year) {
       return new Intl.DateTimeFormat("ru-RU", {
         day: "numeric",
@@ -576,7 +576,7 @@ export default function FeedCard({
                     onClick={handleFollow}
                     className="custom-button bg-umami-green font-inter font-medium text-xs h-7"
                   >
-                    РџРѕРґРїРёСЃР°С‚СЊСЃСЏ
+                    Подписаться
                   </button>
                 )}
                 {/* РџРѕРєР°Р·С‹РІР°РµРј "РџРѕРґРїРёСЃРєРё" РµСЃР»Рё С‚РѕР»СЊРєРѕ С‡С‚Рѕ РїРѕРґРїРёСЃР°Р»СЃСЏ РІ Р»РµРЅС‚Рµ */}
@@ -585,7 +585,7 @@ export default function FeedCard({
                     onClick={handleFollow}
                     className="custom-button bg-umami-gray font-inter font-medium text-xs h-7"
                   >
-                    РџРѕРґРїРёСЃРєРё
+                    Подписки
                   </button>
                 )}
                 {/* Р•СЃР»Рё Р±С‹Р» РїРѕРґРїРёСЃР°РЅ РёР·РЅР°С‡Р°Р»СЊРЅРѕ (following && !justFollowed) - РЅРёС‡РµРіРѕ РЅРµ РїРѕРєР°Р·С‹РІР°РµРј */}
@@ -671,7 +671,7 @@ export default function FeedCard({
               <div className="flex gap-1 items-center">
                 <Image width={20} height={20} src="/Time.svg" alt="time" />
                 <p className="font-inter font-regular text-sm text-umami-dark-gray">
-                  {recipe.cooking_time} РјРёРЅ
+                  {recipe.cooking_time} мин
                 </p>
               </div>
               <div className="flex gap-1 items-center">
@@ -742,7 +742,7 @@ export default function FeedCard({
                     {exactPublishedAt}
                   </p>
                   <p className="mt-1 font-inter text-xs text-umami-gray">
-                    РџСЂРѕСЃРјРѕС‚СЂРѕРІ: {recipe.views_count ?? 0}
+                    Просмотров: {recipe.views_count ?? 0}
                   </p>
                 </div>
               ) : null}
