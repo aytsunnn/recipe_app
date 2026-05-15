@@ -1400,19 +1400,22 @@ function ProfilePageContent() {
   return (
     <>
       <div className="grid w-full grid-cols-[223px_minmax(0,1fr)] gap-5">
-        <aside className="flex flex-col gap-1">
-          {profileNavItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`flex h-[30px] items-center gap-2.5 rounded-[7px] px-[5px] font-nunito text-xs font-bold text-umami-dark-gray transition-colors ${
-                item.active ? "bg-[#f1ebdb]" : "hover:bg-[#f1ebdb]/70"
-              }`}
-            >
-              <Image width={20} height={20} src={item.icon} alt="" />
-              <span>{item.label}</span>
-            </Link>
-          ))}
+        <aside className="relative">
+          <div className="w-[223px]" />
+          <div className="fixed top-[150px] z-30 w-[223px] flex flex-col gap-1">
+            {profileNavItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`flex h-[30px] items-center gap-2.5 rounded-[7px] px-[5px] font-nunito text-xs font-bold text-umami-dark-gray transition-colors ${
+                  item.active ? "bg-[#f1ebdb]" : "hover:bg-[#f1ebdb]/70"
+                }`}
+              >
+                <Image width={20} height={20} src={item.icon} alt="" />
+                <span>{item.label}</span>
+              </Link>
+            ))}
+          </div>
         </aside>
 
         <section className="flex min-w-0 flex-col gap-5">

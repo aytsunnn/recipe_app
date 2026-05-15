@@ -601,7 +601,7 @@ export default function FeedCard({
                     setActionsOpen((prev) => !prev);
                   }}
                   className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-[#f4f1e8]"
-                  aria-label="Р”РµР№СЃС‚РІРёСЏ РјРѕРґРµСЂР°С†РёРё"
+                  aria-label="Действия с рецептом"
                 >
                   <Image
                     width={20}
@@ -617,7 +617,7 @@ export default function FeedCard({
                       onClick={handleReportRecipe}
                       className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
                     >
-                      РџРѕР¶Р°Р»РѕРІР°С‚СЊСЃСЏ
+                      Пожаловаться
                     </button>
                     {canModerate ? (
                     <button
@@ -626,7 +626,7 @@ export default function FeedCard({
                       onClick={handleDeleteRecipe}
                       className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
                     >
-                      РЈРґР°Р»РёС‚СЊ СЂРµС†РµРїС‚
+                      Удалить рецепт
                     </button>
                     ) : null}
                   </div>
