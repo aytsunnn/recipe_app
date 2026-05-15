@@ -8,6 +8,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import FeedCard from "../components/FeedCard";
 import ScrollToTopButton from "../components/ScrollToTopButton";
+import LeftPart from "../components/MainScreen/NavigationLeftPart";
+import FollowUsersModal from "./components/FollowUsersModal";
+import ProfileHeaderCard from "./components/ProfileHeaderCard";
+import RecipeVisibilityFilter from "./components/RecipeVisibilityFilter";
+import EditProfileModal from "./components/EditProfileModal";
+import FriendsSidebar from "./components/FriendsSidebar";
+import RecipeActionsMenu from "./components/RecipeActionsMenu";
+import ProfileRecipesEmptyState from "./components/ProfileRecipesEmptyState";
 import { authService, User } from "../services/authService";
 import { followService, FollowUser } from "../services/followService";
 import { Recipe, recipeService } from "../services/recipeService";
@@ -24,7 +32,6 @@ import {
 } from "../services/metaService";
 import { normalizeImageUrl } from "../utils/imageUrl";
 import { toolsService } from "../services/toolsService";
-import { canAccessModeration, isAdminRole } from "../utils/role";
 import { useUiFeedback } from "../components/UiFeedbackProvider";
 
 interface UserStats {
@@ -145,23 +152,6 @@ const normalizeDifficulty = (
   return DIFFICULTY_TO_API[value] || "1";
 };
 
-const navItems = [
-  { href: "/", label: "Главная", icon: "/House.svg" },
-  {
-    href: "/profile",
-    label: "Личный кабинет",
-    icon: "/User.svg",
-    active: true,
-  },
-  { href: "/favorites", label: "Избранное", icon: "/Favorites.svg" },
-  {
-    href: "/profile#week-menu",
-    label: "Меню недели",
-    icon: "/ClipboardText.svg",
-  },
-  { href: "/recipes/random", label: "Случайный рецепт", icon: "/DiceFive.svg" },
-];
-
 const emptyRecipeForm: RecipeFormData = {
   title: "",
   description: "",
@@ -270,7 +260,6 @@ function ProfilePageContent() {
     return recipes;
   }, [recipes, recipeFilter]);
 
-  const visibleFriends = useMemo(() => friends.slice(0, 6), [friends]);
   const feedColumnRef = useRef<HTMLDivElement | null>(null);
 
   const getSafeImageUrl = (url: string | null) => {
@@ -1384,338 +1373,68 @@ function ProfilePageContent() {
   }
 
   if (!user) return null;
-  const canModerate = canAccessModeration(user.role);
-  const moderationLabel = isAdminRole(user.role) ? "Админ-панель" : "Модерация";
-  const profileNavItems = canModerate
-    ? [
-        ...navItems,
-        {
-          href: "/moderation",
-          label: moderationLabel,
-          icon: "/Shield.svg",
-        },
-      ]
-    : navItems;
-
   return (
     <>
       <div className="grid w-full grid-cols-[223px_minmax(0,1fr)] gap-5">
         <aside className="relative">
-          <div className="w-[223px]" />
-          <div className="fixed top-[150px] z-30 w-[223px] flex flex-col gap-1">
-            {profileNavItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`flex h-[30px] items-center gap-2.5 rounded-[7px] px-[5px] font-nunito text-xs font-bold text-umami-dark-gray transition-colors ${
-                  item.active ? "bg-[#f1ebdb]" : "hover:bg-[#f1ebdb]/70"
-                }`}
-              >
-                <Image width={20} height={20} src={item.icon} alt="" />
-                <span>{item.label}</span>
-              </Link>
-            ))}
-          </div>
+          <LeftPart />
         </aside>
 
         <section className="flex min-w-0 flex-col gap-5">
-          <div className="flex h-[190px] items-center rounded-[20px] border border-[#eaeaea] bg-white p-5">
-            <div className="flex w-full items-center gap-5">
-              <div className="relative h-[150px] w-[150px] shrink-0 overflow-hidden rounded-full bg-[#d9d9d9]">
-                <Image
-                  width={150}
-                  height={150}
-                  src={getSafeImageUrl(user.avatar_url)}
-                  alt="avatar"
-                  className="h-full w-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => setIsAvatarActionsOpen((prev) => !prev)}
-                  className="absolute inset-0 z-10"
-                  aria-label="Открыть действия с аватаркой"
-                />
-                {isAvatarActionsOpen && (
-                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/55 p-2">
-                    <button
-                      type="button"
-                      disabled={avatarLoading}
-                      onClick={() => {
-                        avatarInputRef.current?.click();
-                        setIsAvatarActionsOpen(false);
-                      }}
-                      className="w-full max-w-[130px] rounded-full bg-white px-3 py-1.5 font-nunito text-xs text-umami-dark-gray transition-colors hover:bg-[#f4f4f4] disabled:opacity-60"
-                    >
-                      {avatarLoading ? "Загрузка..." : "Изменить фото"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={avatarLoading}
-                      onClick={() => {
-                        void handleDeleteAvatar();
-                        setIsAvatarActionsOpen(false);
-                      }}
-                      className="w-full max-w-[130px] rounded-full bg-red-500 px-3 py-1.5 font-nunito text-xs text-white transition-colors hover:bg-red-600 disabled:opacity-60"
-                    >
-                      Удалить фото
-                    </button>
-                  </div>
-                )}
-              </div>
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarFileChange}
-              />
-
-              <div className="flex min-w-0 flex-col gap-5">
-                <h1 className="font-nunito text-xl font-bold text-black">
-                  {user.name}
-                </h1>
-                <div className="flex gap-6 text-center text-black">
-                  <div>
-                    <p className="font-nunito text-xl font-semibold leading-none">
-                      {stats.recipesCount}
-                    </p>
-                    <p className="mt-1 font-nunito text-sm">Рецепты</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void openFollowModal("following")}
-                  >
-                    <p className="font-nunito text-xl font-semibold leading-none">
-                      {stats.followingCount}
-                    </p>
-                    <p className="mt-1 font-nunito text-sm">Подписки</p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void openFollowModal("followers")}
-                  >
-                    <p className="font-nunito text-xl font-semibold leading-none">
-                      {stats.followersCount}
-                    </p>
-                    <p className="mt-1 font-nunito text-sm">Подписчики</p>
-                  </button>
-                </div>
-                <div className="flex gap-2.5">
-                  <button
-                    type="button"
-                    onClick={handleEditProfile}
-                    className="w-fit rounded-full bg-umami-green px-3 py-[5px] font-nunito text-xs text-white transition-colors hover:bg-[#6a805e]"
-                  >
-                    Редактировать профиль
-                  </button>
-                  <button
-                    type="button"
-                    disabled={recipeActionLoading}
-                    onClick={() => void handleDeleteProfile()}
-                    className="w-fit rounded-full bg-red-500 px-3 py-[5px] font-nunito text-xs text-white transition-colors hover:bg-red-600 disabled:opacity-60"
-                  >
-                    Удалить профиль
-                  </button>
-                  <button
-                    type="button"
-                    onClick={openCreateRecipeEditor}
-                    className="w-fit rounded-full bg-umami-orange px-3 py-[5px] font-nunito text-xs text-white transition-colors hover:bg-[#dd8c45]"
-                  >
-                    + Добавить рецепт
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ProfileHeaderCard
+            user={user}
+            recipesCount={stats.recipesCount}
+            followingCount={stats.followingCount}
+            followersCount={stats.followersCount}
+            avatarLoading={avatarLoading}
+            isAvatarActionsOpen={isAvatarActionsOpen}
+            avatarInputRef={avatarInputRef}
+            onToggleAvatarActions={() => setIsAvatarActionsOpen((prev) => !prev)}
+            onAvatarFileChange={handleAvatarFileChange}
+            onAvatarEditClick={() => {
+              avatarInputRef.current?.click();
+              setIsAvatarActionsOpen(false);
+            }}
+            onAvatarDeleteClick={() => {
+              void handleDeleteAvatar();
+              setIsAvatarActionsOpen(false);
+            }}
+            onFollowingClick={() => void openFollowModal("following")}
+            onFollowersClick={() => void openFollowModal("followers")}
+            onEditProfileClick={handleEditProfile}
+            onDeleteProfileClick={() => void handleDeleteProfile()}
+            onAddRecipeClick={openCreateRecipeEditor}
+            recipeActionLoading={recipeActionLoading}
+          />
 
           {!isRecipeEditorOpen && (
             <div className="grid grid-cols-[678px_255px] gap-5">
               <div className="flex min-w-0 flex-col gap-2.5">
                 {isEditModalOpen ? (
-                  <div className="rounded-[20px] border border-[#eaeaea] bg-white p-6">
-                    <h2 className="mb-4 font-nunito text-2xl font-bold text-umami-dark-gray">
-                      Редактировать профиль
-                    </h2>
-                    {editProfileMessage && (
-                      <p className="mb-4 rounded-xl bg-[#f6f6f6] px-3 py-2 font-nunito text-sm text-umami-dark-gray">
-                        {editProfileMessage}
-                      </p>
-                    )}
-                    <div className="flex flex-col gap-4">
-                      <label className="block">
-                        <span className="mb-1 block font-inter text-sm text-umami-gray">
-                          Имя
-                        </span>
-                        <input
-                          type="text"
-                          value={editFormData.name}
-                          onChange={(e) =>
-                            setEditFormData({
-                              ...editFormData,
-                              name: e.target.value,
-                            })
-                          }
-                          className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="mb-1 block font-inter text-sm text-umami-gray">
-                          Имя пользователя
-                        </span>
-                        <input
-                          type="text"
-                          value={editFormData.username}
-                          onChange={(e) =>
-                            setEditFormData({
-                              ...editFormData,
-                              username: e.target.value,
-                            })
-                          }
-                          className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="mb-1 block font-inter text-sm text-umami-gray">
-                          Email
-                        </span>
-                        <input
-                          type="email"
-                          value={editFormData.email}
-                          onChange={(e) =>
-                            setEditFormData({
-                              ...editFormData,
-                              email: e.target.value,
-                            })
-                          }
-                          className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="mb-1 block font-inter text-sm text-umami-gray">
-                          Новый пароль
-                        </span>
-                        <input
-                          type="password"
-                          value={editFormData.newPassword}
-                          onChange={(e) =>
-                            setEditFormData({
-                              ...editFormData,
-                              newPassword: e.target.value,
-                            })
-                          }
-                          placeholder="Оставьте пустым, если не меняете"
-                          className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="mb-1 block font-inter text-sm text-umami-gray">
-                          Подтвердите новый пароль
-                        </span>
-                        <input
-                          type="password"
-                          value={editFormData.confirmNewPassword}
-                          onChange={(e) =>
-                            setEditFormData({
-                              ...editFormData,
-                              confirmNewPassword: e.target.value,
-                            })
-                          }
-                          placeholder="Повторите новый пароль"
-                          className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
-                        />
-                      </label>
-                      {isEditVerificationStep && (
-                        <>
-                          <label className="block">
-                            <span className="mb-1 block font-inter text-sm text-umami-gray">
-                              Код подтверждения
-                            </span>
-                            <input
-                              type="text"
-                              value={editFormData.verifyCode}
-                              onChange={(e) =>
-                                setEditFormData({
-                                  ...editFormData,
-                                  verifyCode: e.target.value,
-                                })
-                              }
-                              placeholder="Введите код из письма"
-                              className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
-                            />
-                          </label>
-                          <button
-                            type="button"
-                            onClick={handleResendEditVerificationCode}
-                            disabled={isEditProfileLoading}
-                            className="w-fit font-nunito text-xs text-umami-green underline disabled:opacity-60"
-                          >
-                            Отправить код повторно
-                          </button>
-                        </>
-                      )}
-                    </div>
-                    <div className="mt-6 flex gap-4">
-                      <button
-                        type="button"
-                        disabled={isEditProfileLoading}
-                        onClick={handleSaveProfile}
-                        className="flex-1 rounded-full bg-umami-green px-6 py-2 font-nunito font-medium text-white disabled:opacity-60"
-                      >
-                        {isEditProfileLoading
-                          ? "Сохраняем..."
-                          : isEditVerificationStep
-                          ? "Подтвердить и сохранить"
-                          : "Сохранить"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsEditModalOpen(false);
-                          setIsEditVerificationStep(false);
-                          setEditProfileMessage(null);
-                        }}
-                        className="flex-1 rounded-full bg-umami-gray px-6 py-2 font-nunito font-medium text-white"
-                      >
-                        Отмена
-                      </button>
-                    </div>
-                  </div>
+                  <EditProfileModal
+                    isOpen={isEditModalOpen}
+                    isVerificationStep={isEditVerificationStep}
+                    isLoading={isEditProfileLoading}
+                    message={editProfileMessage}
+                    formData={editFormData}
+                    onChange={setEditFormData}
+                    onSave={handleSaveProfile}
+                    onResendCode={handleResendEditVerificationCode}
+                    onClose={() => {
+                      setIsEditModalOpen(false);
+                      setIsEditVerificationStep(false);
+                      setEditProfileMessage(null);
+                    }}
+                  />
                 ) : recipes.length > 0 ? (
                   <div ref={feedColumnRef} className="flex flex-col gap-2.5 pb-10">
-                    {/* Фильтры рецептов */}
-                    <div className="flex gap-2.5 mb-2.5">
-                      <button
-                        onClick={() => setRecipeFilter("all")}
-                        className={`px-4 py-1.5 rounded-full font-nunito text-xs font-bold transition-colors ${
-                          recipeFilter === "all"
-                            ? "bg-umami-green text-white"
-                            : "bg-white border border-[#eaeaea] text-umami-gray hover:bg-gray-50"
-                        }`}
-                      >
-                        Все ({recipes.length})
-                      </button>
-                      <button
-                        onClick={() => setRecipeFilter("public")}
-                        className={`px-4 py-1.5 rounded-full font-nunito text-xs font-bold transition-colors ${
-                          recipeFilter === "public"
-                            ? "bg-umami-green text-white"
-                            : "bg-white border border-[#eaeaea] text-umami-gray hover:bg-gray-50"
-                        }`}
-                      >
-                        Публичные ({recipes.filter((r) => !r.is_private).length}
-                        )
-                      </button>
-                      <button
-                        onClick={() => setRecipeFilter("private")}
-                        className={`px-4 py-1.5 rounded-full font-nunito text-xs font-bold transition-colors ${
-                          recipeFilter === "private"
-                            ? "bg-umami-green text-white"
-                            : "bg-white border border-[#eaeaea] text-umami-gray hover:bg-gray-50"
-                        }`}
-                      >
-                        Приватные ({recipes.filter((r) => r.is_private).length})
-                      </button>
-                    </div>
+                    <RecipeVisibilityFilter
+                      value={recipeFilter}
+                      totalCount={recipes.length}
+                      publicCount={recipes.filter((r) => !r.is_private).length}
+                      privateCount={recipes.filter((r) => r.is_private).length}
+                      onChange={setRecipeFilter}
+                    />
 
                     {filteredRecipes.length > 0 ? (
                       filteredRecipes.map((recipe) => (
@@ -1734,108 +1453,36 @@ function ProfilePageContent() {
                             ) : null
                           }
                           headerRightSlot={
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={(event) => {
-                                  event.preventDefault();
-                                  event.stopPropagation();
-                                  setOpenRecipeActionsId((prev) =>
-                                    prev === recipe.id ? null : recipe.id
-                                  );
-                                }}
-                                className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-umami-light-gray/70"
-                                aria-label="Действия"
-                              >
-                                <Image
-                                  width={18}
-                                  height={18}
-                                  src="/DotsThreeOutlineVertical.svg"
-                                  alt="actions"
-                                />
-                              </button>
-                              {openRecipeActionsId === recipe.id ? (
-                                <div className="absolute right-0 top-9 z-20 min-w-[160px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setOpenRecipeActionsId(null);
-                                      void openEditRecipeEditor(recipe);
-                                    }}
-                                    className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
-                                  >
-                                    Редактировать
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setOpenRecipeActionsId(null);
-                                      void handleDeleteRecipe(recipe.id);
-                                    }}
-                                    className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50"
-                                  >
-                                    Удалить
-                                  </button>
-                                </div>
-                              ) : null}
-                            </div>
+                            <RecipeActionsMenu
+                              isOpen={openRecipeActionsId === recipe.id}
+                              onToggle={() =>
+                                setOpenRecipeActionsId((prev) =>
+                                  prev === recipe.id ? null : recipe.id
+                                )
+                              }
+                              onEdit={() => {
+                                setOpenRecipeActionsId(null);
+                                void openEditRecipeEditor(recipe);
+                              }}
+                              onDelete={() => {
+                                setOpenRecipeActionsId(null);
+                                void handleDeleteRecipe(recipe.id);
+                              }}
+                            />
                           }
                         />
                       ))
                     ) : (
-                      <div className="rounded-[15px] border border-[#eaeaea] bg-white p-8 text-center">
-                        <p className="font-nunito text-base font-bold text-umami-gray">
-                          Нет рецептов в этой категории
-                        </p>
-                      </div>
+                      <ProfileRecipesEmptyState variant="filtered" />
                     )}
                     <ScrollToTopButton anchorRef={feedColumnRef} />
                   </div>
                 ) : (
-                  <div className="rounded-[15px] border border-[#eaeaea] bg-white p-8 text-center">
-                    <p className="font-nunito text-lg font-bold text-umami-gray">
-                      Пока нет рецептов
-                    </p>
-                    <p className="mt-1 font-inter text-sm text-umami-light-gray">
-                      Нажмите &quot;Добавить рецепт&quot;, чтобы создать первый.
-                    </p>
-                  </div>
+                  <ProfileRecipesEmptyState variant="empty" />
                 )}
               </div>
 
-              <aside className="h-fit rounded-[15px] border border-[#eaeaea] bg-white p-2.5">
-                <div className="mb-2 flex items-center justify-between font-inter text-base">
-                  <h2 className="text-[#222]">Друзья</h2>
-                  <span className="text-[#999]">{friends.length}</span>
-                </div>
-                {visibleFriends.length > 0 ? (
-                  <div className="flex flex-col gap-[5px]">
-                    {visibleFriends.map((friend) => (
-                      <div
-                        key={friend.id}
-                        className="flex items-center gap-[5px]"
-                      >
-                        <div className="relative h-[30px] w-[30px] shrink-0 overflow-hidden rounded-full bg-[#d9d9d9]">
-                          <Image
-                            width={30}
-                            height={30}
-                            src={getSafeImageUrl(friend.avatar_url)}
-                            alt="avatar"
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <p className="truncate font-inter text-sm text-umami-dark-gray">
-                          {friend.name}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="py-4 text-center font-inter text-sm text-umami-gray">
-                    Пока нет друзей
-                  </p>
-                )}
-              </aside>
+              <FriendsSidebar friends={friends} maxVisible={6} />
             </div>
           )}
 
@@ -2464,56 +2111,12 @@ function ProfilePageContent() {
           )}
         </section>
       </div>
-      {followModalType && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-[520px] rounded-[20px] bg-white p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-nunito text-xl font-bold text-umami-dark-gray">
-                {followModalType === "following" ? "Подписки" : "Подписчики"}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setFollowModalType(null)}
-                className="rounded-full bg-umami-gray px-3 py-1 font-nunito text-xs text-white"
-              >
-                Закрыть
-              </button>
-            </div>
-            {followModalLoading ? (
-              <p className="py-4 text-sm text-umami-gray">Загрузка...</p>
-            ) : followModalUsers.length === 0 ? (
-              <p className="py-4 text-sm text-umami-gray">Список пуст</p>
-            ) : (
-              <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
-                {followModalUsers.map((person) => (
-                  <Link
-                    key={person.id}
-                    href={`/users/${person.id}`}
-                    onClick={() => setFollowModalType(null)}
-                    className="flex items-center gap-3 rounded-xl border border-umami-light-gray/50 p-2 hover:bg-[#faf7ef]"
-                  >
-                    <Image
-                      width={40}
-                      height={40}
-                      src={getSafeImageUrl(person.avatar_url)}
-                      alt={person.name}
-                      className="h-10 w-10 rounded-full object-cover"
-                    />
-                    <div className="min-w-0">
-                      <p className="truncate font-nunito text-sm font-bold text-umami-dark-gray">
-                        {person.name}
-                      </p>
-                      <p className="truncate font-inter text-xs text-umami-gray">
-                        @{person.username}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <FollowUsersModal
+        type={followModalType}
+        users={followModalUsers}
+        loading={followModalLoading}
+        onClose={() => setFollowModalType(null)}
+      />
     </>
   );
 }
