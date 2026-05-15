@@ -39,6 +39,7 @@ export interface ModerationUser {
   id: string;
   username: string;
   name: string;
+  email?: string;
   avatar_url?: string | null;
   role?: string;
   is_blocked?: boolean;
@@ -95,6 +96,12 @@ class ModerationService {
               : typeof raw.name === "string"
               ? raw.name
               : "",
+          email:
+            typeof source.email === "string"
+              ? source.email
+              : typeof raw.email === "string"
+              ? raw.email
+              : "",
           avatar_url:
             typeof source.avatar_url === "string"
               ? source.avatar_url
@@ -106,6 +113,10 @@ class ModerationService {
               ? source.role
               : typeof raw.role === "string"
               ? raw.role
+              : typeof (source.Role as { name?: string } | undefined)?.name === "string"
+              ? String((source.Role as { name?: string }).name)
+              : typeof (raw.Role as { name?: string } | undefined)?.name === "string"
+              ? String((raw.Role as { name?: string }).name)
               : undefined,
           is_blocked:
             typeof source.is_blocked === "boolean"
@@ -249,8 +260,38 @@ class ModerationService {
     await apiClient.post(`/admin/users/${id}/block`);
   }
 
+  async unblockUser(id: string): Promise<void> {
+    try {
+      await apiClient.post(`/admin/users/${id}/unblock`);
+      return;
+    } catch {
+      const numericId = Number(id);
+      if (!Number.isFinite(numericId) || numericId <= 0) throw new Error("Некорректный ID пользователя");
+      await apiClient.post("/admin/users/bulk-block", {
+        userIds: [numericId],
+        is_blocked: false,
+      });
+    }
+  }
+
   async deleteUser(id: string): Promise<void> {
     await apiClient.delete(`/admin/users/${id}`);
+  }
+
+  async updateUserRole(id: string, role: "Admin" | "Moderator" | "User"): Promise<void> {
+    try {
+      await apiClient.patch(`/admin/users/${id}/role`, { role });
+      return;
+    } catch {
+      await apiClient.patch(`/admin/users/${id}`, { role });
+    }
+  }
+
+  async updateUser(
+    id: string,
+    payload: { name?: string; username?: string; email?: string }
+  ): Promise<void> {
+    await apiClient.patch(`/admin/users/${id}`, payload);
   }
 
   async bulkBlockUsers(userIds: number[], isBlocked = true): Promise<void> {

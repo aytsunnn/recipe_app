@@ -342,6 +342,61 @@ export default function ModerationPage() {
     });
   };
 
+  const handleUnblockUser = async (userId: string) => {
+    await runAction(`user-${userId}-unblock`, async () => {
+      await moderationService.unblockUser(userId);
+      setUsers((prev) =>
+        prev.map((user) =>
+          String(user.id) === String(userId) ? { ...user, is_blocked: false } : user
+        )
+      );
+    });
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    const confirmed = window.confirm("Удалить пользователя? Это действие нельзя отменить.");
+    if (!confirmed) return;
+    await runAction(`user-${userId}-delete`, async () => {
+      await moderationService.deleteUser(userId);
+      await loadUsers(usersPage);
+    });
+  };
+
+  const handleRoleUpdate = async (
+    userId: string,
+    role: "Admin" | "Moderator" | "User"
+  ) => {
+    await runAction(`user-${userId}-role`, async () => {
+      await moderationService.updateUserRole(userId, role);
+      setUsers((prev) =>
+        prev.map((user) =>
+          String(user.id) === String(userId) ? { ...user, role } : user
+        )
+      );
+    });
+  };
+
+  const handleEditUser = async (
+    userId: string,
+    payload: { name?: string; username?: string; email?: string }
+  ) => {
+    await runAction(`user-${userId}-edit`, async () => {
+      await moderationService.updateUser(userId, payload);
+      setUsers((prev) =>
+        prev.map((user) =>
+          String(user.id) === String(userId)
+            ? {
+                ...user,
+                name: payload.name ?? user.name,
+                username: payload.username ?? user.username,
+                email: payload.email ?? user.email,
+              }
+            : user
+        )
+      );
+    });
+  };
+
   const handleAcceptReport = async (report: ModerationReport) => {
     const reportType = (report.type || "").toLowerCase();
     const commentId = getReportCommentId(report);
@@ -526,8 +581,14 @@ export default function ModerationPage() {
                         <ModerationUserCard
                           key={user.id}
                           user={user}
+                          isAdmin={isAdmin}
                           selected={selected}
                           onToggleSelect={() => toggleUserSelection(String(user.id))}
+                          onUnblock={() => void handleUnblockUser(String(user.id))}
+                          onDelete={() => void handleDeleteUser(String(user.id))}
+                          onUpdateRole={(role) => void handleRoleUpdate(String(user.id), role)}
+                          onEdit={(payload) => void handleEditUser(String(user.id), payload)}
+                          actionLoading={actionLoading}
                         />
                       );
                     })}
