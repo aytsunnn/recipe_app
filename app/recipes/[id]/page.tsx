@@ -17,6 +17,7 @@ import RightPart from "../../components/MainScreen/NewsRightPart";
 import NotFoundState from "../../components/NotFoundState";
 import { isNotFoundErrorMessage } from "../../utils/errorUtils";
 import { canAccessModeration, isAdminRole } from "../../utils/role";
+import { useUiFeedback } from "../../components/UiFeedbackProvider";
 
 const RECIPE_LIKE_OVERRIDES_KEY = "recipe_like_overrides";
 const RECIPE_COMMENTS_OVERRIDES_KEY = "recipe_comments_overrides";
@@ -45,6 +46,7 @@ function parseUnitOverrideFromNote(
 }
 
 export default function RecipeDetailsPage() {
+  const { toast, confirm, requestReport } = useUiFeedback();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -235,7 +237,7 @@ export default function RecipeDetailsPage() {
       setCommentsCountState(data.length);
     } catch (loadError) {
       console.error("Ошибка загрузки комментариев:", loadError);
-      alert("Не удалось загрузить комментарии");
+      toast("Не удалось загрузить комментарии", "error");
     } finally {
       setCommentsLoading(false);
     }
@@ -358,7 +360,7 @@ export default function RecipeDetailsPage() {
 
   const handleLikeRecipe = async () => {
     if (!currentUserId || !recipeId || likeBusy) {
-      if (!currentUserId) alert("Необходимо авторизоваться");
+      if (!currentUserId) toast("Необходимо авторизоваться", "error");
       return;
     }
     const prev = isLiked;
@@ -416,7 +418,7 @@ export default function RecipeDetailsPage() {
         })
       );
       console.error("Ошибка при лайке рецепта:", error);
-      alert("Не удалось поставить лайк");
+      toast("Не удалось поставить лайк", "error");
     } finally {
       setLikeBusy(false);
     }
@@ -424,7 +426,7 @@ export default function RecipeDetailsPage() {
 
   const handleFavoriteRecipe = async () => {
     if (!currentUserId || !recipeId || favoriteBusy) {
-      if (!currentUserId) alert("Необходимо авторизоваться");
+      if (!currentUserId) toast("Необходимо авторизоваться", "error");
       return;
     }
     const prev = isFavorite;
@@ -436,7 +438,7 @@ export default function RecipeDetailsPage() {
     } catch (error) {
       setIsFavorite(prev);
       console.error("Ошибка при избранном:", error);
-      alert("Не удалось обновить избранное");
+      toast("Не удалось обновить избранное", "error");
     } finally {
       setFavoriteBusy(false);
     }
@@ -444,7 +446,8 @@ export default function RecipeDetailsPage() {
 
   const handleDeleteRecipe = async () => {
     if (!recipeId || deleteRecipeBusy) return;
-    if (!window.confirm("Удалить рецепт?")) return;
+    const confirmed = await confirm("Удалить рецепт?");
+    if (!confirmed) return;
     try {
       setDeleteRecipeBusy(true);
       await moderationService.deleteRecipe(recipeId);
@@ -452,7 +455,7 @@ export default function RecipeDetailsPage() {
       router.back();
     } catch (error) {
       console.error("Ошибка удаления рецепта:", error);
-      alert("Не удалось удалить рецепт");
+      toast("Не удалось удалить рецепт", "error");
     } finally {
       setDeleteRecipeBusy(false);
     }
@@ -460,26 +463,24 @@ export default function RecipeDetailsPage() {
 
   const handleReportRecipe = async () => {
     if (!currentUserId || !recipeId) {
-      alert("Необходимо авторизоваться");
+      toast("Необходимо авторизоваться", "error");
       return;
     }
-    const reason = window.prompt("Причина жалобы");
-    if (!reason || !reason.trim()) return;
-    const description =
-      window.prompt("Комментарий к жалобе (необязательно)") || "";
+    const reportPayload = await requestReport();
+    if (!reportPayload) return;
     try {
       await moderationService.createReport({
         type: "recipe",
-        reason: reason.trim(),
-        description: description.trim(),
+        reason: reportPayload.reason.trim(),
+        description: reportPayload.description.trim(),
         recipe_id: Number(recipeId),
         reported_user_id: recipe?.User?.id ? Number(recipe.User.id) : undefined,
       });
       setRecipeActionsOpen(false);
-      alert("Жалоба отправлена");
+      toast("Жалоба отправлена", "error");
     } catch (error) {
       console.error("Ошибка отправки жалобы:", error);
-      alert("Не удалось отправить жалобу");
+      toast("Не удалось отправить жалобу", "error");
     }
   };
 
@@ -489,7 +490,7 @@ export default function RecipeDetailsPage() {
 
   const handleSavePersonalNote = async () => {
     if (!currentUserId || !recipeId || noteSaving) {
-      if (!currentUserId) alert("Необходимо авторизоваться");
+      if (!currentUserId) toast("Необходимо авторизоваться", "error");
       return;
     }
     try {
@@ -497,7 +498,7 @@ export default function RecipeDetailsPage() {
       await recipeService.updatePersonalNote(recipeId, personalNote.trim());
     } catch (error) {
       console.error("Ошибка сохранения заметки:", error);
-      alert("Не удалось сохранить заметку");
+      toast("Не удалось сохранить заметку", "error");
     } finally {
       setNoteSaving(false);
     }
@@ -600,7 +601,7 @@ export default function RecipeDetailsPage() {
 
   const handleToggleCommentLike = async (comment: Comment) => {
     if (!currentUserId) {
-      alert("Необходимо авторизоваться");
+      toast("Необходимо авторизоваться", "error");
       return;
     }
     const commentId = String(comment.id);
@@ -618,7 +619,7 @@ export default function RecipeDetailsPage() {
     } catch (error) {
       patchCommentLikeState(commentId, prevLiked, prevCount);
       console.error("Ошибка лайка комментария:", error);
-      alert("Не удалось поставить лайк на комментарий");
+      toast("Не удалось поставить лайк на комментарий", "error");
     } finally {
       setCommentLikeBusy((prev) => ({ ...prev, [commentId]: false }));
     }
@@ -629,7 +630,8 @@ export default function RecipeDetailsPage() {
     canDeleteAsModerator: boolean
   ) => {
     if (!recipeId || deleteCommentBusy[commentId]) return;
-    if (!window.confirm("Удалить комментарий?")) return;
+    const confirmedDeleteComment = await confirm("Удалить комментарий?");
+    if (!confirmedDeleteComment) return;
     try {
       setDeleteCommentBusy((prev) => ({ ...prev, [commentId]: true }));
       if (canDeleteAsModerator) {
@@ -663,7 +665,7 @@ export default function RecipeDetailsPage() {
       }
     } catch (error) {
       console.error("Ошибка удаления комментария:", error);
-      alert("Не удалось удалить комментарий");
+      toast("Не удалось удалить комментарий", "error");
     } finally {
       setDeleteCommentBusy((prev) => ({ ...prev, [commentId]: false }));
     }
@@ -671,18 +673,16 @@ export default function RecipeDetailsPage() {
 
   const handleReportComment = async (comment: Comment) => {
     if (!currentUserId || !recipeId) {
-      alert("Необходимо авторизоваться");
+      toast("Необходимо авторизоваться", "error");
       return;
     }
-    const reason = window.prompt("Причина жалобы");
-    if (!reason || !reason.trim()) return;
-    const description =
-      window.prompt("Комментарий к жалобе (необязательно)") || "";
+    const reportPayload = await requestReport();
+    if (!reportPayload) return;
     try {
       await moderationService.createReport({
         type: "comment",
-        reason: reason.trim(),
-        description: description.trim(),
+        reason: reportPayload.reason.trim(),
+        description: reportPayload.description.trim(),
         recipe_id: Number(recipeId),
         reported_user_id: comment.Author?.id
           ? Number(comment.Author.id)
@@ -690,20 +690,20 @@ export default function RecipeDetailsPage() {
         comment_id: Number(comment.id),
       });
       setCommentActionsOpenId(null);
-      alert("Жалоба отправлена");
+      toast("Жалоба отправлена", "error");
     } catch (error) {
       console.error("Ошибка отправки жалобы на комментарий:", error);
-      alert("Не удалось отправить жалобу");
+      toast("Не удалось отправить жалобу", "error");
     }
   };
 
   const handleSubmitComment = async () => {
     if (!currentUserId) {
-      alert("Необходимо авторизоваться");
+      toast("Необходимо авторизоваться", "error");
       return;
     }
     if (!commentForm.content.trim()) {
-      alert("Введите текст комментария");
+      toast("Введите текст комментария", "error");
       return;
     }
     if (!recipeId) return;
@@ -1787,3 +1787,6 @@ export default function RecipeDetailsPage() {
     </div>
   );
 }
+
+
+

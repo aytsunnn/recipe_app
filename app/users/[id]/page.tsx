@@ -15,6 +15,7 @@ import { Recipe } from "../../services/recipeService";
 import { userService, User } from "../../services/userService";
 import { isNotFoundErrorMessage } from "../../utils/errorUtils";
 import { normalizeImageUrl } from "../../utils/imageUrl";
+import { useUiFeedback } from "../../components/UiFeedbackProvider";
 
 interface ProfileStats {
   recipes: number;
@@ -27,6 +28,7 @@ const getSafeImageUrl = (url: string | null) => {
 };
 
 export default function PublicUserPage() {
+  const { toast, requestReport } = useUiFeedback();
   const params = useParams<{ id: string }>();
   const userId = params?.id || "";
 
@@ -95,24 +97,23 @@ export default function PublicUserPage() {
 
   const handleReportProfile = async () => {
     if (!authService.isAuthenticated() || !profile) {
-      alert("Необходимо авторизоваться");
+      toast("Необходимо авторизоваться", "error");
       return;
     }
-    const reason = window.prompt("Причина жалобы");
-    if (!reason || !reason.trim()) return;
-    const description = window.prompt("Комментарий к жалобе (необязательно)") || "";
+    const reportPayload = await requestReport();
+    if (!reportPayload) return;
 
     try {
       await moderationService.createReport({
         type: "profile",
-        reason: reason.trim(),
-        description: description.trim(),
+        reason: reportPayload.reason.trim(),
+        description: reportPayload.description.trim(),
         reported_user_id: Number(profile.id),
       });
-      alert("Жалоба отправлена");
+      toast("Жалоба отправлена", "success");
     } catch (error) {
       console.error("Ошибка отправки жалобы на профиль:", error);
-      alert("Не удалось отправить жалобу");
+      toast("Не удалось отправить жалобу", "error");
     }
   };
 
@@ -209,3 +210,5 @@ export default function PublicUserPage() {
     </div>
   );
 }
+
+

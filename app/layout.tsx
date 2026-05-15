@@ -1,6 +1,7 @@
 ﻿import type { Metadata } from "next";
 import "./globals.css";
 import Header from "./components/Header";
+import { UiFeedbackProvider } from "./components/UiFeedbackProvider";
 
 export const metadata: Metadata = {
   title: "Умами",
@@ -15,12 +16,14 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body className="font-sans">
-        <main className="h-min-screen w-full justify-center flex">
-          <div className="w-299 pt-12.5 gap-12.5 flex flex-col">
-            <Header />
-            {children}
-          </div>
-        </main>
+        <UiFeedbackProvider>
+          <main className="h-min-screen w-full justify-center flex">
+            <div className="w-299 pt-12.5 gap-12.5 flex flex-col">
+              <Header />
+              {children}
+            </div>
+          </main>
+        </UiFeedbackProvider>
       </body>
     </html>
   );

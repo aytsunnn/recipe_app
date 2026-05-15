@@ -25,6 +25,7 @@ import {
 import { normalizeImageUrl } from "../utils/imageUrl";
 import { toolsService } from "../services/toolsService";
 import { canAccessModeration, isAdminRole } from "../utils/role";
+import { useUiFeedback } from "../components/UiFeedbackProvider";
 
 interface UserStats {
   followingCount: number;
@@ -196,6 +197,7 @@ const emptyRecipeForm: RecipeFormData = {
 };
 
 function ProfilePageContent() {
+  const { confirm } = useUiFeedback();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
@@ -234,6 +236,9 @@ function ProfilePageContent() {
   const [followModalType, setFollowModalType] = useState<
     "following" | "followers" | null
   >(null);
+  const [openRecipeActionsId, setOpenRecipeActionsId] = useState<string | null>(
+    null
+  );
   const [followModalUsers, setFollowModalUsers] = useState<FollowUser[]>([]);
   const [followModalLoading, setFollowModalLoading] = useState(false);
 
@@ -248,6 +253,16 @@ function ProfilePageContent() {
   const [parseLoading, setParseLoading] = useState(false);
   const [parseWarnings, setParseWarnings] = useState<string[]>([]);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setOpenRecipeActionsId(null);
+    };
+
+    if (!openRecipeActionsId) return;
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, [openRecipeActionsId]);
 
   const filteredRecipes = useMemo(() => {
     if (recipeFilter === "public") return recipes.filter((r) => !r.is_private);
@@ -1262,7 +1277,8 @@ function ProfilePageContent() {
 
   const handleDeleteRecipe = async (recipeId: string) => {
     if (!user) return;
-    if (!window.confirm("Удалить этот рецепт?")) return;
+    const confirmedDeleteRecipe = await confirm("Удалить этот рецепт?");
+    if (!confirmedDeleteRecipe) return;
     try {
       setRecipeActionLoading(true);
       await recipeService.delete(recipeId);
@@ -1331,7 +1347,7 @@ function ProfilePageContent() {
 
   const handleDeleteProfile = async () => {
     if (!user || recipeActionLoading) return;
-    const confirmed = window.confirm(
+    const confirmed = await confirm(
       "Удалить профиль? Это действие необратимо."
     );
     if (!confirmed) return;
@@ -1700,40 +1716,68 @@ function ProfilePageContent() {
 
                     {filteredRecipes.length > 0 ? (
                       filteredRecipes.map((recipe) => (
-                        <div key={recipe.id} className="relative">
-                          {recipe.is_private && (
-                            <span className="absolute left-3 top-3 z-10 rounded-full bg-[#333]/90 px-3 py-1 font-nunito text-xs font-bold text-white">
-                              Приватный
-                            </span>
-                          )}
-                          <FeedCard
-                            recipe={recipe}
-                            currentUserId={user.id}
-                            isFollowing={false}
-                            showAuthorHeader={false}
-                            detailsQuery="from=profile"
-                            footerRightSlot={
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    void openEditRecipeEditor(recipe)
-                                  }
-                                  className="rounded-full bg-white px-3 py-1 font-nunito text-xs font-bold text-umami-dark-gray border border-umami-light-gray/70"
-                                >
-                                  Редактировать
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteRecipe(recipe.id)}
-                                  className="rounded-full bg-red-500 px-3 py-1 font-nunito text-xs font-bold text-white"
-                                >
-                                  Удалить
-                                </button>
-                              </>
-                            }
-                          />
-                        </div>
+                        <FeedCard
+                          key={recipe.id}
+                          recipe={recipe}
+                          currentUserId={user.id}
+                          isFollowing={false}
+                          showAuthorHeader={false}
+                          detailsQuery="from=profile"
+                          headerLeftSlot={
+                            recipe.is_private ? (
+                              <span className="rounded-full bg-[#333]/90 px-3 py-1 font-nunito text-xs font-bold text-white">
+                                Приватный
+                              </span>
+                            ) : null
+                          }
+                          headerRightSlot={
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  setOpenRecipeActionsId((prev) =>
+                                    prev === recipe.id ? null : recipe.id
+                                  );
+                                }}
+                                className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-umami-light-gray/70"
+                                aria-label="Действия"
+                              >
+                                <Image
+                                  width={18}
+                                  height={18}
+                                  src="/DotsThreeOutlineVertical.svg"
+                                  alt="actions"
+                                />
+                              </button>
+                              {openRecipeActionsId === recipe.id ? (
+                                <div className="absolute right-0 top-9 z-20 min-w-[160px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenRecipeActionsId(null);
+                                      void openEditRecipeEditor(recipe);
+                                    }}
+                                    className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
+                                  >
+                                    Редактировать
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setOpenRecipeActionsId(null);
+                                      void handleDeleteRecipe(recipe.id);
+                                    }}
+                                    className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50"
+                                  >
+                                    Удалить
+                                  </button>
+                                </div>
+                              ) : null}
+                            </div>
+                          }
+                        />
                       ))
                     ) : (
                       <div className="rounded-[15px] border border-[#eaeaea] bg-white p-8 text-center">
@@ -2478,5 +2522,7 @@ export default function ProfilePage() {
     </Suspense>
   );
 }
+
+
 
 

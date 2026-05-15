@@ -12,6 +12,7 @@ import {
   ModerationUser,
 } from "../services/moderationService";
 import { canAccessModeration, isAdminRole } from "../utils/role";
+import { useUiFeedback } from "../components/UiFeedbackProvider";
 
 const toIdList = (value: string): number[] =>
   value
@@ -20,6 +21,7 @@ const toIdList = (value: string): number[] =>
     .filter((item) => Number.isFinite(item) && item > 0);
 
 export default function ModerationPage() {
+  const { toast } = useUiFeedback();
   const USERS_LIMIT = 20;
   const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -297,7 +299,7 @@ export default function ModerationPage() {
       await loadData();
     } catch (error) {
       console.error("Ошибка действия модерации:", error);
-      alert(
+      toast(
         error instanceof Error
           ? `Не удалось выполнить действие: ${error.message}`
           : "Не удалось выполнить действие"
@@ -836,3 +838,5 @@ export default function ModerationPage() {
     </div>
   );
 }
+
+

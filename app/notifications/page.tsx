@@ -10,6 +10,7 @@ import {
   AppNotification,
   notificationService,
 } from "../services/notificationService";
+import { useUiFeedback } from "../components/UiFeedbackProvider";
 
 const formatDate = (value?: string) => {
   if (!value) return "";
@@ -25,6 +26,7 @@ const formatDate = (value?: string) => {
 };
 
 export default function NotificationsPage() {
+  const { toast, confirm } = useUiFeedback();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -147,7 +149,7 @@ export default function NotificationsPage() {
       setItems((prev) => prev.map((item) => ({ ...item, is_read: true })));
     } catch (e) {
       console.error("Ошибка пометки всех уведомлений:", e);
-      alert("Не удалось отметить все уведомления как прочитанные");
+      toast("Не удалось отметить все уведомления как прочитанные", "error");
     } finally {
       setActionBusy(null);
     }
@@ -155,7 +157,8 @@ export default function NotificationsPage() {
 
   const handleClearAll = async () => {
     if (actionBusy) return;
-    if (!window.confirm("Очистить историю уведомлений?")) return;
+    const confirmed = await confirm("Очистить историю уведомлений?");
+    if (!confirmed) return;
     try {
       setActionBusy("clearAll");
       await notificationService.clearAll();
@@ -163,7 +166,7 @@ export default function NotificationsPage() {
       setHasMore(false);
     } catch (e) {
       console.error("Ошибка очистки уведомлений:", e);
-      alert("Не удалось очистить историю уведомлений");
+      toast("Не удалось очистить историю уведомлений", "error");
     } finally {
       setActionBusy(null);
     }
@@ -363,3 +366,5 @@ export default function NotificationsPage() {
     </div>
   );
 }
+
+
