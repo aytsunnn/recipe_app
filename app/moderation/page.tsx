@@ -212,10 +212,10 @@ export default function ModerationPage() {
   const getTargetHref = (report: ModerationReport): string | null => {
     const commentId = getReportCommentId(report);
     if (commentId && report.recipe_id) {
-      return `/recipes/${report.recipe_id}?tab=comments&commentId=${commentId}#comment-${commentId}`;
+      return `/recipes/${report.recipe_id}?from=moderation&tab=comments&commentId=${commentId}#comment-${commentId}`;
     }
     if (report.type === "recipe" && report.recipe_id) {
-      return `/recipes/${report.recipe_id}`;
+      return `/recipes/${report.recipe_id}?from=moderation`;
     }
     if (
       (report.type === "profile" || report.type === "user") &&

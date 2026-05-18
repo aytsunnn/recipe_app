@@ -790,6 +790,8 @@ export default function RecipeDetailsPage() {
       ? "/recipes/random"
       : fromQuery === "profile"
       ? "/profile"
+      : fromQuery === "moderation"
+      ? "/moderation"
       : "/";
   const handleGoBack = () => {
     if (
