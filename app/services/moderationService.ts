@@ -201,7 +201,20 @@ class ModerationService {
     let lastError: unknown = null;
     for (const endpoint of endpoints) {
       try {
-        return await apiClient.get<ModerationReport[]>(endpoint);
+        const response = await apiClient.get<unknown>(endpoint);
+        if (Array.isArray(response)) {
+          return response as ModerationReport[];
+        }
+        if (response && typeof response === "object") {
+          const raw = response as Record<string, unknown>;
+          const candidates = [raw.reports, raw.items, raw.data, raw.rows];
+          for (const candidate of candidates) {
+            if (Array.isArray(candidate)) {
+              return candidate as ModerationReport[];
+            }
+          }
+        }
+        return [];
       } catch (error) {
         lastError = error;
       }
@@ -225,12 +238,10 @@ class ModerationService {
   async getUsers(page = 1, limit = 20): Promise<ModerationUsersPage> {
     const endpoints = [
       "/admin/users",
-      `/users?page=${page}&limit=${limit}`,
-      "/users",
-      "/users/search?q=",
-      "/users/search?q=%20",
       "/users/search?q=a",
       "/users/search?q=%D0%B0",
+      "/users/search?q=e",
+      "/users/search?q=%D0%B5",
     ];
     let response: unknown = null;
     let lastError: unknown = null;
