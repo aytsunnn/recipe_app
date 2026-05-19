@@ -18,6 +18,7 @@ import ReportsHeader from "./components/ReportsHeader";
 import ModerationUserCard from "./components/ModerationUserCard";
 import ModerationReportCard from "./components/ModerationReportCard";
 import WeekMenuAdminPanel from "./components/WeekMenuAdminPanel";
+import ModerationAnalyticsPanel from "./components/ModerationAnalyticsPanel";
 
 const toIdList = (value: string): number[] =>
   value
@@ -30,7 +31,9 @@ export default function ModerationPage() {
   const USERS_LIMIT = 20;
   const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<"reports" | "users" | "week-menu">("reports");
+  const [activeTab, setActiveTab] = useState<
+    "analytics" | "reports" | "users" | "week-menu"
+  >("reports");
   const [reports, setReports] = useState<ModerationReport[]>([]);
   const [users, setUsers] = useState<ModerationUser[]>([]);
   const [usersPage, setUsersPage] = useState(1);
@@ -107,7 +110,9 @@ export default function ModerationPage() {
       const me = await authService.getCurrentUser();
       const role = me?.role || authService.getRoleFromToken();
       const allowed = canAccessModeration(role);
-      setIsAdmin(isAdminRole(role));
+      const admin = isAdminRole(role);
+      setIsAdmin(admin);
+      setActiveTab(admin ? "analytics" : "reports");
       setIsAllowed(allowed);
       if (!allowed) return;
       await loadData();
@@ -573,7 +578,9 @@ export default function ModerationPage() {
           <ModerationTabs activeTab={activeTab} onChange={setActiveTab} isAdmin={isAdmin} />
 
           <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
-            {activeTab === "reports" ? (
+            {activeTab === "analytics" && isAdmin ? (
+              <ModerationAnalyticsPanel />
+            ) : activeTab === "reports" ? (
               <>
             <ReportsHeader
               reportsCount={reports.length}

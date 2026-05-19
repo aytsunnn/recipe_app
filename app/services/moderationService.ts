@@ -65,6 +65,8 @@ export interface CreateReportData {
   comment_id?: number;
 }
 
+export type AdminAnalyticsResponse = Record<string, unknown>;
+
 class ModerationService {
   private normalizeUsers(rawList: unknown[]): ModerationUser[] {
     return rawList
@@ -399,6 +401,17 @@ class ModerationService {
 
   async deleteComment(id: string): Promise<void> {
     await apiClient.delete(`/admin/comments/${id}`);
+  }
+
+  async getAnalytics(): Promise<AdminAnalyticsResponse> {
+    const data = await apiClient.get<unknown>("/admin/analytics");
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      return data as AdminAnalyticsResponse;
+    }
+    if (Array.isArray(data)) {
+      return { items: data };
+    }
+    return {};
   }
 }
 
