@@ -29,11 +29,15 @@ export default function WeekMenuPage() {
   const { toast } = useUiFeedback();
   const [loading, setLoading] = useState(true);
   const [savingDay, setSavingDay] = useState<number | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(
+    undefined
+  );
   const [isAdmin, setIsAdmin] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [entries, setEntries] = useState<WeekMenuEntry[]>([]);
-  const [selectedRecipeByDay, setSelectedRecipeByDay] = useState<SelectedByDay>({});
+  const [selectedRecipeByDay, setSelectedRecipeByDay] = useState<SelectedByDay>(
+    {}
+  );
   const [pickerDayId, setPickerDayId] = useState<number | null>(null);
   const [recipeSearch, setRecipeSearch] = useState("");
 
@@ -43,11 +47,24 @@ export default function WeekMenuPage() {
     return map;
   }, [recipes]);
 
+  const resolveRenderableRecipe = (entry: WeekMenuEntry): Recipe | null => {
+    const fallback = recipesById.get(String(entry.recipe_id)) || null;
+    const source = (entry.Recipe || entry.recipe || null) as Recipe | null;
+    if (!source && !fallback) return null;
+    if (!source) return fallback;
+    if (!source.User && fallback) {
+      return { ...fallback, ...source, User: fallback.User };
+    }
+    return source;
+  };
+
   const filteredRecipes = useMemo(() => {
     const query = recipeSearch.trim().toLowerCase();
     if (!query) return recipes;
     return recipes.filter((recipe) =>
-      `${recipe.title} ${recipe.User?.name || ""} ${recipe.User?.username || ""}`
+      `${recipe.title} ${recipe.User?.name || ""} ${
+        recipe.User?.username || ""
+      }`
         .toLowerCase()
         .includes(query)
     );
@@ -116,7 +133,11 @@ export default function WeekMenuPage() {
 
     try {
       setSavingDay(dayId);
-      await weekMenuService.addToWeekMenu(dayId, Number(selected), currentDayEntries.length + 1);
+      await weekMenuService.addToWeekMenu(
+        dayId,
+        Number(selected),
+        currentDayEntries.length + 1
+      );
       await loadAll();
       setSelectedRecipeByDay((prev) => ({ ...prev, [dayId]: "" }));
       setPickerDayId(null);
@@ -132,7 +153,9 @@ export default function WeekMenuPage() {
   const handleDeleteRecipe = async (entryId: string) => {
     try {
       await weekMenuService.removeFromWeekMenu(entryId);
-      setEntries((prev) => prev.filter((entry) => String(entry.id) !== String(entryId)));
+      setEntries((prev) =>
+        prev.filter((entry) => String(entry.id) !== String(entryId))
+      );
       toast("Рецепт удален из меню недели", "success");
     } catch (error) {
       console.error("Ошибка удаления из меню недели:", error);
@@ -148,7 +171,9 @@ export default function WeekMenuPage() {
 
       <div className="w-full pb-10 lg:w-169.5">
         <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
-          <h1 className="font-nunito text-2xl font-bold text-umami-dark-gray">Меню недели</h1>
+          <h1 className="font-nunito text-2xl font-bold text-umami-dark-gray">
+            Меню недели
+          </h1>
           <p className="mt-1 font-inter text-sm text-umami-gray">
             Администратор формирует меню на каждый день: от 1 до 5 рецептов.
           </p>
@@ -169,7 +194,9 @@ export default function WeekMenuPage() {
                   className="rounded-[20px] border border-umami-light-gray/50 bg-white p-4"
                 >
                   <div className="mb-3 flex items-center justify-between gap-2">
-                    <h2 className="font-nunito text-lg font-bold text-umami-dark-gray">{day.label}</h2>
+                    <h2 className="font-nunito text-lg font-bold text-umami-dark-gray">
+                      {day.label}
+                    </h2>
                     <p className="text-xs text-umami-gray">
                       {dayEntries.length} / 5
                     </p>
@@ -177,29 +204,38 @@ export default function WeekMenuPage() {
 
                   {isAdmin ? (
                     <div className="mb-4 flex items-center justify-between rounded-xl border border-umami-light-gray/50 bg-[#fcfbf8] p-3">
-                      <p className="font-inter text-sm text-umami-gray">Добавить рецепт</p>
+                      <p className="font-inter text-sm text-umami-gray">
+                        Добавить рецепт
+                      </p>
                       <button
                         type="button"
-                        disabled={savingDay === day.id || dayEntries.length >= 5}
+                        disabled={
+                          savingDay === day.id || dayEntries.length >= 5
+                        }
                         onClick={() => {
                           setPickerDayId(day.id);
                           setRecipeSearch("");
                         }}
-                        className="flex h-10 w-10 items-center justify-center rounded-full border border-umami-orange/40 bg-white hover:bg-[#fff7ef] disabled:opacity-60"
                         aria-label="Открыть выбор рецепта"
                       >
-                        <Image src="/pluscircle.svg" alt="" width={22} height={22} />
+                        <Image
+                          src="/pluscirclegray.svg"
+                          alt=""
+                          width={22}
+                          height={22}
+                        />
                       </button>
                     </div>
                   ) : null}
 
                   {dayEntries.length === 0 ? (
-                    <p className="text-sm text-umami-gray">На этот день меню пока не добавлено</p>
+                    <p className="text-sm text-umami-gray">
+                      На этот день меню пока не добавлено
+                    </p>
                   ) : (
                     <div className="flex flex-col gap-3">
                       {dayEntries.map((entry, index) => {
-                        const recipe =
-                          entry.Recipe || entry.recipe || recipesById.get(String(entry.recipe_id));
+                        const recipe = resolveRenderableRecipe(entry);
                         if (!recipe) return null;
                         return (
                           <div key={entry.id} className="relative">
@@ -209,7 +245,9 @@ export default function WeekMenuPage() {
                             {isAdmin ? (
                               <button
                                 type="button"
-                                onClick={() => void handleDeleteRecipe(entry.id)}
+                                onClick={() =>
+                                  void handleDeleteRecipe(entry.id)
+                                }
                                 className="absolute right-0 top-0 rounded-full bg-red-50 px-2 py-1 text-xs font-bold text-red-600"
                               >
                                 Удалить
@@ -242,7 +280,8 @@ export default function WeekMenuPage() {
           <div className="w-full max-w-[1180px] rounded-2xl bg-white p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 className="font-nunito text-lg font-bold text-umami-dark-gray">
-                Выберите рецепт для: {DAYS.find((d) => d.id === pickerDayId)?.label}
+                Выберите рецепт для:{" "}
+                {DAYS.find((d) => d.id === pickerDayId)?.label}
               </h3>
               <button
                 type="button"
@@ -271,7 +310,9 @@ export default function WeekMenuPage() {
                     <button
                       key={recipe.id}
                       type="button"
-                      onClick={() => void handleAddRecipe(pickerDayId, recipe.id)}
+                      onClick={() =>
+                        void handleAddRecipe(pickerDayId, recipe.id)
+                      }
                       className="overflow-hidden rounded-xl border border-umami-light-gray/50 bg-white text-left transition hover:border-umami-orange/50 hover:shadow-sm"
                     >
                       <div className="aspect-square w-full bg-[#f2f2f2]">
