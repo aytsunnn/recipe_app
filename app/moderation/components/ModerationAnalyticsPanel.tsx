@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import * as Plot from "@observablehq/plot";
 import Image from "next/image";
 import Link from "next/link";
 import { AdminAnalyticsResponse, moderationService } from "../../services/moderationService";
@@ -222,91 +221,108 @@ function TopHorizontalList({ title, items }: { title: string; items: TopItem[] }
 
 function AnalyticsPlot({ title, points, mode }: { title: string; points: ChartPoint[]; mode: "bar" | "line" }) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [plotUnavailable, setPlotUnavailable] = useState(false);
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
     if (!wrapper || points.length === 0) return;
+    let isUnmounted = false;
+    let chart: Element | undefined;
+    let observer: ResizeObserver | null = null;
 
-    const render = (width: number) =>
-      Plot.plot({
-        width,
-        height: 320,
-        marginLeft: 48,
-        marginBottom: 80,
-        marginTop: 24,
-        style: {
-          background: "white",
-          color: "#2f2f2f",
-          fontFamily: "Nunito, sans-serif",
-        },
-        x: {
-          label: null,
-          tickRotate: -35,
-          tickSize: 0,
-        },
-        y: {
-          label: null,
-          grid: true,
-          tickSize: 0,
-        },
-        marks:
-          mode === "line"
-            ? [
-                Plot.line(points, {
-                  x: "label",
-                  y: "value",
-                  stroke: "#f19a4b",
-                  strokeWidth: 3,
-                }),
-                Plot.dot(points, { x: "label", y: "value", r: 4, fill: "#f19a4b" }),
-                Plot.tip(
-                  points,
-                  Plot.pointerX({
-                    x: "label",
-                    y: "value",
-                    title: (d) => `${d.label}: ${d.value}`,
-                  })
-                ),
-                Plot.ruleY([0]),
-              ]
-            : [
-                Plot.barY(points, {
-                  x: "label",
-                  y: "value",
-                  fill: "#f19a4b",
-                  title: (d) => `${d.label}: ${d.value}`,
-                }),
-                Plot.tip(
-                  points,
-                  Plot.pointerX({
-                    x: "label",
-                    y: "value",
-                    title: (d) => `${d.label}: ${d.value}`,
-                  })
-                ),
-                Plot.ruleY([0]),
-              ],
-      });
+    const run = async () => {
+      try {
+        const Plot = await import("@observablehq/plot");
+        if (isUnmounted) return;
+        setPlotUnavailable(false);
 
-    const draw = () => {
-      if (!wrapper) return;
-      const width = Math.max(wrapper.clientWidth, 320);
-      wrapper.innerHTML = "";
-      const chart = render(width);
-      wrapper.append(chart);
-      return chart;
+        const render = (width: number) =>
+          Plot.plot({
+            width,
+            height: 320,
+            marginLeft: 48,
+            marginBottom: 80,
+            marginTop: 24,
+            style: {
+              background: "white",
+              color: "#2f2f2f",
+              fontFamily: "Nunito, sans-serif",
+            },
+            x: {
+              label: null,
+              tickRotate: -35,
+              tickSize: 0,
+            },
+            y: {
+              label: null,
+              grid: true,
+              tickSize: 0,
+            },
+            marks:
+              mode === "line"
+                ? [
+                    Plot.line(points, {
+                      x: "label",
+                      y: "value",
+                      stroke: "#f19a4b",
+                      strokeWidth: 3,
+                    }),
+                    Plot.dot(points, { x: "label", y: "value", r: 4, fill: "#f19a4b" }),
+                    Plot.tip(
+                      points,
+                      Plot.pointerX({
+                        x: "label",
+                        y: "value",
+                        title: (d: ChartPoint) => `${d.label}: ${d.value}`,
+                      })
+                    ),
+                    Plot.ruleY([0]),
+                  ]
+                : [
+                    Plot.barY(points, {
+                      x: "label",
+                      y: "value",
+                      fill: "#f19a4b",
+                      title: (d: ChartPoint) => `${d.label}: ${d.value}`,
+                    }),
+                    Plot.tip(
+                      points,
+                      Plot.pointerX({
+                        x: "label",
+                        y: "value",
+                        title: (d: ChartPoint) => `${d.label}: ${d.value}`,
+                      })
+                    ),
+                    Plot.ruleY([0]),
+                  ],
+          });
+
+        const draw = () => {
+          if (!wrapper) return undefined;
+          const width = Math.max(wrapper.clientWidth, 320);
+          wrapper.innerHTML = "";
+          const nextChart = render(width);
+          wrapper.append(nextChart);
+          return nextChart;
+        };
+
+        chart = draw();
+        observer = new ResizeObserver(() => {
+          chart?.remove();
+          chart = draw();
+        });
+        observer.observe(wrapper);
+      } catch (error) {
+        console.error("Не удалось загрузить библиотеку графиков:", error);
+        setPlotUnavailable(true);
+      }
     };
 
-    let chart = draw();
-    const observer = new ResizeObserver(() => {
-      chart?.remove();
-      chart = draw();
-    });
-
-    observer.observe(wrapper);
+    void run();
 
     return () => {
-      observer.disconnect();
+      isUnmounted = true;
+      observer?.disconnect();
       chart?.remove();
     };
   }, [points, mode]);
@@ -315,6 +331,9 @@ function AnalyticsPlot({ title, points, mode }: { title: string; points: ChartPo
     <div className="rounded-xl border border-umami-light-gray/50 bg-white p-3">
       <h3 className="mb-3 font-nunito text-base font-bold text-umami-dark-gray">{title}</h3>
       <div ref={wrapperRef} className="w-full overflow-x-auto" />
+      {plotUnavailable ? (
+        <p className="mt-2 text-xs text-umami-gray">График недоступен: не установлена библиотека @observablehq/plot.</p>
+      ) : null}
     </div>
   );
 }
