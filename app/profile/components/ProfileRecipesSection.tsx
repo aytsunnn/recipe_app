@@ -14,6 +14,7 @@ interface ProfileRecipesSectionProps {
   filteredRecipes: Recipe[];
   recipeFilter: "all" | "public" | "private";
   setRecipeFilter: (value: "all" | "public" | "private") => void;
+  onAddRecipeClick: () => void;
   currentUserId: string;
   openRecipeActionsId: string | null;
   onToggleRecipeActions: (recipeId: string) => void;
@@ -28,6 +29,7 @@ export default function ProfileRecipesSection({
   filteredRecipes,
   recipeFilter,
   setRecipeFilter,
+  onAddRecipeClick,
   currentUserId,
   openRecipeActionsId,
   onToggleRecipeActions,
@@ -42,6 +44,16 @@ export default function ProfileRecipesSection({
 
   return (
     <div ref={feedColumnRef} className="flex flex-col gap-2.5 pb-10">
+      <div className="mb-0.5 flex items-center justify-start">
+        <button
+          type="button"
+          onClick={onAddRecipeClick}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-umami-orange px-4 py-2 font-nunito text-sm text-white transition-colors hover:bg-[#dd8c45]"
+        >
+          <Image width={18} height={18} src="/pluscircle.svg" alt="add-recipe" />
+          Добавить рецепт
+        </button>
+      </div>
       <RecipeVisibilityFilter
         value={recipeFilter}
         totalCount={recipes.length}

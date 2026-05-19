@@ -865,6 +865,40 @@ window.onload = function() {
           }
         }
       },
+      "/auth/resend-code": {
+        "post": {
+          "summary": "Переотправка кода подтверждения",
+          "tags": [
+            "Auth"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "email"
+                  ],
+                  "properties": {
+                    "email": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Код переотправлен"
+            },
+            "404": {
+              "description": "Пользователь не найден"
+            }
+          }
+        }
+      },
       "/comments/{id}": {
         "delete": {
           "summary": "Удалить свой комментарий",

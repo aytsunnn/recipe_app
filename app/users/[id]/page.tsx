@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import FeedCard from "../../components/feed-card/FeedCard";
 import LeftPart from "../../components/MainScreen/NavigationLeftPart";
@@ -31,6 +31,7 @@ const getSafeImageUrl = (url: string | null) => {
 export default function PublicUserPage() {
   const { toast, requestReport, confirm } = useUiFeedback();
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const userId = params?.id || "";
 
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(
@@ -87,6 +88,10 @@ export default function PublicUserPage() {
 
         if (authService.isAuthenticated()) {
           const me = await authService.getCurrentUser();
+          if (me?.id && String(me.id) === String(userId)) {
+            router.replace("/profile");
+            return;
+          }
           setCurrentUserId(me?.id);
           const effectiveRole = me?.role || authService.getRoleFromToken();
           setIsAdmin(isAdminRole(effectiveRole));
@@ -112,7 +117,7 @@ export default function PublicUserPage() {
     };
 
     void load();
-  }, [userId]);
+  }, [userId, router]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -253,60 +258,57 @@ export default function PublicUserPage() {
 
         {!loading && !error && profile && (
           <div className="flex flex-col gap-4">
-            <div className="rounded-[20px] border border-[#eaeaea] bg-white p-5">
-              <div className="flex items-start gap-4">
+            <div className="relative flex h-[190px] items-center rounded-[20px] border border-[#eaeaea] bg-white p-5">
+              {!isOwnProfile && isAdmin ? (
+                <div ref={adminMenuRef} className="absolute right-5 top-5 z-20">
+                  <button
+                    type="button"
+                    onClick={() => setAdminMenuOpen((prev) => !prev)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-umami-light-gray/60 bg-white hover:bg-[#f7f4ea]"
+                    aria-label="Действия администратора"
+                  >
+                    <Image
+                      width={18}
+                      height={18}
+                      src="/DotsThreeOutlineVertical.svg"
+                      alt="admin-actions"
+                    />
+                  </button>
+                  {adminMenuOpen ? (
+                    <div className="absolute right-0 top-9 min-w-[220px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
+                      <button
+                        type="button"
+                        disabled={adminActionLoading !== null}
+                        onClick={() => void handleToggleBlockUser()}
+                        className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea] disabled:opacity-60"
+                      >
+                        {profile.is_blocked ? "Разблокировать" : "Заблокировать"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={adminActionLoading !== null}
+                        onClick={() => void handleDeleteUser()}
+                        className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
+                      >
+                        Удалить
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              <div className="flex w-full items-center gap-5">
                 <Image
                   src={getSafeImageUrl(profile.avatar_url)}
                   alt={profile.name}
-                  width={96}
-                  height={96}
-                  className="h-24 w-24 rounded-full object-cover"
+                  width={150}
+                  height={150}
+                  className="h-[150px] w-[150px] rounded-full object-cover"
                 />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <h1 className="truncate font-nunito text-2xl font-bold text-umami-dark-gray">
-                      {profile.name}
-                    </h1>
-                    {!isOwnProfile && isAdmin ? (
-                      <div ref={adminMenuRef} className="relative shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setAdminMenuOpen((prev) => !prev)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border border-umami-light-gray/60 bg-white hover:bg-[#f7f4ea]"
-                          aria-label="Действия администратора"
-                        >
-                          <Image
-                            width={18}
-                            height={18}
-                            src="/DotsThreeOutlineVertical.svg"
-                            alt="admin-actions"
-                          />
-                        </button>
-                        {adminMenuOpen ? (
-                          <div className="absolute right-0 top-9 z-20 min-w-[220px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
-                            <button
-                              type="button"
-                              disabled={adminActionLoading !== null}
-                              onClick={() => void handleToggleBlockUser()}
-                              className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea] disabled:opacity-60"
-                            >
-                              {profile.is_blocked
-                                ? "Разблокировать"
-                                : "Заблокировать"}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={adminActionLoading !== null}
-                              onClick={() => void handleDeleteUser()}
-                              className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
-                            >
-                              Удалить
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </div>
+                <div className="min-w-0 flex-1 pr-10">
+                  <h1 className="truncate font-nunito text-xl font-bold text-black">
+                    {profile.name}
+                  </h1>
                   <p className="font-inter text-sm text-umami-gray">
                     @{profile.username}
                   </p>
@@ -315,11 +317,32 @@ export default function PublicUserPage() {
                       Пользователь заблокирован
                     </p>
                   ) : null}
-                  <p className="mt-2 font-inter text-sm text-umami-gray">
-                    {stats.recipes} рецептов • {stats.followers} подписчиков •{" "}
-                    {stats.following} подписок
-                  </p>
-                  {!isOwnProfile && authService.isAuthenticated() && (
+                  {profile.bio ? (
+                    <p className="mt-1 line-clamp-2 max-w-[560px] font-inter text-sm text-umami-gray">
+                      О себе: {profile.bio}
+                    </p>
+                  ) : null}
+                  <div className="mt-2 flex gap-6 text-center text-black">
+                    <div>
+                      <p className="font-nunito text-xl font-semibold leading-none">
+                        {stats.recipes}
+                      </p>
+                      <p className="mt-1 font-nunito text-sm">Рецепты</p>
+                    </div>
+                    <div>
+                      <p className="font-nunito text-xl font-semibold leading-none">
+                        {stats.following}
+                      </p>
+                      <p className="mt-1 font-nunito text-sm">Подписки</p>
+                    </div>
+                    <div>
+                      <p className="font-nunito text-xl font-semibold leading-none">
+                        {stats.followers}
+                      </p>
+                      <p className="mt-1 font-nunito text-sm">Подписчики</p>
+                    </div>
+                  </div>
+                  {!isOwnProfile && authService.isAuthenticated() ? (
                     <div className="mt-2 flex items-center gap-2">
                       <button
                         type="button"
@@ -332,17 +355,15 @@ export default function PublicUserPage() {
                       >
                         {isFollowing ? "Вы подписаны" : "Подписаться"}
                       </button>
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() => void handleReportProfile()}
-                          className="rounded-full border border-umami-light-gray/60 bg-white px-3 py-1 font-nunito text-xs font-bold text-umami-dark-gray hover:bg-[#f7f4ea]"
-                        >
-                          Пожаловаться
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleReportProfile()}
+                        className="rounded-full border border-umami-light-gray/60 bg-white px-3 py-1 font-nunito text-xs font-bold text-umami-dark-gray hover:bg-[#f7f4ea]"
+                      >
+                        Пожаловаться
+                      </button>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </div>

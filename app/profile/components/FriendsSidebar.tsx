@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { FollowUser } from "../../services/followService";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 
@@ -24,7 +25,11 @@ export default function FriendsSidebar({
       {visibleFriends.length > 0 ? (
         <div className="flex flex-col gap-[5px]">
           {visibleFriends.map((friend) => (
-            <div key={friend.id} className="flex items-center gap-[5px]">
+            <Link
+              key={friend.id}
+              href={`/users/${friend.id}`}
+              className="flex items-center gap-[5px] rounded-[8px] px-1 py-0.5 hover:bg-[#f7f4ea]"
+            >
               <div className="relative h-[30px] w-[30px] shrink-0 overflow-hidden rounded-full bg-[#d9d9d9]">
                 <Image
                   width={30}
@@ -37,7 +42,7 @@ export default function FriendsSidebar({
               <p className="truncate font-inter text-sm text-umami-dark-gray">
                 {friend.name}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       ) : (

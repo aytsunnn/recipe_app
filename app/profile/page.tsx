@@ -1398,7 +1398,6 @@ function ProfilePageContent() {
             onFollowersClick={() => void openFollowModal("followers")}
             onEditProfileClick={handleEditProfile}
             onDeleteProfileClick={() => void handleDeleteProfile()}
-            onAddRecipeClick={openCreateRecipeEditor}
             recipeActionLoading={recipeActionLoading}
           />
 
@@ -1446,6 +1445,7 @@ function ProfilePageContent() {
               onToggleRecipeVisibility={(recipe) => {
                 void handleToggleRecipeVisibility(recipe);
               }}
+              onAddRecipeClick={openCreateRecipeEditor}
               feedColumnRef={feedColumnRef}
               friends={friends}
             />

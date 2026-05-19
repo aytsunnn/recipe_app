@@ -44,6 +44,7 @@ interface ProfileOverviewSectionProps {
   onEditRecipe: (recipe: Recipe) => void;
   onDeleteRecipe: (recipeId: string) => void;
   onToggleRecipeVisibility: (recipe: Recipe) => void;
+  onAddRecipeClick: () => void;
   feedColumnRef: RefObject<HTMLDivElement | null>;
   friends: FollowUser[];
 }
@@ -74,6 +75,7 @@ export default function ProfileOverviewSection({
   onEditRecipe,
   onDeleteRecipe,
   onToggleRecipeVisibility,
+  onAddRecipeClick,
   feedColumnRef,
   friends,
 }: ProfileOverviewSectionProps) {
@@ -110,6 +112,7 @@ export default function ProfileOverviewSection({
             onEditRecipe={onEditRecipe}
             onDeleteRecipe={onDeleteRecipe}
             onToggleVisibility={onToggleRecipeVisibility}
+            onAddRecipeClick={onAddRecipeClick}
             feedColumnRef={feedColumnRef}
           />
         )}

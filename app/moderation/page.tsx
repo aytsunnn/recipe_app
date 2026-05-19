@@ -124,6 +124,24 @@ export default function ModerationPage() {
     () => users.filter((user) => user.is_blocked).length,
     [users]
   );
+  const sortedUsers = useMemo(() => {
+    const roleOrder = (user: ModerationUser) => {
+      if (user.role_id === 1) return 0;
+      if (user.role_id === 3) return 1;
+      if (user.role_id === 2) return 2;
+
+      const normalizedRole = (user.role || "").toLowerCase();
+      if (normalizedRole.includes("admin")) return 0;
+      if (normalizedRole.includes("moderator")) return 1;
+      return 2;
+    };
+
+    return [...users].sort((left, right) => {
+      const roleDiff = roleOrder(left) - roleOrder(right);
+      if (roleDiff !== 0) return roleDiff;
+      return String(left.id).localeCompare(String(right.id), "ru");
+    });
+  }, [users]);
   const filteredReports = useMemo(() => {
     if (reportsFilter === "in_work") {
       return reports.filter((report) => {
@@ -325,11 +343,7 @@ export default function ModerationPage() {
       await loadData();
     } catch (error) {
       console.error("Ошибка действия модерации:", error);
-      toast(
-        error instanceof Error
-          ? `Не удалось выполнить действие: ${error.message}`
-          : "Не удалось выполнить действие"
-      );
+      toast("Не удалось выполнить действие");
     } finally {
       setActionLoading(null);
     }
@@ -342,7 +356,7 @@ export default function ModerationPage() {
   };
 
   const toggleSelectAllVisible = () => {
-    const visibleIds = users.map((user) => String(user.id));
+    const visibleIds = sortedUsers.map((user) => String(user.id));
     const allSelected =
       visibleIds.length > 0 &&
       visibleIds.every((id) => selectedUserIds.includes(id));
@@ -653,7 +667,7 @@ export default function ModerationPage() {
                       className="rounded-full bg-[#f3efe2] px-3 py-1 text-xs font-bold text-umami-dark-gray hover:bg-[#ece4cf]"
                     >
                       {users.length > 0 &&
-                      users.every((user) =>
+                      sortedUsers.every((user) =>
                         selectedUserIds.includes(String(user.id))
                       )
                         ? "Снять выбор"
@@ -683,7 +697,7 @@ export default function ModerationPage() {
                   </p>
                 ) : (
                   <div className="mt-3 space-y-2">
-                    {users.map((user) => {
+                    {sortedUsers.map((user) => {
                       const selected = selectedUserIds.includes(String(user.id));
                       return (
                         <ModerationUserCard

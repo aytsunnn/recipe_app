@@ -14,7 +14,7 @@ const navItems = [
   { href: "/profile", label: "Личный кабинет", icon: "/User.svg" },
   { href: "/favorites", label: "Избранное", icon: "/Favorites.svg" },
   {
-    href: "/profile#week-menu",
+    href: "/week-menu",
     label: "Меню недели",
     icon: "/ClipboardText.svg",
   },
