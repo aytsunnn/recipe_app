@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ModerationUser } from "../../services/moderationService";
+import { normalizeImageUrl } from "../../utils/imageUrl";
 
 interface ModerationUserCardProps {
   user: ModerationUser;
@@ -134,7 +135,7 @@ export default function ModerationUserCard({
           <Image
             width={40}
             height={40}
-            src={user.avatar_url || "/avatar.jpg"}
+            src={normalizeImageUrl(user.avatar_url, "/avatar.jpg")}
             alt="user-avatar"
             className="h-10 w-10 rounded-full object-cover"
           />

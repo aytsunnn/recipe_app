@@ -17,6 +17,7 @@ import ModerationTabs from "./components/ModerationTabs";
 import ReportsHeader from "./components/ReportsHeader";
 import ModerationUserCard from "./components/ModerationUserCard";
 import ModerationReportCard from "./components/ModerationReportCard";
+import WeekMenuAdminPanel from "./components/WeekMenuAdminPanel";
 
 const toIdList = (value: string): number[] =>
   value
@@ -29,7 +30,7 @@ export default function ModerationPage() {
   const USERS_LIMIT = 20;
   const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<"reports" | "users">("reports");
+  const [activeTab, setActiveTab] = useState<"reports" | "users" | "week-menu">("reports");
   const [reports, setReports] = useState<ModerationReport[]>([]);
   const [users, setUsers] = useState<ModerationUser[]>([]);
   const [usersPage, setUsersPage] = useState(1);
@@ -569,7 +570,7 @@ export default function ModerationPage() {
         className="relative w-full pb-10 lg:w-[calc(100%-223px-20px)]"
       >
         <div className="flex flex-col gap-4">
-          <ModerationTabs activeTab={activeTab} onChange={setActiveTab} />
+          <ModerationTabs activeTab={activeTab} onChange={setActiveTab} isAdmin={isAdmin} />
 
           <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
             {activeTab === "reports" ? (
@@ -649,7 +650,7 @@ export default function ModerationPage() {
               </div>
             )}
               </>
-            ) : (
+            ) : activeTab === "users" ? (
               <>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -747,7 +748,9 @@ export default function ModerationPage() {
                   </button>
                 </div>
               </>
-            )}
+            ) : isAdmin ? (
+              <WeekMenuAdminPanel />
+            ) : null}
           </div>
         </div>
         <ScrollToTopButton anchorRef={moderationColumnRef} />
