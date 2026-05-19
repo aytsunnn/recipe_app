@@ -198,6 +198,8 @@ function ProfilePageContent() {
     name: "",
     username: "",
     email: "",
+    bio: "",
+    avatar_url: null as string | null,
     newPassword: "",
     confirmNewPassword: "",
     verifyCode: "",
@@ -347,6 +349,8 @@ function ProfilePageContent() {
       name: user.name,
       username: user.username,
       email: user.email || "",
+      bio: ((user as unknown as { bio?: string | null }).bio || ""),
+      avatar_url: user.avatar_url || null,
       newPassword: "",
       confirmNewPassword: "",
       verifyCode: "",
@@ -421,6 +425,8 @@ function ProfilePageContent() {
         name: editFormData.name.trim(),
         username: editFormData.username.trim(),
         email: normalizedEmail,
+        bio: editFormData.bio.trim(),
+        avatar_url: editFormData.avatar_url,
       });
 
       if (hasPasswordChange) {
@@ -1316,25 +1322,12 @@ function ProfilePageContent() {
   const handleAvatarFileChange = async (
     event: ChangeEvent<HTMLInputElement>
   ) => {
-    if (!user) return;
     const file = event.target.files?.[0];
     if (!file) return;
     try {
       setAvatarLoading(true);
       const avatarUrl = await uploadService.uploadImage(file, "avatars");
-      const updatedUser = await userService.updateProfile({
-        avatar_url: avatarUrl,
-      });
-      setUser((prev) =>
-        prev
-          ? {
-              ...prev,
-              ...updatedUser,
-              avatar_url: updatedUser.avatar_url ?? avatarUrl,
-            }
-          : prev
-      );
-      authService.dispatchAuthChange();
+      setEditFormData((prev) => ({ ...prev, avatar_url: avatarUrl }));
     } catch (error) {
       console.error("Ошибка обновления аватарки:", error);
       alert("Не удалось обновить аватарку");
@@ -1345,26 +1338,8 @@ function ProfilePageContent() {
   };
 
   const handleDeleteAvatar = async () => {
-    if (!user) return;
-    try {
-      setAvatarLoading(true);
-      const updatedUser = await userService.updateProfile({ avatar_url: null });
-      setUser((prev) =>
-        prev
-          ? {
-              ...prev,
-              ...updatedUser,
-              avatar_url: null,
-            }
-          : prev
-      );
-      authService.dispatchAuthChange();
-    } catch (error) {
-      console.error("Ошибка удаления аватарки:", error);
-      alert("Не удалось удалить аватарку");
-    } finally {
-      setAvatarLoading(false);
-    }
+    setEditFormData((prev) => ({ ...prev, avatar_url: null }));
+    setIsAvatarActionsOpen(false);
   };
 
   const handleDeleteProfile = async () => {
@@ -1419,19 +1394,6 @@ function ProfilePageContent() {
             recipesCount={stats.recipesCount}
             followingCount={stats.followingCount}
             followersCount={stats.followersCount}
-            avatarLoading={avatarLoading}
-            isAvatarActionsOpen={isAvatarActionsOpen}
-            avatarInputRef={avatarInputRef}
-            onToggleAvatarActions={() => setIsAvatarActionsOpen((prev) => !prev)}
-            onAvatarFileChange={handleAvatarFileChange}
-            onAvatarEditClick={() => {
-              avatarInputRef.current?.click();
-              setIsAvatarActionsOpen(false);
-            }}
-            onAvatarDeleteClick={() => {
-              void handleDeleteAvatar();
-              setIsAvatarActionsOpen(false);
-            }}
             onFollowingClick={() => void openFollowModal("following")}
             onFollowersClick={() => void openFollowModal("followers")}
             onEditProfileClick={handleEditProfile}
@@ -1450,10 +1412,17 @@ function ProfilePageContent() {
               setEditFormData={setEditFormData}
               handleSaveProfile={handleSaveProfile}
               handleResendEditVerificationCode={handleResendEditVerificationCode}
+              avatarLoading={avatarLoading}
+              isAvatarActionsOpen={isAvatarActionsOpen}
+              avatarInputRef={avatarInputRef}
+              onToggleAvatarActions={() => setIsAvatarActionsOpen((prev) => !prev)}
+              onAvatarFileChange={handleAvatarFileChange}
+              onAvatarDeleteClick={handleDeleteAvatar}
               closeEditModal={() => {
                 setIsEditModalOpen(false);
                 setIsEditVerificationStep(false);
                 setEditProfileMessage(null);
+                setIsAvatarActionsOpen(false);
               }}
               recipes={recipes}
               filteredRecipes={filteredRecipes}

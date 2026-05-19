@@ -1,7 +1,6 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
-import { ChangeEvent, RefObject } from "react";
 import { User } from "../../services/authService";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 import ProfileStats from "./ProfileStats";
@@ -11,13 +10,6 @@ interface ProfileHeaderCardProps {
   recipesCount: number;
   followingCount: number;
   followersCount: number;
-  avatarLoading: boolean;
-  isAvatarActionsOpen: boolean;
-  avatarInputRef: RefObject<HTMLInputElement | null>;
-  onToggleAvatarActions: () => void;
-  onAvatarFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  onAvatarEditClick: () => void;
-  onAvatarDeleteClick: () => void;
   onFollowingClick: () => void;
   onFollowersClick: () => void;
   onEditProfileClick: () => void;
@@ -31,13 +23,6 @@ export default function ProfileHeaderCard({
   recipesCount,
   followingCount,
   followersCount,
-  avatarLoading,
-  isAvatarActionsOpen,
-  avatarInputRef,
-  onToggleAvatarActions,
-  onAvatarFileChange,
-  onAvatarEditClick,
-  onAvatarDeleteClick,
   onFollowingClick,
   onFollowersClick,
   onEditProfileClick,
@@ -56,40 +41,7 @@ export default function ProfileHeaderCard({
             alt="avatar"
             className="h-full w-full object-cover"
           />
-          <button
-            type="button"
-            onClick={onToggleAvatarActions}
-            className="absolute inset-0 z-10"
-            aria-label="Открыть действия с аватаркой"
-          />
-          {isAvatarActionsOpen && (
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/55 p-2">
-              <button
-                type="button"
-                disabled={avatarLoading}
-                onClick={onAvatarEditClick}
-                className="w-full max-w-[130px] rounded-full bg-white px-3 py-1.5 font-nunito text-xs text-umami-dark-gray transition-colors hover:bg-[#f4f4f4] disabled:opacity-60"
-              >
-                {avatarLoading ? "Загрузка..." : "Изменить фото"}
-              </button>
-              <button
-                type="button"
-                disabled={avatarLoading}
-                onClick={onAvatarDeleteClick}
-                className="w-full max-w-[130px] rounded-full bg-red-500 px-3 py-1.5 font-nunito text-xs text-white transition-colors hover:bg-red-600 disabled:opacity-60"
-              >
-                Удалить фото
-              </button>
-            </div>
-          )}
         </div>
-        <input
-          ref={avatarInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={onAvatarFileChange}
-        />
 
         <div className="flex min-w-0 flex-col gap-5">
           <h1 className="font-nunito text-xl font-bold text-black">{user.name}</h1>

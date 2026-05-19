@@ -7,6 +7,7 @@ export interface User {
   username: string;
   name: string;
   avatar_url: string | null;
+  bio?: string | null;
   email?: string;
   role?: string;
   is_blocked?: boolean;

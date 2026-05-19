@@ -1,6 +1,6 @@
 "use client";
 
-import { RefObject } from "react";
+import { ChangeEvent, RefObject } from "react";
 import { FollowUser } from "../../services/followService";
 import { Recipe } from "../../services/recipeService";
 import EditProfileModal from "./EditProfileModal";
@@ -11,6 +11,8 @@ interface EditProfileFormData {
   name: string;
   username: string;
   email: string;
+  bio: string;
+  avatar_url: string | null;
   newPassword: string;
   confirmNewPassword: string;
   verifyCode: string;
@@ -25,6 +27,12 @@ interface ProfileOverviewSectionProps {
   setEditFormData: (next: EditProfileFormData) => void;
   handleSaveProfile: () => void;
   handleResendEditVerificationCode: () => void;
+  avatarLoading: boolean;
+  isAvatarActionsOpen: boolean;
+  avatarInputRef: RefObject<HTMLInputElement | null>;
+  onToggleAvatarActions: () => void;
+  onAvatarFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onAvatarDeleteClick: () => void;
   closeEditModal: () => void;
   recipes: Recipe[];
   filteredRecipes: Recipe[];
@@ -49,6 +57,12 @@ export default function ProfileOverviewSection({
   setEditFormData,
   handleSaveProfile,
   handleResendEditVerificationCode,
+  avatarLoading,
+  isAvatarActionsOpen,
+  avatarInputRef,
+  onToggleAvatarActions,
+  onAvatarFileChange,
+  onAvatarDeleteClick,
   closeEditModal,
   recipes,
   filteredRecipes,
@@ -76,6 +90,12 @@ export default function ProfileOverviewSection({
             onChange={setEditFormData}
             onSave={handleSaveProfile}
             onResendCode={handleResendEditVerificationCode}
+            avatarLoading={avatarLoading}
+            isAvatarActionsOpen={isAvatarActionsOpen}
+            avatarInputRef={avatarInputRef}
+            onToggleAvatarActions={onToggleAvatarActions}
+            onAvatarFileChange={onAvatarFileChange}
+            onAvatarDeleteClick={onAvatarDeleteClick}
             onClose={closeEditModal}
           />
         ) : (
