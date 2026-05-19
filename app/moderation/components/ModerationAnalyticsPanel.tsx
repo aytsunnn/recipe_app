@@ -1,9 +1,10 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AdminAnalyticsResponse, moderationService } from "../../services/moderationService";
+import { recipeService } from "../../services/recipeService";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 
 type ChartPoint = { label: string; value: number };
@@ -11,7 +12,6 @@ type ChartPoint = { label: string; value: number };
 type TopItem = {
   id: string;
   title: string;
-  subtitle?: string;
   imageUrl: string | null;
   count: number;
   href: string;
@@ -114,17 +114,29 @@ const extractTopRecipes = (data: AdminAnalyticsResponse): TopItem[] => {
     .map((item) => {
       if (!item || typeof item !== "object") return null;
       const row = item as Record<string, unknown>;
+      const recipeNode = (row.Recipe ||
+        row.recipe ||
+        row.Post ||
+        row.post) as Record<string, unknown> | undefined;
       const count =
         toNumber(row.count) ?? toNumber(row.likes_count) ?? toNumber(row.views_count) ?? toNumber(row.total) ?? 0;
-      const idRaw = row.recipe_id ?? row.id ?? (row.Recipe as Record<string, unknown> | undefined)?.id;
+      const idRaw = row.recipe_id ?? row.id ?? recipeNode?.id;
       if (idRaw === undefined || idRaw === null) return null;
       const title =
         (row.title as string | undefined) ||
-        ((row.Recipe as Record<string, unknown> | undefined)?.title as string | undefined) ||
+        (recipeNode?.title as string | undefined) ||
         `Рецепт #${idRaw}`;
       const image =
         (row.image_url as string | null | undefined) ||
-        ((row.Recipe as Record<string, unknown> | undefined)?.image_url as string | null | undefined) ||
+        (recipeNode?.image_url as string | null | undefined) ||
+        (row.image as string | null | undefined) ||
+        (row.photo as string | null | undefined) ||
+        (row.photo_url as string | null | undefined) ||
+        (row.preview as string | null | undefined) ||
+        (recipeNode?.image as string | null | undefined) ||
+        (recipeNode?.photo as string | null | undefined) ||
+        (recipeNode?.photo_url as string | null | undefined) ||
+        (recipeNode?.preview as string | null | undefined) ||
         null;
 
       return {
@@ -148,27 +160,38 @@ const extractTopUsers = (data: AdminAnalyticsResponse): TopItem[] => {
     .map((item) => {
       if (!item || typeof item !== "object") return null;
       const row = item as Record<string, unknown>;
+      const userNode = (row.User ||
+        row.user ||
+        row.Author ||
+        row.author ||
+        row.Profile ||
+        row.profile) as Record<string, unknown> | undefined;
       const count =
         toNumber(row.count) ?? toNumber(row.followers_count) ?? toNumber(row.likes_count) ?? toNumber(row.total) ?? 0;
-      const idRaw = row.user_id ?? row.id ?? (row.User as Record<string, unknown> | undefined)?.id;
+      const idRaw = row.user_id ?? row.id ?? userNode?.id;
       if (idRaw === undefined || idRaw === null) return null;
-      const username =
-        (row.username as string | undefined) ||
-        ((row.User as Record<string, unknown> | undefined)?.username as string | undefined) ||
-        `user_${idRaw}`;
       const name =
         (row.name as string | undefined) ||
-        ((row.User as Record<string, unknown> | undefined)?.name as string | undefined) ||
-        username;
+        (userNode?.name as string | undefined) ||
+        `user_${idRaw}`;
       const image =
         (row.avatar_url as string | null | undefined) ||
-        ((row.User as Record<string, unknown> | undefined)?.avatar_url as string | null | undefined) ||
+        (userNode?.avatar_url as string | null | undefined) ||
+        (row.avatar as string | null | undefined) ||
+        (row.avatarUrl as string | null | undefined) ||
+        (row.photo as string | null | undefined) ||
+        (row.photo_url as string | null | undefined) ||
+        (row.image_url as string | null | undefined) ||
+        (userNode?.avatar as string | null | undefined) ||
+        (userNode?.avatarUrl as string | null | undefined) ||
+        (userNode?.photo as string | null | undefined) ||
+        (userNode?.photo_url as string | null | undefined) ||
+        (userNode?.image_url as string | null | undefined) ||
         null;
 
       return {
         id: String(idRaw),
         title: name,
-        subtitle: `@${username}`,
         imageUrl: image || null,
         count,
         href: `/users/${idRaw}`,
@@ -194,7 +217,7 @@ function TopHorizontalList({ title, items }: { title: string; items: TopItem[] }
             <Image
               src={normalizeImageUrl(
                 item.imageUrl,
-                title.includes("рецептов") ? "/image_placeholder.jpg" : "/avatar.jpg"
+                title.includes("рецептов") ? "/placeholder.jpg" : "/avatar.jpg"
               )}
               alt={item.title}
               width={44}
@@ -203,7 +226,6 @@ function TopHorizontalList({ title, items }: { title: string; items: TopItem[] }
             />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold text-umami-dark-gray">{item.title}</p>
-              {item.subtitle ? <p className="truncate text-xs text-umami-gray">{item.subtitle}</p> : null}
               <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-[#f1ebdb]">
                 <div
                   className="h-full bg-umami-orange"
@@ -220,128 +242,79 @@ function TopHorizontalList({ title, items }: { title: string; items: TopItem[] }
 }
 
 function AnalyticsPlot({ title, points, mode }: { title: string; points: ChartPoint[]; mode: "bar" | "line" }) {
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const [plotUnavailable, setPlotUnavailable] = useState(false);
-
-  useEffect(() => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper || points.length === 0) return;
-    let isUnmounted = false;
-    let chart: Element | undefined;
-    let observer: ResizeObserver | null = null;
-
-    const run = async () => {
-      try {
-        const dynamicImport = new Function(
-          "moduleName",
-          "return import(moduleName)"
-        ) as (moduleName: string) => Promise<unknown>;
-        const plotModule = (await dynamicImport("@observablehq/plot")) as Record<
-          string,
-          unknown
-        >;
-        const Plot = plotModule as Record<string, (...args: unknown[]) => unknown>;
-        if (isUnmounted) return;
-        setPlotUnavailable(false);
-
-        const render = (width: number) =>
-          (Plot.plot as (...args: unknown[]) => SVGSVGElement)({
-            width,
-            height: 320,
-            marginLeft: 48,
-            marginBottom: 80,
-            marginTop: 24,
-            style: {
-              background: "white",
-              color: "#2f2f2f",
-              fontFamily: "Nunito, sans-serif",
-            },
-            x: {
-              label: null,
-              tickRotate: -35,
-              tickSize: 0,
-            },
-            y: {
-              label: null,
-              grid: true,
-              tickSize: 0,
-            },
-            marks:
-              mode === "line"
-                ? [
-                    (Plot.line as (...args: unknown[]) => unknown)(points, {
-                      x: "label",
-                      y: "value",
-                      stroke: "#f19a4b",
-                      strokeWidth: 3,
-                    }),
-                    (Plot.dot as (...args: unknown[]) => unknown)(points, { x: "label", y: "value", r: 4, fill: "#f19a4b" }),
-                    (Plot.tip as (...args: unknown[]) => unknown)(
-                      points,
-                      (Plot.pointerX as (...args: unknown[]) => unknown)({
-                        x: "label",
-                        y: "value",
-                        title: (d: ChartPoint) => `${d.label}: ${d.value}`,
-                      })
-                    ),
-                    (Plot.ruleY as (...args: unknown[]) => unknown)([0]),
-                  ]
-                : [
-                    (Plot.barY as (...args: unknown[]) => unknown)(points, {
-                      x: "label",
-                      y: "value",
-                      fill: "#f19a4b",
-                      title: (d: ChartPoint) => `${d.label}: ${d.value}`,
-                    }),
-                    (Plot.tip as (...args: unknown[]) => unknown)(
-                      points,
-                      (Plot.pointerX as (...args: unknown[]) => unknown)({
-                        x: "label",
-                        y: "value",
-                        title: (d: ChartPoint) => `${d.label}: ${d.value}`,
-                      })
-                    ),
-                    (Plot.ruleY as (...args: unknown[]) => unknown)([0]),
-                  ],
-          });
-
-        const draw = () => {
-          if (!wrapper) return undefined;
-          const width = Math.max(wrapper.clientWidth, 320);
-          wrapper.innerHTML = "";
-          const nextChart = render(width);
-          wrapper.append(nextChart);
-          return nextChart;
-        };
-
-        chart = draw();
-        observer = new ResizeObserver(() => {
-          chart?.remove();
-          chart = draw();
-        });
-        observer.observe(wrapper);
-      } catch (error) {
-        console.error("Не удалось загрузить библиотеку графиков:", error);
-        setPlotUnavailable(true);
-      }
-    };
-
-    void run();
-
-    return () => {
-      isUnmounted = true;
-      observer?.disconnect();
-      chart?.remove();
-    };
-  }, [points, mode]);
+  const max = Math.max(...points.map((point) => point.value), 1);
+  const chartHeight = 220;
+  const chartWidth = Math.max(640, points.length * 64);
+  const step = chartWidth / Math.max(points.length, 1);
+  const barWidth = Math.max(18, Math.min(42, step * 0.55));
+  const linePath = points
+    .map((point, index) => {
+      const x = index * step + step / 2;
+      const y = chartHeight - (point.value / max) * (chartHeight - 16);
+      return `${index === 0 ? "M" : "L"}${x},${y}`;
+    })
+    .join(" ");
 
   return (
     <div className="rounded-xl border border-umami-light-gray/50 bg-white p-3">
       <h3 className="mb-3 font-nunito text-base font-bold text-umami-dark-gray">{title}</h3>
-      <div ref={wrapperRef} className="w-full overflow-x-auto" />
-      {plotUnavailable ? (
-        <p className="mt-2 text-xs text-umami-gray">График недоступен: не установлена библиотека @observablehq/plot.</p>
-      ) : null}
+      <div className="w-full overflow-x-auto">
+        <svg width={chartWidth} height={280} role="img" aria-label={title}>
+          <line x1={0} y1={chartHeight} x2={chartWidth} y2={chartHeight} stroke="#e6e0d2" />
+          {[0.25, 0.5, 0.75, 1].map((k) => {
+            const y = chartHeight - (chartHeight - 16) * k;
+            return <line key={k} x1={0} y1={y} x2={chartWidth} y2={y} stroke="#f3efe6" />;
+          })}
+
+          {mode === "bar"
+            ? points.map((point, index) => {
+                const x = index * step + (step - barWidth) / 2;
+                const h = (point.value / max) * (chartHeight - 16);
+                const y = chartHeight - h;
+                return (
+                  <g key={`${point.label}-${index}`}>
+                    <rect x={x} y={y} width={barWidth} height={h} fill="#f19a4b">
+                      <title>{`${point.label}: ${point.value}`}</title>
+                    </rect>
+                    <text
+                      x={x + barWidth / 2}
+                      y={chartHeight + 16}
+                      textAnchor="middle"
+                      fontSize="11"
+                      fill="#7f7f7f"
+                    >
+                      {point.label.slice(0, 12)}
+                    </text>
+                  </g>
+                );
+              })
+            : (
+                <>
+                  <path d={linePath} fill="none" stroke="#f19a4b" strokeWidth={3} />
+                  {points.map((point, index) => {
+                    const x = index * step + step / 2;
+                    const y = chartHeight - (point.value / max) * (chartHeight - 16);
+                    return (
+                      <g key={`${point.label}-${index}`}>
+                        <circle cx={x} cy={y} r={4} fill="#f19a4b">
+                          <title>{`${point.label}: ${point.value}`}</title>
+                        </circle>
+                        <text
+                          x={x}
+                          y={chartHeight + 16}
+                          textAnchor="middle"
+                          fontSize="11"
+                          fill="#7f7f7f"
+                        >
+                          {point.label.slice(0, 12)}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </>
+              )}
+        </svg>
+      </div>
     </div>
   );
 }
@@ -350,14 +323,41 @@ export default function ModerationAnalyticsPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<AdminAnalyticsResponse>({});
+  const [userAvatarsById, setUserAvatarsById] = useState<Record<string, string | null>>({});
+  const [recipeImagesById, setRecipeImagesById] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         setError(null);
-        const result = await moderationService.getAnalytics();
+        const [result, usersPage] = await Promise.all([
+          moderationService.getAnalytics(),
+          moderationService.getUsers(1, 500),
+        ]);
+        const avatarMap: Record<string, string | null> = {};
+        usersPage.items.forEach((user) => {
+          avatarMap[String(user.id)] = user.avatar_url ?? null;
+        });
+        const initialTopRecipes = extractTopRecipes(result);
+        const needRecipeImages = initialTopRecipes.filter((recipe) => !recipe.imageUrl);
+        const recipePairs = await Promise.all(
+          needRecipeImages.map(async (recipe) => {
+            try {
+              const full = await recipeService.getById(recipe.id);
+              return [recipe.id, full.image_url ?? null] as const;
+            } catch {
+              return [recipe.id, null] as const;
+            }
+          })
+        );
+        const recipeMap: Record<string, string | null> = {};
+        recipePairs.forEach(([id, image]) => {
+          recipeMap[id] = image;
+        });
         setData(result);
+        setUserAvatarsById(avatarMap);
+        setRecipeImagesById(recipeMap);
       } catch (err) {
         console.error("Ошибка загрузки аналитики:", err);
         setError("Не удалось загрузить аналитику");
@@ -379,8 +379,22 @@ export default function ModerationAnalyticsPanel() {
       .filter((item): item is { key: string; value: number } => Boolean(item));
   }, [data]);
 
-  const recipeTop = useMemo(() => extractTopRecipes(data), [data]);
-  const userTop = useMemo(() => extractTopUsers(data), [data]);
+  const recipeTop = useMemo(
+    () =>
+      extractTopRecipes(data).map((item) => ({
+        ...item,
+        imageUrl: item.imageUrl || recipeImagesById[item.id] || null,
+      })),
+    [data, recipeImagesById]
+  );
+  const userTop = useMemo(
+    () =>
+      extractTopUsers(data).map((item) => ({
+        ...item,
+        imageUrl: item.imageUrl || userAvatarsById[item.id] || null,
+      })),
+    [data, userAvatarsById]
+  );
 
   const charts = useMemo(() => {
     const skipKeys = new Set<string>();
