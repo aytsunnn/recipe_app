@@ -19,6 +19,7 @@ import ModerationUserCard from "./components/ModerationUserCard";
 import ModerationReportCard from "./components/ModerationReportCard";
 import WeekMenuAdminPanel from "./components/WeekMenuAdminPanel";
 import ModerationAnalyticsPanel from "./components/ModerationAnalyticsPanel";
+import ModerationBroadcastPanel from "./components/ModerationBroadcastPanel";
 
 const toIdList = (value: string): number[] =>
   value
@@ -32,7 +33,7 @@ export default function ModerationPage() {
   const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "analytics" | "reports" | "users" | "week-menu"
+    "analytics" | "reports" | "users" | "week-menu" | "broadcast"
   >("reports");
   const [reports, setReports] = useState<ModerationReport[]>([]);
   const [users, setUsers] = useState<ModerationUser[]>([]);
@@ -755,8 +756,10 @@ export default function ModerationPage() {
                   </button>
                 </div>
               </>
-            ) : isAdmin ? (
+            ) : activeTab === "week-menu" && isAdmin ? (
               <WeekMenuAdminPanel />
+            ) : activeTab === "broadcast" && isAdmin ? (
+              <ModerationBroadcastPanel />
             ) : null}
           </div>
         </div>

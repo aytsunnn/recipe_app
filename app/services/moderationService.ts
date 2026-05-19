@@ -413,6 +413,10 @@ class ModerationService {
     }
     return {};
   }
+
+  async sendBroadcast(message: string): Promise<void> {
+    await apiClient.post("/admin/notifications/broadcast", { message });
+  }
 }
 
 export const moderationService = new ModerationService();

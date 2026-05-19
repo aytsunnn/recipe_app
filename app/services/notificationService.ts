@@ -45,6 +45,13 @@ class NotificationService {
       return "подписался(ась) на вас";
     }
     if (
+      type.includes("broadcast") ||
+      type.includes("system") ||
+      type.includes("notification")
+    ) {
+      return "Новое уведомление";
+    }
+    if (
       type.includes("recipe") ||
       type.includes("post") ||
       type.includes("publish") ||
@@ -250,6 +257,14 @@ class NotificationService {
         const items = parsed.list
           .filter((row) => {
             const raw = row as Record<string, unknown>;
+            const type =
+              typeof raw.type === "string"
+                ? raw.type.toLowerCase()
+                : typeof raw.event === "string"
+                ? raw.event.toLowerCase()
+                : "";
+            const hasExplicitMessage =
+              typeof raw.message === "string" && raw.message.trim().length > 0;
             const userId =
               raw.user_id !== null && raw.user_id !== undefined
                 ? String(raw.user_id)
@@ -258,6 +273,13 @@ class NotificationService {
               raw.actor_id !== null && raw.actor_id !== undefined
                 ? String(raw.actor_id)
                 : "";
+            const isSystemOrBroadcast =
+              type.includes("broadcast") ||
+              type.includes("system") ||
+              type.includes("admin") ||
+              hasExplicitMessage;
+
+            if (isSystemOrBroadcast) return true;
             return !(userId && actorId && userId === actorId);
           })
           .map((row) => this.normalize(row));

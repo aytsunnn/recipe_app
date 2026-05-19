@@ -1,8 +1,8 @@
 ﻿"use client";
 
 interface ModerationTabsProps {
-  activeTab: "analytics" | "reports" | "users" | "week-menu";
-  onChange: (tab: "analytics" | "reports" | "users" | "week-menu") => void;
+  activeTab: "analytics" | "reports" | "users" | "week-menu" | "broadcast";
+  onChange: (tab: "analytics" | "reports" | "users" | "week-menu" | "broadcast") => void;
   isAdmin: boolean;
 }
 
@@ -49,17 +49,30 @@ export default function ModerationTabs({ activeTab, onChange, isAdmin }: Moderat
         </button>
 
         {isAdmin ? (
-          <button
-            type="button"
-            onClick={() => onChange("week-menu")}
-            className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
-              activeTab === "week-menu"
-                ? "bg-umami-orange text-white"
-                : "bg-[#f3efe2] text-umami-dark-gray hover:bg-[#ece4cf]"
-            }`}
-          >
-            Меню недели
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => onChange("week-menu")}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
+                activeTab === "week-menu"
+                  ? "bg-umami-orange text-white"
+                  : "bg-[#f3efe2] text-umami-dark-gray hover:bg-[#ece4cf]"
+              }`}
+            >
+              Меню недели
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange("broadcast")}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
+                activeTab === "broadcast"
+                  ? "bg-umami-orange text-white"
+                  : "bg-[#f3efe2] text-umami-dark-gray hover:bg-[#ece4cf]"
+              }`}
+            >
+              Рассылка
+            </button>
+          </>
         ) : null}
       </div>
     </div>

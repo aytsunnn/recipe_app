@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AuthModal from "./AuthModal";
 import RegisterModal from "./RegisterModal";
 import { authService } from "../services/authService";
 import { normalizeImageUrl } from "../utils/imageUrl";
+import { notificationService } from "../services/notificationService";
+import { useUiFeedback } from "./UiFeedbackProvider";
 
 interface User {
   id: string;
@@ -32,8 +34,11 @@ function HeaderContent() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const knownNotificationIdsRef = useRef<Set<string>>(new Set());
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useUiFeedback();
   const [searchQuery, setSearchQuery] = useState(
     searchParams?.get("search") || ""
   );
@@ -61,6 +66,60 @@ function HeaderContent() {
       window.removeEventListener("auth-change", loadUser);
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadNotifications(0);
+      knownNotificationIdsRef.current = new Set();
+      return;
+    }
+
+    let cancelled = false;
+    let isFirstPoll = true;
+
+    const pollNotifications = async () => {
+      try {
+        const result = await notificationService.getMyNotifications(1, 20);
+        if (cancelled) return;
+
+        const unread = result.items.filter((item) => !item.is_read).length;
+        setUnreadNotifications(unread);
+
+        const ids = new Set(result.items.map((item) => item.id));
+        if (isFirstPoll) {
+          knownNotificationIdsRef.current = ids;
+          isFirstPoll = false;
+          return;
+        }
+
+        const newItems = result.items.filter(
+          (item) => !knownNotificationIdsRef.current.has(item.id)
+        );
+        if (newItems.length > 0) {
+          const fresh = newItems[0];
+          toast(
+            fresh.message && fresh.message.trim().length > 0
+              ? fresh.message
+              : "Новое уведомление",
+            "info"
+          );
+          newItems.forEach((item) => knownNotificationIdsRef.current.add(item.id));
+        }
+      } catch (error) {
+        console.error("Ошибка загрузки уведомлений в шапке:", error);
+      }
+    };
+
+    void pollNotifications();
+    const intervalId = window.setInterval(() => {
+      void pollNotifications();
+    }, 15000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [user, toast]);
 
   const handleSwitchToRegister = () => {
     setIsAuthModalOpen(false);
@@ -187,7 +246,7 @@ function HeaderContent() {
           <div className="flex gap-2.5 items-center">
             <Link
               href="/notifications"
-              className="w-9 h-9 rounded-full border flex justify-center items-center border-umami-light-gray/50"
+              className="relative w-9 h-9 rounded-full border flex justify-center items-center border-umami-light-gray/50"
             >
               <Image
                 width={22}
@@ -196,6 +255,11 @@ function HeaderContent() {
                 alt="notifications"
                 className="w-5.25 h-5.25"
               />
+              {unreadNotifications > 0 ? (
+                <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-umami-orange px-1 text-[10px] font-bold leading-none text-white">
+                  {unreadNotifications > 99 ? "99+" : unreadNotifications}
+                </span>
+              ) : null}
             </Link>
             <button
               onClick={() => void handleLogout()}
