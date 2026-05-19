@@ -232,12 +232,20 @@ function AnalyticsPlot({ title, points, mode }: { title: string; points: ChartPo
 
     const run = async () => {
       try {
-        const Plot = await import("@observablehq/plot");
+        const dynamicImport = new Function(
+          "moduleName",
+          "return import(moduleName)"
+        ) as (moduleName: string) => Promise<unknown>;
+        const plotModule = (await dynamicImport("@observablehq/plot")) as Record<
+          string,
+          unknown
+        >;
+        const Plot = plotModule as Record<string, (...args: unknown[]) => unknown>;
         if (isUnmounted) return;
         setPlotUnavailable(false);
 
         const render = (width: number) =>
-          Plot.plot({
+          (Plot.plot as (...args: unknown[]) => SVGSVGElement)({
             width,
             height: 320,
             marginLeft: 48,
@@ -261,39 +269,39 @@ function AnalyticsPlot({ title, points, mode }: { title: string; points: ChartPo
             marks:
               mode === "line"
                 ? [
-                    Plot.line(points, {
+                    (Plot.line as (...args: unknown[]) => unknown)(points, {
                       x: "label",
                       y: "value",
                       stroke: "#f19a4b",
                       strokeWidth: 3,
                     }),
-                    Plot.dot(points, { x: "label", y: "value", r: 4, fill: "#f19a4b" }),
-                    Plot.tip(
+                    (Plot.dot as (...args: unknown[]) => unknown)(points, { x: "label", y: "value", r: 4, fill: "#f19a4b" }),
+                    (Plot.tip as (...args: unknown[]) => unknown)(
                       points,
-                      Plot.pointerX({
+                      (Plot.pointerX as (...args: unknown[]) => unknown)({
                         x: "label",
                         y: "value",
                         title: (d: ChartPoint) => `${d.label}: ${d.value}`,
                       })
                     ),
-                    Plot.ruleY([0]),
+                    (Plot.ruleY as (...args: unknown[]) => unknown)([0]),
                   ]
                 : [
-                    Plot.barY(points, {
+                    (Plot.barY as (...args: unknown[]) => unknown)(points, {
                       x: "label",
                       y: "value",
                       fill: "#f19a4b",
                       title: (d: ChartPoint) => `${d.label}: ${d.value}`,
                     }),
-                    Plot.tip(
+                    (Plot.tip as (...args: unknown[]) => unknown)(
                       points,
-                      Plot.pointerX({
+                      (Plot.pointerX as (...args: unknown[]) => unknown)({
                         x: "label",
                         y: "value",
                         title: (d: ChartPoint) => `${d.label}: ${d.value}`,
                       })
                     ),
-                    Plot.ruleY([0]),
+                    (Plot.ruleY as (...args: unknown[]) => unknown)([0]),
                   ],
           });
 
