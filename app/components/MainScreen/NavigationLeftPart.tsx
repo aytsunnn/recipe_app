@@ -13,6 +13,7 @@ const navItems = [
   { href: "/", label: "Главная", icon: "/House.svg" },
   { href: "/profile", label: "Личный кабинет", icon: "/User.svg" },
   { href: "/favorites", label: "Избранное", icon: "/Favorites.svg" },
+  { href: "/diet-plans", label: "Рационы", icon: "/Orange.svg" },
   {
     href: "/week-menu",
     label: "Меню недели",

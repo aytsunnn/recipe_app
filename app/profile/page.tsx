@@ -27,11 +27,13 @@ import {
 import { normalizeImageUrl } from "../utils/imageUrl";
 import { toolsService } from "../services/toolsService";
 import { useUiFeedback } from "../components/UiFeedbackProvider";
+import { dietPlanService } from "../services/dietPlanService";
 
 interface UserStats {
   followingCount: number;
   followersCount: number;
   recipesCount: number;
+  dietPlansCount: number;
 }
 
 interface IngredientRow {
@@ -189,6 +191,7 @@ function ProfilePageContent() {
     followingCount: 0,
     followersCount: 0,
     recipesCount: 0,
+    dietPlansCount: 0,
   });
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [friends, setFriends] = useState<FollowUser[]>([]);
@@ -277,11 +280,12 @@ function ProfilePageContent() {
   };
 
   const loadProfile = async (currentUser: User) => {
-    const [following, followers, ownRecipesRaw] =
+    const [following, followers, ownRecipesRaw, myDietPlans] =
       await Promise.all([
         followService.getFollowing(currentUser.id),
         followService.getFollowers(currentUser.id),
         userService.getRecipes(currentUser.id),
+        dietPlanService.getMine(),
       ]);
 
     const followingIds = new Set(following.map((follow) => follow.id));
@@ -306,6 +310,7 @@ function ProfilePageContent() {
       followingCount: following.length,
       followersCount: followers.length,
       recipesCount: ownRecipes.length,
+      dietPlansCount: myDietPlans.length,
     });
   };
 
@@ -1400,6 +1405,25 @@ function ProfilePageContent() {
             onDeleteProfileClick={() => void handleDeleteProfile()}
             recipeActionLoading={recipeActionLoading}
           />
+
+          <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="font-nunito text-lg font-bold text-umami-dark-gray">
+                  Мои рационы
+                </p>
+                <p className="text-sm text-umami-gray">
+                  Создано рационов: {stats.dietPlansCount}
+                </p>
+              </div>
+              <Link
+                href="/diet-plans"
+                className="rounded-full bg-umami-orange px-4 py-2 font-nunito text-xs font-bold text-white"
+              >
+                Перейти к рационам
+              </Link>
+            </div>
+          </div>
 
           {!isRecipeEditorOpen && (
             <ProfileOverviewSection

@@ -1,8 +1,8 @@
 ﻿"use client";
 
 interface ModerationTabsProps {
-  activeTab: "analytics" | "reports" | "users" | "week-menu" | "broadcast";
-  onChange: (tab: "analytics" | "reports" | "users" | "week-menu" | "broadcast") => void;
+  activeTab: "analytics" | "reports" | "users" | "week-menu" | "broadcast" | "meta";
+  onChange: (tab: "analytics" | "reports" | "users" | "week-menu" | "broadcast" | "meta") => void;
   isAdmin: boolean;
 }
 
@@ -71,6 +71,17 @@ export default function ModerationTabs({ activeTab, onChange, isAdmin }: Moderat
               }`}
             >
               Рассылка
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange("meta")}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
+                activeTab === "meta"
+                  ? "bg-umami-orange text-white"
+                  : "bg-[#f3efe2] text-umami-dark-gray hover:bg-[#ece4cf]"
+              }`}
+            >
+              Meta
             </button>
           </>
         ) : null}

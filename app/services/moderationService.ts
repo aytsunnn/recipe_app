@@ -66,6 +66,14 @@ export interface CreateReportData {
 }
 
 export type AdminAnalyticsResponse = Record<string, unknown>;
+export type MetaEntityType =
+  | "categories"
+  | "kitchens"
+  | "cooking-types"
+  | "celebrations"
+  | "units"
+  | "ingredients";
+export type MetaItem = Record<string, unknown> & { id: string | number };
 
 class ModerationService {
   private normalizeUsers(rawList: unknown[]): ModerationUser[] {
@@ -416,6 +424,36 @@ class ModerationService {
 
   async sendBroadcast(message: string): Promise<void> {
     await apiClient.post("/admin/notifications/broadcast", { message });
+  }
+
+  async getMetaItems(type: MetaEntityType): Promise<MetaItem[]> {
+    const data = await apiClient.get<unknown>(`/meta/${type}`);
+    if (Array.isArray(data)) return data as MetaItem[];
+    if (data && typeof data === "object") {
+      const raw = data as Record<string, unknown>;
+      const candidate = raw.items || raw.data || raw.rows;
+      if (Array.isArray(candidate)) return candidate as MetaItem[];
+    }
+    return [];
+  }
+
+  async createMetaItem(
+    type: MetaEntityType,
+    payload: Record<string, unknown>
+  ): Promise<MetaItem> {
+    return apiClient.post<MetaItem>(`/meta/${type}`, payload);
+  }
+
+  async updateMetaItem(
+    type: MetaEntityType,
+    id: string | number,
+    payload: Record<string, unknown>
+  ): Promise<MetaItem> {
+    return apiClient.put<MetaItem>(`/meta/${type}/${id}`, payload);
+  }
+
+  async deleteMetaItem(type: MetaEntityType, id: string | number): Promise<void> {
+    await apiClient.delete(`/meta/${type}/${id}`);
   }
 }
 
