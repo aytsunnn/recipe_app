@@ -27,6 +27,7 @@ function MobileCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const showFilters = searchParams?.get("filters") === "true";
 
   useEffect(() => {
     let cancelled = false;
@@ -61,7 +62,7 @@ function MobileCategories() {
     router.push(`/?${params.toString()}`, { scroll: false });
   };
 
-  if (!categories.length) return null;
+  if (!categories.length || showFilters) return null;
 
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

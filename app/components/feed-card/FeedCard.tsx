@@ -721,7 +721,7 @@ export default function FeedCard({
         <div className="border-t border-umami-light-gray/50 pt-2.5">
           {loadingComment ? (
             <p className="font-inter text-xs text-umami-gray">
-              Р—Р°РіСЂСѓР·РєР° РєРѕРјРјРµРЅС‚Р°СЂРёСЏ...
+              Загрузка комментария...
             </p>
           ) : lastComment ? (
             <div className="flex gap-2">

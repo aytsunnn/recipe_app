@@ -1052,7 +1052,7 @@ export default function RecipeDetailsPage() {
             <button
               type="button"
               onClick={handleCookedToggle}
-              className={`rounded-full px-2 py-1.25 font-nunito text-xs  ${
+              className={`whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-nunito md:px-2.5 md:py-1.25 md:text-xs ${
                 isCooked
                   ? "bg-white border border-umami-gray/50 text-umami-orange"
                   : "bg-umami-orange text-white"
@@ -1082,10 +1082,10 @@ export default function RecipeDetailsPage() {
             </button>
           </div>
 
-          <div className="mt-5 grid h-10 grid-cols-4 overflow-hidden rounded-[20px] bg-white border border-umami-light-gray/50">
+          <div className="mt-5 grid h-9 grid-cols-4 overflow-hidden rounded-[20px] border border-umami-light-gray/50 bg-white md:h-10">
             <button
               onClick={() => setActiveTab("info")}
-              className={`font-nunito text-base ${
+              className={`px-1 text-[11px] font-nunito md:text-sm lg:text-base ${
                 activeTab === "info"
                   ? "bg-umami-orange text-white rounded-[20px]"
                   : "text-umami-gray"
@@ -1095,7 +1095,7 @@ export default function RecipeDetailsPage() {
             </button>
             <button
               onClick={() => setActiveTab("ingredients")}
-              className={`font-nunito text-base ${
+              className={`px-1 text-[11px] font-nunito md:text-sm lg:text-base ${
                 activeTab === "ingredients"
                   ? "bg-umami-orange text-white rounded-[20px]"
                   : "text-umami-gray"
@@ -1105,7 +1105,7 @@ export default function RecipeDetailsPage() {
             </button>
             <button
               onClick={() => setActiveTab("recipe")}
-              className={`font-nunito text-base ${
+              className={`px-1 text-[11px] font-nunito md:text-sm lg:text-base ${
                 activeTab === "recipe"
                   ? "bg-umami-orange text-white rounded-[20px]"
                   : "text-umami-gray"
@@ -1122,7 +1122,7 @@ export default function RecipeDetailsPage() {
                   await loadComments();
                 }
               }}
-              className={`font-nunito text-base ${
+              className={`px-1 text-[11px] font-nunito md:text-sm lg:text-base ${
                 activeTab === "comments"
                   ? "bg-umami-orange text-white rounded-[20px]"
                   : "text-umami-gray"
@@ -1135,28 +1135,28 @@ export default function RecipeDetailsPage() {
           <div className="mt-4 rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
             {activeTab === "info" && (
               <div className="flex flex-col gap-3">
-                <div className="grid grid-cols-3 gap-10">
+                <div className="grid grid-cols-3 gap-2 md:gap-4">
                   <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white">
-                    <p className="font-nunito text-base font-bold text-umami-orange">
+                    <p className="font-nunito text-sm font-bold text-umami-orange md:text-base">
                       {recipe.cooking_time} мин
                     </p>
-                    <p className="font-nunito text-sm text-umami-light-gray">
+                    <p className="font-nunito text-[11px] text-umami-light-gray md:text-sm">
                       готовка
                     </p>
                   </div>
                   <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white">
-                    <p className="font-nunito text-base font-bold text-umami-orange">
+                    <p className="font-nunito text-sm font-bold text-umami-orange md:text-base">
                       {recipe.portion} порции
                     </p>
-                    <p className="font-nunito text-sm text-umami-light-gray">
+                    <p className="font-nunito text-[11px] text-umami-light-gray md:text-sm">
                       выход
                     </p>
                   </div>
                   <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white">
-                    <p className="font-nunito text-base font-bold text-umami-orange">
+                    <p className="font-nunito text-sm font-bold text-umami-orange md:text-base">
                       {recipe.calorific ?? 0}
                     </p>
-                    <p className="font-nunito text-sm text-umami-light-gray">
+                    <p className="font-nunito text-[11px] text-umami-light-gray md:text-sm">
                       ккал
                     </p>
                   </div>
@@ -1303,10 +1303,7 @@ export default function RecipeDetailsPage() {
                   .slice()
                   .sort((a, b) => (a.step_number ?? 0) - (b.step_number ?? 0))
                   .map((step, index) => (
-                    <div
-                      key={step.id}
-                      className="rounded-xl border border-umami-light-gray/40 p-3"
-                    >
+                    <div key={step.id} className="py-2">
                       <p className="font-nunito text-sm font-bold text-umami-orange">
                         Шаг {step.step_number ?? index + 1}
                       </p>
