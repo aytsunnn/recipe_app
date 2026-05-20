@@ -8,7 +8,7 @@ import WeekMenuContent from "./components/WeekMenuContent";
 export default function WeekMenuPage() {
   return (
     <div className="flex w-full gap-5">
-      <div className="hidden w-55.75 lg:flex">
+      <div className="hidden lg:flex lg:w-55.75">
         <Suspense fallback={<div className="text-umami-gray">Загрузка...</div>}>
           <LeftPart />
         </Suspense>
@@ -18,9 +18,12 @@ export default function WeekMenuPage() {
         <WeekMenuContent editable={false} />
       </div>
 
-      <div className="hidden w-63.75 lg:flex">
+      <div className="hidden lg:flex lg:w-63.75">
         <RightPart />
       </div>
     </div>
   );
 }
+
+
+

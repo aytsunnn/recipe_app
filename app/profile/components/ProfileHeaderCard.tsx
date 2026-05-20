@@ -15,6 +15,7 @@ interface ProfileHeaderCardProps {
   onFollowersClick: () => void;
   onEditProfileClick: () => void;
   onDeleteProfileClick: () => void;
+  onLogoutClick: () => void;
   recipeActionLoading: boolean;
 }
 
@@ -27,6 +28,7 @@ export default function ProfileHeaderCard({
   onFollowersClick,
   onEditProfileClick,
   onDeleteProfileClick,
+  onLogoutClick,
   recipeActionLoading,
 }: ProfileHeaderCardProps) {
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -86,6 +88,16 @@ export default function ProfileHeaderCard({
               className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
             >
               Удалить профиль
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActionsOpen(false);
+                onLogoutClick();
+              }}
+              className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
+            >
+              Выйти
             </button>
           </div>
         ) : null}

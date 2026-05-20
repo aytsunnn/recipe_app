@@ -173,14 +173,14 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="w-full gap-5 flex flex-row">
-      <div className="flex w-55.75">
+    <div className="flex w-full flex-col gap-4 lg:flex-row lg:gap-5">
+      <div className="hidden lg:flex lg:w-55.75">
         <Suspense fallback={<div className="text-umami-gray">Загрузка...</div>}>
           <LeftPart />
         </Suspense>
       </div>
 
-      <div className="flex w-169.5">
+      <div className="flex w-full lg:w-169.5">
         <div className="w-full flex flex-col gap-4 pb-10">
           <NotificationsHeader
             unreadCount={unreadCount}
@@ -237,5 +237,8 @@ export default function NotificationsPage() {
     </div>
   );
 }
+
+
+
 
 

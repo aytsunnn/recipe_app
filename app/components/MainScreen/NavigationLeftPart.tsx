@@ -21,7 +21,15 @@ const navItems = [
   { href: "/recipes/random", label: "Случайный рецепт", icon: "/DiceFive.svg" },
 ];
 
-export default function LeftPart() {
+export default function LeftPart({
+  compact = false,
+  onNavigate,
+  showCategories = true,
+}: {
+  compact?: boolean;
+  onNavigate?: () => void;
+  showCategories?: boolean;
+}) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
     new Set()
@@ -128,7 +136,7 @@ export default function LeftPart() {
   }
 
   return (
-    <div className="sticky top-[150px] self-start w-full">
+    <div className="w-full self-start lg:sticky lg:top-[150px]">
       <div className="flex flex-col gap-1.25">
         {isAuthenticated && (
           <div className="mb-5 flex flex-col gap-1">
@@ -136,6 +144,7 @@ export default function LeftPart() {
               <Link
                 key={item.label}
                 href={item.href}
+                onClick={onNavigate}
                 className={`flex h-[30px] items-center gap-2.5 rounded-[7px] px-[5px] font-nunito text-xs font-bold text-umami-dark-gray transition-colors ${
                   pathname === item.href
                     ? "bg-[#f1ebdb]"
@@ -149,44 +158,56 @@ export default function LeftPart() {
           </div>
         )}
 
-        <p className="font-nunito font-bold text-xl text-umami-orange">
-          Категории
-        </p>
-        <div className="grid grid-cols-3 w-full gap-2.5">
-          {categories.map((category) => {
-            const isSelected = selectedCategories.has(category.id);
-            return (
-              <div
-                key={category.id}
-                className="flex flex-col cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => handleCategoryClick(category.id)}
-              >
-                <div
-                  className={`w-17.75 h-17.75 flex justify-center items-center border rounded-2xl transition-colors ${
-                    isSelected
-                      ? "border-umami-orange bg-umami-orange/10"
-                      : "border-umami-light-gray/50 bg-white"
-                  }`}
-                >
-                  <Image
-                    src={getCategoryImageUrl(category.image_url)}
-                    width={55}
-                    height={55}
-                    alt={category.name}
-                    className="h-[55px] w-[55px] rounded-xl object-cover"
-                  />
-                </div>
-                <p
-                  className={`font-nunito font-bold text-sm max-w-17.75 transition-colors ${
-                    isSelected ? "text-umami-orange" : "text-umami-dark-gray"
-                  }`}
-                >
-                  {category.name}
-                </p>
-              </div>
-            );
-          })}
-        </div>
+        {showCategories ? (
+          <>
+            <p className="font-nunito font-bold text-xl text-umami-orange">
+              Категории
+            </p>
+            <div
+              className={
+                compact
+                  ? "flex w-full flex-col gap-2"
+                  : "grid w-full grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-3 lg:gap-2.5"
+              }
+            >
+              {categories.map((category) => {
+                const isSelected = selectedCategories.has(category.id);
+                return (
+                  <div
+                    key={category.id}
+                    className={`cursor-pointer transition-opacity hover:opacity-80 ${
+                      compact ? "flex items-center gap-2" : "flex flex-col"
+                    }`}
+                    onClick={() => handleCategoryClick(category.id)}
+                  >
+                    <div
+                      className={`flex aspect-square w-full items-center justify-center rounded-2xl border transition-colors lg:h-17.75 lg:w-17.75 ${
+                        isSelected
+                          ? "border-umami-orange bg-umami-orange/10"
+                          : "border-umami-light-gray/50 bg-white"
+                      } ${compact ? "h-9 w-9 shrink-0 rounded-lg" : ""}`}
+                    >
+                      <Image
+                        src={getCategoryImageUrl(category.image_url)}
+                        width={55}
+                        height={55}
+                        alt={category.name}
+                        className={`${compact ? "h-7 w-7 rounded-md" : "h-[55px] w-[55px] rounded-xl"} object-cover`}
+                      />
+                    </div>
+                    <p
+                      className={`max-w-full text-wrap-safe font-nunito text-xs font-bold transition-colors md:text-sm lg:max-w-17.75 ${
+                        isSelected ? "text-umami-orange" : "text-umami-dark-gray"
+                      } ${compact ? "text-sm md:text-sm" : ""}`}
+                    >
+                      {category.name}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   );

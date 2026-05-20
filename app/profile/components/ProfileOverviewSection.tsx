@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { ChangeEvent, RefObject } from "react";
 import { FollowUser } from "../../services/followService";
@@ -80,7 +80,7 @@ export default function ProfileOverviewSection({
   friends,
 }: ProfileOverviewSectionProps) {
   return (
-    <div className="grid grid-cols-[678px_255px] gap-5">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[678px_255px] lg:gap-5">
       <div className="flex min-w-0 flex-col gap-2.5">
         {isEditModalOpen ? (
           <EditProfileModal
@@ -121,3 +121,4 @@ export default function ProfileOverviewSection({
     </div>
   );
 }
+

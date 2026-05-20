@@ -253,7 +253,7 @@ export default function FiltersPanel({
   }
 
   return (
-    <div className="mb-2 rounded-2xl border border-[#E9E1D2] bg-[#FFFCF7] px-3 py-3">
+    <div className="mb-2 rounded-2xl border border-[#E9E1D2] bg-[#FFFCF7] px-2.5 py-2.5 md:px-3 md:py-3">
       <div
         ref={chipsRowRef}
         className="no-scrollbar flex flex-nowrap gap-2 overflow-x-auto pb-1 cursor-grab select-none active:cursor-grabbing [scrollbar-width:none] [-ms-overflow-style:none]"
@@ -268,7 +268,7 @@ export default function FiltersPanel({
             onClick={resetAll}
             className="flex h-9 shrink-0 items-center gap-2 rounded-full border border-[#D7C7AB] bg-[#FFF6E9] px-3 font-nunito text-[#7B6140] transition-colors hover:bg-[#FDECD1]"
           >
-            <span className="text-sm font-bold">Сбросить фильтры</span>
+            <span className="text-xs font-bold md:text-sm">Сбросить фильтры</span>
             <Image src="/X.svg" alt="cross" width={15} height={15} />
           </button>
         )}
@@ -289,9 +289,9 @@ export default function FiltersPanel({
                   : "border-[#E3D7C6] bg-white text-[#65513D] hover:bg-[#FFF4E4]"
               }`}
             >
-              <span className="text-sm font-bold">{fieldLabels[key]}</span>
+              <span className="text-xs font-bold md:text-sm">{fieldLabels[key]}</span>
               {selectedCount > 0 && (
-                <span className="text-sm font-bold text-[#D7862A]">
+                <span className="text-xs font-bold text-[#D7862A] md:text-sm">
                   {selectedCount}
                 </span>
               )}
@@ -324,14 +324,14 @@ export default function FiltersPanel({
                 activeOptions.map((item) => item.value)
               )
             }
-            className="inline-flex h-9 items-center gap-2 rounded-full border border-[#9CC199] bg-[#EDF8EC] px-4 font-nunito text-sm font-bold text-[#426F3F]"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#9CC199] bg-[#EDF8EC] px-3 font-nunito text-xs font-bold text-[#426F3F] md:h-9 md:gap-2 md:px-4 md:text-sm"
           >
             <Image src="/DoneCircle.svg" alt="select-all" width={14} height={14} />
             Выбрать все
           </button>
           <button
             onClick={() => setSelected(openFilter, [])}
-            className="inline-flex h-9 items-center gap-2 rounded-full border border-[#D7C7AB] bg-[#FFF6E9] px-4 font-nunito text-sm font-bold text-[#7B6140]"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#D7C7AB] bg-[#FFF6E9] px-3 font-nunito text-xs font-bold text-[#7B6140] md:h-9 md:gap-2 md:px-4 md:text-sm"
           >
             <Image src="/X.svg" alt="clear-all" width={14} height={14} />
             Сбросить все
@@ -352,7 +352,7 @@ export default function FiltersPanel({
                   }
                   setSelected(openFilter, [...activeSelected, option.value]);
                 }}
-                className={`h-9 rounded-full border px-4 font-nunito text-sm font-bold transition-colors ${
+                className={`h-8 rounded-full border px-3 font-nunito text-xs font-bold transition-colors md:h-9 md:px-4 md:text-sm ${
                   isSelected
                     ? "border-[#E3B679] bg-[#FFEED5] text-[#B66B1F]"
                     : "border-[#E8DDCF] bg-[#FFFDFA] text-[#65513D] hover:bg-[#FFF4E4]"

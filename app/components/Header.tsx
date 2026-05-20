@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -6,6 +6,7 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AuthModal from "./AuthModal";
 import RegisterModal from "./RegisterModal";
+import LeftPart from "./MainScreen/NavigationLeftPart";
 import { authService } from "../services/authService";
 import { normalizeImageUrl } from "../utils/imageUrl";
 import { notificationService } from "../services/notificationService";
@@ -35,6 +36,7 @@ function HeaderContent() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const knownNotificationIdsRef = useRef<Set<string>>(new Set());
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -60,7 +62,6 @@ function HeaderContent() {
 
     loadUser();
 
-    // Слушаем изменения авторизации
     window.addEventListener("auth-change", loadUser);
     return () => {
       window.removeEventListener("auth-change", loadUser);
@@ -131,18 +132,6 @@ function HeaderContent() {
     setIsAuthModalOpen(true);
   };
 
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-    } catch (error) {
-      console.error("Ошибка при выходе из аккаунта:", error);
-    } finally {
-      authService.removeToken();
-      authService.dispatchAuthChange();
-      router.push("/");
-    }
-  };
-
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const params = new URLSearchParams(searchParams?.toString() || "");
@@ -176,31 +165,35 @@ function HeaderContent() {
     router.push("/", { scroll: false });
   };
 
+  const closeBurger = () => setIsBurgerOpen(false);
+
   const getSafeAvatarUrl = (url: string | null) => {
     return normalizeImageUrl(url, "/avatar.jpg");
   };
 
   return (
     <>
-      <header className="flex justify-between items-center w-full">
+      <header className="flex w-full flex-wrap items-center justify-between gap-2 md:gap-3 lg:flex-nowrap lg:gap-0">
         <a onClick={handleLogoClick} className="cursor-pointer">
-          <Image width={215} height={41} src="/logo.svg" alt="logo" />
+          <Image width={215} height={41} src="/logo.svg" alt="logo" className="h-8 w-auto md:h-9 lg:h-auto" />
         </a>
-        <div className="flex gap-2.5 items-center">
-          <div className="relative">
+
+        <div className="order-3 flex w-full items-center gap-1.5 sm:order-2 sm:w-auto sm:flex-1 md:gap-2 lg:order-none lg:w-auto lg:flex-none lg:gap-2.5">
+          <div className="relative min-w-0 flex-1 lg:flex-none">
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="w-125 h-9.25 pl-10 pr-10 px-1.25 py-1.25 placeholder:text-umami-gray placeholder:font-nunito font-nunito text-base text-umami-dark-gray placeholder:font-regular border border-umami-light-gray/50 rounded-3xl focus:outline-none focus:border-umami-green"
+              className="h-8.5 w-full rounded-3xl border border-umami-light-gray/50 px-1.25 py-1 pl-9 pr-9 font-nunito text-xs text-umami-dark-gray placeholder:font-nunito placeholder:text-xs placeholder:font-regular placeholder:text-umami-gray focus:border-umami-green focus:outline-none md:h-9 md:text-sm lg:h-9.25 lg:w-125 lg:text-base"
               placeholder="Поиск"
             />
             <div className="absolute left-2.5 top-1/2 -translate-y-1/2">
               <Image
-                width={24}
-                height={24}
+                width={20}
+                height={20}
                 src="/MagnifyingGlass.svg"
                 alt="search"
+                className="md:h-6 md:w-6"
               />
             </div>
             <button
@@ -209,51 +202,51 @@ function HeaderContent() {
               className="absolute right-2.5 top-1/2 -translate-y-1/2"
             >
               <Image
-                width={24}
-                height={24}
+                width={20}
+                height={20}
                 src="/SlidersHorizontal.svg"
                 alt="settings"
+                className="md:h-6 md:w-6"
               />
             </button>
           </div>
           <button
             onClick={handleSearch}
-            className="custom-button h-9.25 font-nunito font-medium bg-umami-green text-sm"
+            className="custom-button h-8.5 whitespace-nowrap bg-umami-green px-2.5 font-nunito text-[11px] font-medium md:h-9 md:px-3 md:text-xs lg:h-9.25 lg:px-0 lg:text-sm"
           >
             Найти рецепт
           </button>
         </div>
-        {/* для неавторизованных пользователей */}
+
         {!user && !isLoading && (
-          <div className="flex gap-2.5 items-center">
+          <div className="order-2 ml-auto flex items-center gap-2 md:gap-2.5 lg:order-none lg:ml-0">
             <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="bg-umami-orange custom-button h-10.25 flex items-center justify-center font-medium font-nunito"
+              className="custom-button h-10.25 flex items-center justify-center bg-umami-orange px-3 font-nunito font-medium md:px-4"
             >
               Войти
             </button>
             <button
               onClick={() => setIsRegisterModalOpen(true)}
-              className="bg-umami-green custom-button h-10.25 flex items-center justify-center font-medium font-nunito"
+              className="custom-button h-10.25 hidden items-center justify-center bg-umami-green px-3 font-nunito font-medium sm:flex md:px-4"
             >
               Создать аккаунт
             </button>
           </div>
         )}
 
-        {/* для авторизованных пользователей */}
         {user && (
-          <div className="flex gap-2.5 items-center">
+          <div className="order-2 ml-auto flex items-center gap-2 md:gap-2.5 lg:order-none lg:ml-0">
             <Link
               href="/notifications"
-              className="relative w-9 h-9 rounded-full border flex justify-center items-center border-umami-light-gray/50"
+              className="relative h-9 w-9 rounded-full border border-umami-light-gray/50 flex justify-center items-center"
             >
               <Image
                 width={22}
                 height={22}
                 src="/Colocolchik.svg"
                 alt="notifications"
-                className="w-5.25 h-5.25"
+                className="h-5.25 w-5.25"
               />
               {unreadNotifications > 0 ? (
                 <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-umami-orange px-1 text-[10px] font-bold leading-none text-white">
@@ -261,23 +254,9 @@ function HeaderContent() {
                 </span>
               ) : null}
             </Link>
-            <button
-              onClick={() => void handleLogout()}
-              className="w-9 h-9 rounded-full border flex justify-center items-center border-umami-light-gray/50"
-              title="Выйти"
-              aria-label="Выйти"
-            >
-              <Image
-                width={20}
-                height={20}
-                src="/SignOut.svg"
-                alt="logout"
-                className="w-5 h-5"
-              />
-            </button>
             <Link
               href="/profile"
-              className="bg-umami-orange custom-button h-10.25 flex items-center justify-center font-medium font-nunito gap-5 pr-0"
+              className="hidden h-10.25 w-auto items-center justify-center gap-5 rounded-full bg-umami-orange pr-0 pl-4 lg:flex"
             >
               <p>{user.username}</p>
               <Image
@@ -285,12 +264,49 @@ function HeaderContent() {
                 height={36}
                 src={getSafeAvatarUrl(user.avatar_url)}
                 alt="avatar"
-                className="w-10.25 h-10.25 right-0 top-0 border border-white rounded-full object-cover"
+                className="h-10.25 w-10.25 rounded-full border border-white object-cover"
               />
             </Link>
           </div>
         )}
+
+        <button
+          type="button"
+          onClick={() => setIsBurgerOpen(true)}
+          className="order-2 flex h-10 w-10 items-center justify-center rounded-full border border-umami-light-gray/50 bg-white lg:hidden"
+          aria-label="Открыть меню"
+        >
+          <div className="flex flex-col gap-1">
+            <span className="h-[2px] w-4 rounded-full bg-umami-dark-gray" />
+            <span className="h-[2px] w-4 rounded-full bg-umami-dark-gray" />
+            <span className="h-[2px] w-4 rounded-full bg-umami-dark-gray" />
+          </div>
+        </button>
       </header>
+
+      {isBurgerOpen ? (
+        <div
+          className="fixed inset-0 z-[70] bg-black/45 lg:hidden"
+          onClick={closeBurger}
+        >
+          <div
+            className="h-full w-[88%] max-w-[368px] overflow-y-auto border-r border-umami-light-gray/40 bg-gradient-to-b from-[#fff8e8] to-[#fffdf7] p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <p className="font-nunito text-lg font-bold text-umami-dark-gray">Меню</p>
+              <button
+                type="button"
+                onClick={closeBurger}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-umami-light-gray/50 bg-white"
+              >
+                <Image width={14} height={14} src="/X.svg" alt="close-menu" />
+              </button>
+            </div>
+            <LeftPart compact showCategories={false} onNavigate={closeBurger} />
+          </div>
+        </div>
+      ) : null}
 
       <AuthModal
         isOpen={isAuthModalOpen}

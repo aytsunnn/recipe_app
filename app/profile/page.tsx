@@ -1371,6 +1371,18 @@ function ProfilePageContent() {
     }
   };
 
+  const handleLogoutProfile = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error("Ошибка выхода из профиля:", error);
+    } finally {
+      authService.removeToken();
+      authService.dispatchAuthChange();
+      router.push("/");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-[420px] items-center justify-center">
@@ -1382,8 +1394,8 @@ function ProfilePageContent() {
   if (!user) return null;
   return (
     <>
-      <div className="grid w-full grid-cols-[223px_minmax(0,1fr)] gap-5">
-        <aside className="relative">
+      <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-[223px_minmax(0,1fr)] lg:gap-5">
+        <aside className="relative hidden lg:block">
           <LeftPart />
         </aside>
 
@@ -1397,6 +1409,7 @@ function ProfilePageContent() {
             onFollowersClick={() => void openFollowModal("followers")}
             onEditProfileClick={handleEditProfile}
             onDeleteProfileClick={() => void handleDeleteProfile()}
+            onLogoutClick={() => void handleLogoutProfile()}
             recipeActionLoading={recipeActionLoading}
           />
 
@@ -2097,6 +2110,10 @@ export default function ProfilePage() {
     </Suspense>
   );
 }
+
+
+
+
 
 
 

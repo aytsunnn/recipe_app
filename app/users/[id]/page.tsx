@@ -230,7 +230,7 @@ export default function PublicUserPage() {
 
   return (
     <div className="flex w-full gap-5">
-      <div className="hidden w-55.75 lg:flex">
+      <div className="hidden lg:flex lg:w-55.75">
         <LeftPart />
       </div>
 
@@ -390,9 +390,12 @@ export default function PublicUserPage() {
         )}
       </div>
 
-      <div className="hidden w-63.75 lg:flex">
+      <div className="hidden lg:flex lg:w-63.75">
         <RightPart />
       </div>
     </div>
   );
 }
+
+
+

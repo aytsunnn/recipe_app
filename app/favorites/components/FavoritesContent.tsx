@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
@@ -67,22 +67,22 @@ export default function FavoritesContent() {
   }, [router]);
 
   return (
-    <div className="w-full gap-5 flex flex-row">
-      <div className="flex w-55.75">
+    <div className="flex w-full flex-col gap-4 lg:flex-row lg:gap-5">
+      <div className="hidden lg:flex lg:w-55.75">
         <Suspense fallback={<div className="text-umami-gray">Загрузка...</div>}>
           <LeftPart />
         </Suspense>
       </div>
 
-      <div className="flex w-169.5">
-        <div ref={feedColumnRef} className="w-full flex flex-col gap-4 pb-10">
-          <div className="bg-white rounded-lg border border-umami-light-gray/50 p-4">
-            <h1 className="font-nunito font-bold text-2xl text-umami-dark-gray">Избранное</h1>
-            <p className="font-inter text-sm text-umami-gray mt-1">Сохраненные рецепты: {recipes.length}</p>
+      <div className="flex w-full lg:w-169.5">
+        <div ref={feedColumnRef} className="flex w-full flex-col gap-4 pb-10">
+          <div className="rounded-lg border border-umami-light-gray/50 bg-white p-4">
+            <h1 className="font-nunito text-2xl font-bold text-umami-dark-gray">Избранное</h1>
+            <p className="mt-1 font-inter text-sm text-umami-gray">Сохраненные рецепты: {recipes.length}</p>
           </div>
 
           {isLoading && (
-            <div className="w-full flex justify-center items-center py-10">
+            <div className="flex w-full items-center justify-center py-10">
               <div className="text-umami-gray">Загрузка избранного...</div>
             </div>
           )}
@@ -97,14 +97,14 @@ export default function FavoritesContent() {
           )}
 
           {error && !isLoading && !isNotFoundErrorMessage(error) && (
-            <div className="bg-white rounded-lg border border-umami-light-gray/50 p-8 text-center">
-              <p className="font-nunito font-bold text-lg text-red-500">Ошибка: {error}</p>
+            <div className="rounded-lg border border-umami-light-gray/50 bg-white p-8 text-center">
+              <p className="font-nunito text-lg font-bold text-red-500">Ошибка: {error}</p>
             </div>
           )}
 
           {!isLoading && !error && recipes.length === 0 && (
-            <div className="bg-white rounded-lg border border-umami-light-gray/50 p-8 text-center">
-              <p className="font-nunito font-bold text-lg text-umami-gray">В избранном пока пусто</p>
+            <div className="rounded-lg border border-umami-light-gray/50 bg-white p-8 text-center">
+              <p className="font-nunito text-lg font-bold text-umami-gray">В избранном пока пусто</p>
             </div>
           )}
 

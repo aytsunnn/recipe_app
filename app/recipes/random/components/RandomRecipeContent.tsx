@@ -79,7 +79,7 @@ export default function RandomRecipeContent() {
 
   return (
     <div className="flex w-full flex-row gap-5">
-      <div className="hidden w-55.75 lg:flex">
+      <div className="hidden lg:flex lg:w-55.75">
         <Suspense fallback={<div className="text-umami-gray">Загрузка...</div>}>
           <LeftPart />
         </Suspense>
@@ -129,9 +129,12 @@ export default function RandomRecipeContent() {
         )}
       </div>
 
-      <div className="hidden w-63.75 lg:flex">
+      <div className="hidden lg:flex lg:w-63.75">
         <RightPart />
       </div>
     </div>
   );
 }
+
+
+

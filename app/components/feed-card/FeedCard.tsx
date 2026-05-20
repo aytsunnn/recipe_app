@@ -563,7 +563,7 @@ export default function FeedCard({
               <p className="font-inter text-sm font-medium text-umami-dark-gray">
                 {recipe.User.name}
               </p>
-              <p className="truncate font-inter text-xs text-umami-light-gray">
+              <p className="hidden truncate font-inter text-xs text-umami-light-gray lg:block">
                 @{recipe.User.username}
               </p>
             </div>

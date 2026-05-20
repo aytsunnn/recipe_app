@@ -808,7 +808,7 @@ export default function RecipeDetailsPage() {
   if (loading) {
     return (
       <div className="flex w-full gap-5">
-        <div className="hidden w-55.75 lg:flex">
+        <div className="hidden lg:flex lg:w-55.75">
           <LeftPart />
         </div>
         <div className="flex w-full items-center justify-center lg:w-169.5">
@@ -816,7 +816,7 @@ export default function RecipeDetailsPage() {
             Загрузка рецепта...
           </p>
         </div>
-        <div className="hidden w-63.75 lg:flex">
+        <div className="hidden lg:flex lg:w-63.75">
           <RightPart />
         </div>
       </div>
@@ -827,7 +827,7 @@ export default function RecipeDetailsPage() {
     if (!recipe || isNotFoundErrorMessage(error)) {
       return (
         <div className="flex w-full gap-5">
-          <div className="hidden w-55.75 lg:flex">
+          <div className="hidden lg:flex lg:w-55.75">
             <LeftPart />
           </div>
           <div className="w-full pb-10 lg:w-169.5">
@@ -838,7 +838,7 @@ export default function RecipeDetailsPage() {
               actionLabel="Вернуться в ленту"
             />
           </div>
-          <div className="hidden w-63.75 lg:flex">
+          <div className="hidden lg:flex lg:w-63.75">
             <RightPart />
           </div>
         </div>
@@ -847,7 +847,7 @@ export default function RecipeDetailsPage() {
 
     return (
       <div className="flex w-full gap-5">
-        <div className="hidden w-55.75 lg:flex">
+        <div className="hidden lg:flex lg:w-55.75">
           <LeftPart />
         </div>
         <div className="w-full pb-10 lg:w-169.5">
@@ -866,7 +866,7 @@ export default function RecipeDetailsPage() {
             </Link>
           </div>
         </div>
-        <div className="hidden w-63.75 lg:flex">
+        <div className="hidden lg:flex lg:w-63.75">
           <RightPart />
         </div>
       </div>
@@ -875,7 +875,7 @@ export default function RecipeDetailsPage() {
 
   return (
     <div className="flex w-full gap-5">
-      <div className="hidden w-55.75 lg:flex">
+      <div className="hidden lg:flex lg:w-55.75">
         <LeftPart />
       </div>
       <div className="w-169.5">
@@ -1783,12 +1783,15 @@ export default function RecipeDetailsPage() {
           </div>
         </div>
       </div>
-      <div className="hidden w-63.75 lg:flex">
+      <div className="hidden lg:flex lg:w-63.75">
         <RightPart />
       </div>
     </div>
   );
 }
+
+
+
 
 
 

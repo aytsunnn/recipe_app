@@ -566,7 +566,7 @@ export default function ModerationPage() {
 
   return (
     <div className="flex w-full gap-5">
-      <div className="hidden w-55.75 lg:flex">
+      <div className="hidden lg:flex lg:w-55.75">
         <Suspense fallback={<div className="w-full" />}>
           <LeftPart />
         </Suspense>
@@ -898,5 +898,8 @@ export default function ModerationPage() {
     </div>
   );
 }
+
+
+
 
 
