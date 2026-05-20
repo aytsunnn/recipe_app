@@ -86,8 +86,17 @@ class AuthService {
     return apiClient.post<{ message: string }>('/auth/verify-email', data);
   }
 
-  async requestEmailCode(email: string): Promise<{ message: string }> {
+  async requestPasswordRecoveryCode(email: string): Promise<{ message: string }> {
     return apiClient.post<{ message: string }>('/auth/password-recovery', { email });
+  }
+
+  async resendVerificationCode(email: string): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>('/auth/resend-code', { email });
+  }
+
+  // Backward-compatible alias for old call sites.
+  async requestEmailCode(email: string): Promise<{ message: string }> {
+    return this.requestPasswordRecoveryCode(email);
   }
 
   async resetPassword(data: ResetPasswordData): Promise<{ message: string }> {

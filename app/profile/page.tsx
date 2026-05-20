@@ -393,7 +393,7 @@ function ProfilePageContent() {
     if (needsVerification && !isEditVerificationStep) {
       try {
         setIsEditProfileLoading(true);
-        await authService.requestEmailCode(normalizedEmail);
+        await authService.resendVerificationCode(normalizedEmail);
         setIsEditVerificationStep(true);
         setEditProfileMessage("Код подтверждения отправлен на email");
       } catch (error) {
@@ -465,7 +465,7 @@ function ProfilePageContent() {
 
     try {
       setIsEditProfileLoading(true);
-      await authService.requestEmailCode(normalizedEmail);
+      await authService.resendVerificationCode(normalizedEmail);
       setEditProfileMessage("Код отправлен повторно");
     } catch (error) {
       console.error("Ошибка повторной отправки кода:", error);

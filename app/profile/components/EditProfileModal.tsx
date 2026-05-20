@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ChangeEvent, RefObject, useState } from "react";
 import { normalizeImageUrl } from "../../utils/imageUrl";
+import OtpCodeInput from "../../components/OtpCodeInput";
 
 interface EditProfileFormData {
   name: string;
@@ -209,12 +210,10 @@ export default function EditProfileModal({
         <div className="mt-4 flex flex-col gap-3">
           <label className="block">
             <span className="mb-1 block font-inter text-sm text-umami-gray">Код подтверждения</span>
-            <input
-              type="text"
+            <OtpCodeInput
               value={formData.verifyCode}
-              onChange={(e) => onChange({ ...formData, verifyCode: e.target.value })}
-              placeholder="Введите код из письма"
-              className="w-full rounded-full border border-umami-light-gray px-4 py-2 font-nunito text-sm text-umami-dark-gray"
+              onChange={(verifyCode) => onChange({ ...formData, verifyCode })}
+              disabled={isLoading}
             />
           </label>
           <button
@@ -223,7 +222,7 @@ export default function EditProfileModal({
             disabled={isLoading}
             className="w-fit font-nunito text-xs text-umami-green underline disabled:opacity-60"
           >
-            Отправить код повторно
+            Отправить повторно
           </button>
         </div>
       ) : null}
