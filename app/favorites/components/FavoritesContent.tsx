@@ -76,8 +76,8 @@ export default function FavoritesContent() {
 
       <div className="flex w-full lg:w-169.5">
         <div ref={feedColumnRef} className="flex w-full flex-col gap-4 pb-10">
-          <div className="rounded-lg border border-umami-light-gray/50 bg-white p-4">
-            <h1 className="font-nunito text-2xl font-bold text-umami-dark-gray">Избранное</h1>
+          <div className="rounded-lg border border-umami-light-gray/50 bg-white p-3 sm:p-4">
+            <h1 className="font-nunito text-lg font-bold text-umami-dark-gray sm:text-2xl">Избранное</h1>
             <p className="mt-1 font-inter text-sm text-umami-gray">Сохраненные рецепты: {recipes.length}</p>
           </div>
 

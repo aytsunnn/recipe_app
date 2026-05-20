@@ -550,17 +550,17 @@ export default function FeedCard({
             onClick={saveFeedReturnState}
             className="flex min-w-0 flex-1 items-center gap-2.5"
           >
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200">
               <Image
                 width={40}
                 height={40}
                 src={normalizeImageUrl(recipe.User.avatar_url, "/avatar.jpg")}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
                 alt="avatar"
               />
             </div>
             <div className="min-w-0 flex flex-col">
-              <p className="font-inter text-sm font-medium text-umami-dark-gray">
+              <p className="truncate font-inter text-sm font-medium text-umami-dark-gray">
                 {recipe.User.name}
               </p>
               <p className="hidden truncate font-inter text-xs text-umami-light-gray lg:block">

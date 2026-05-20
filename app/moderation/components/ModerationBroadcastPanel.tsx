@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { moderationService } from "../../services/moderationService";
@@ -34,7 +34,7 @@ export default function ModerationBroadcastPanel() {
 
   return (
     <div>
-      <h2 className="font-nunito text-lg font-bold text-umami-dark-gray">
+      <h2 className="font-nunito text-base font-bold text-umami-dark-gray sm:text-lg">
         Глобальная рассылка
       </h2>
       <p className="mt-1 text-sm text-umami-gray">
@@ -50,9 +50,7 @@ export default function ModerationBroadcastPanel() {
           placeholder="Введите текст уведомления..."
           className="w-full rounded-xl border border-umami-light-gray/60 px-3 py-2 text-sm text-umami-dark-gray outline-none focus:border-umami-orange/60"
         />
-        <div className="mt-1 text-right text-xs text-umami-gray">
-          {message.length} / 1000
-        </div>
+        <div className="mt-1 text-right text-xs text-umami-gray">{message.length} / 1000</div>
       </div>
 
       <div className="mt-3 flex justify-end">
@@ -60,7 +58,7 @@ export default function ModerationBroadcastPanel() {
           type="button"
           onClick={() => void handleSend()}
           disabled={sending}
-          className="rounded-full bg-umami-orange px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+          className="rounded-full bg-umami-orange px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60 sm:px-4 sm:py-2 sm:text-sm"
         >
           {sending ? "Отправка..." : "Отправить рассылку"}
         </button>

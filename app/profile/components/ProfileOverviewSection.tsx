@@ -117,7 +117,9 @@ export default function ProfileOverviewSection({
           />
         )}
       </div>
-      <FriendsSidebar friends={friends} maxVisible={6} />
+      <div className="hidden lg:block">
+        <FriendsSidebar friends={friends} maxVisible={6} />
+      </div>
     </div>
   );
 }

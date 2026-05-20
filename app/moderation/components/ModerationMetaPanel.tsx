@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useUiFeedback } from "../../components/UiFeedbackProvider";
@@ -184,7 +184,7 @@ export default function ModerationMetaPanel() {
             key={item.type}
             type="button"
             onClick={() => setActiveType(item.type)}
-            className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors ${
+            className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors sm:px-4 ${
               activeType === item.type
                 ? "bg-umami-orange text-white"
                 : "bg-[#f3efe2] text-umami-dark-gray hover:bg-[#ece4cf]"
@@ -195,8 +195,8 @@ export default function ModerationMetaPanel() {
         ))}
       </div>
 
-      <div className="rounded-xl border border-umami-light-gray/50 bg-[#fcfbf8] p-4">
-        <h3 className="mb-3 font-nunito text-base font-bold text-umami-dark-gray">
+      <div className="rounded-xl border border-umami-light-gray/50 bg-[#fcfbf8] p-3 sm:p-4">
+        <h3 className="mb-3 font-nunito text-sm font-bold text-umami-dark-gray sm:text-base">
           {editingId === null ? `Создать: ${config.label}` : `Редактировать: ${config.label}`}
         </h3>
         <div className="grid gap-3 md:grid-cols-2">
@@ -216,12 +216,12 @@ export default function ModerationMetaPanel() {
             </label>
           ))}
         </div>
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => void handleSubmit()}
             disabled={saving}
-            className="rounded-full bg-umami-orange px-4 py-2 text-xs font-bold text-white disabled:opacity-60"
+            className="rounded-full bg-umami-orange px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60 sm:px-4 sm:py-2"
           >
             {editingId === null ? "Создать" : "Сохранить"}
           </button>
@@ -229,7 +229,7 @@ export default function ModerationMetaPanel() {
             <button
               type="button"
               onClick={resetDraft}
-              className="rounded-full bg-[#f3efe2] px-4 py-2 text-xs font-bold text-umami-dark-gray"
+              className="rounded-full bg-[#f3efe2] px-3 py-1.5 text-xs font-bold text-umami-dark-gray sm:px-4 sm:py-2"
             >
               Отмена
             </button>
@@ -237,7 +237,7 @@ export default function ModerationMetaPanel() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-umami-light-gray/50 bg-white p-4">
+      <div className="rounded-xl border border-umami-light-gray/50 bg-white p-3 sm:p-4">
         {loading ? (
           <p className="text-sm text-umami-gray">Загрузка...</p>
         ) : items.length === 0 ? (
@@ -245,11 +245,8 @@ export default function ModerationMetaPanel() {
         ) : (
           <div className="space-y-2">
             {items.map((item) => (
-              <div
-                key={String(item.id)}
-                className="rounded-lg border border-umami-light-gray/40 p-3"
-              >
-                <div className="mb-2 flex items-center justify-between gap-2">
+              <div key={String(item.id)} className="rounded-lg border border-umami-light-gray/40 p-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs text-umami-gray">ID: {String(item.id)}</p>
                   <div className="flex items-center gap-2">
                     <button
@@ -270,7 +267,7 @@ export default function ModerationMetaPanel() {
                 </div>
                 <div className="grid gap-2 md:grid-cols-2">
                   {config.fields.map((field) => (
-                    <p key={`${item.id}-${field.key}`} className="text-sm text-umami-dark-gray">
+                    <p key={`${item.id}-${field.key}`} className="text-sm text-umami-dark-gray break-words">
                       <span className="font-bold">{field.label}: </span>
                       {String(item[field.key] ?? "—")}
                     </p>
@@ -284,4 +281,3 @@ export default function ModerationMetaPanel() {
     </div>
   );
 }
-

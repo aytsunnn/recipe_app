@@ -1465,8 +1465,8 @@ function ProfilePageContent() {
 
           {isRecipeEditorOpen && (
             <div className="overflow-hidden rounded-[24px] border border-[#eaeaea] bg-white shadow-[0_12px_36px_rgba(0,0,0,0.08)]">
-              <div className="flex items-center justify-between border-b border-[#efefef] bg-[#fcfaf5] px-6 py-4">
-                <h2 className="font-nunito text-2xl font-bold text-umami-dark-gray">
+              <div className="flex items-center justify-between border-b border-[#efefef] bg-[#fcfaf5] px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-4">
+                <h2 className="font-nunito text-lg font-bold sm:text-xl md:text-2xl text-umami-dark-gray">
                   {editingRecipeId ? "Редактировать рецепт" : "Добавить рецепт"}
                 </h2>
                 <button
@@ -1486,8 +1486,8 @@ function ProfilePageContent() {
                 прокручивать.
               </p>
 
-              <div className="px-6 pb-6 pt-4">
-                <div className="grid grid-cols-2 gap-5">
+              <div className="px-3 pb-4 pt-3 sm:px-4 sm:pb-5 sm:pt-4 md:px-6 md:pb-6 md:pt-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
                   <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
                     <span className="mb-1 block font-inter text-sm text-umami-gray">
                       Ссылка на рецепт для парсинга
@@ -1589,7 +1589,7 @@ function ProfilePageContent() {
                     )}
                   </label>
 
-                  <div className="col-span-2 grid grid-cols-3 gap-3">
+                  <div className="col-span-1 grid grid-cols-1 gap-3 md:col-span-2 md:grid-cols-3">
                     <label className="block">
                       <span className="mb-1 block font-inter text-sm text-umami-gray">
                         Сложность
@@ -1654,7 +1654,7 @@ function ProfilePageContent() {
                     </p>
                   </div>
 
-                  <div className="col-span-2 grid grid-cols-2 gap-4">
+                  <div className="col-span-1 grid grid-cols-1 gap-3 md:col-span-2 md:grid-cols-2 md:gap-4">
                     <label className="block">
                       <span className="mb-1 block font-inter text-sm text-umami-gray">
                         Калории
@@ -1764,7 +1764,7 @@ function ProfilePageContent() {
                     </div>
                   </div>
 
-                <div className="col-span-2 grid grid-cols-3 gap-3">
+                <div className="col-span-1 grid grid-cols-1 gap-3 md:col-span-2 md:grid-cols-3">
                   <label className="block">
                     <span className="mb-1 block font-inter text-sm text-umami-gray">
                       Кухня
@@ -1872,7 +1872,7 @@ function ProfilePageContent() {
                       {recipeForm.ingredients.map((item, index) => (
                         <div
                           key={index}
-                          className="grid grid-cols-4 gap-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-3"
+                          className="grid grid-cols-1 gap-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-3 sm:grid-cols-2 lg:grid-cols-4"
                         >
                           <select
                             value={item.ingredient_id ?? ""}
@@ -2020,7 +2020,7 @@ function ProfilePageContent() {
                     </div>
                   </div>
 
-                  <div className="col-span-2 mt-1 flex items-center gap-3">
+                  <div className="col-span-2 mt-1 flex flex-wrap items-center gap-2 sm:gap-3">
                     <span className="font-inter text-sm text-umami-gray">
                       Видимость рецепта:
                     </span>
@@ -2030,7 +2030,7 @@ function ProfilePageContent() {
                         onClick={() =>
                           setRecipeForm({ ...recipeForm, is_private: false })
                         }
-                        className={`rounded-full px-4 py-1.5 font-nunito text-sm ${
+                        className={`rounded-full px-3 py-1 font-nunito text-xs sm:px-4 sm:py-1.5 sm:text-sm ${
                           !recipeForm.is_private
                             ? "bg-umami-green text-white"
                             : "bg-gray-100 text-umami-gray"
@@ -2046,7 +2046,7 @@ function ProfilePageContent() {
                           setRecipeForm({ ...recipeForm, is_private: true });
                         }
                       }}
-                      className={`rounded-full px-4 py-1.5 font-nunito text-sm ${
+                      className={`rounded-full px-3 py-1 font-nunito text-xs sm:px-4 sm:py-1.5 sm:text-sm ${
                         recipeForm.is_private
                           ? "bg-umami-orange text-white"
                           : "bg-gray-100 text-umami-gray"

@@ -54,6 +54,7 @@ interface ChatMessage {
 }
 
 const MICROCHEF_CACHE_KEY = "microchef_chat_cache_v1";
+const MICROCHEF_OPEN_KEY = "microchef_open_from_burger";
 const MAX_CACHED_MESSAGES = 80;
 const DEFAULT_WELCOME_MESSAGE: ChatMessage = {
   id: "welcome",
@@ -412,6 +413,35 @@ export default function RightPart() {
       body.style.paddingRight = prevBodyPaddingRight;
     };
   }, [isChatOpen]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const openFromBurgerIfNeeded = () => {
+      const shouldOpen = window.sessionStorage.getItem(MICROCHEF_OPEN_KEY);
+      const searchParams = new URLSearchParams(window.location.search);
+      const fromQuery = searchParams.get("microchef") === "1";
+
+      if (shouldOpen === "1" || fromQuery) {
+        window.sessionStorage.removeItem(MICROCHEF_OPEN_KEY);
+        if (fromQuery) {
+          searchParams.delete("microchef");
+          const nextQuery = searchParams.toString();
+          const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}${window.location.hash}`;
+          window.history.replaceState(null, "", nextUrl);
+        }
+        setIsChatOpen(true);
+      }
+    };
+
+    openFromBurgerIfNeeded();
+    window.addEventListener("microchef-open-request", openFromBurgerIfNeeded);
+    return () =>
+      window.removeEventListener(
+        "microchef-open-request",
+        openFromBurgerIfNeeded
+      );
+  }, []);
 
   useEffect(() => {
     const loadPopularAuthors = async () => {

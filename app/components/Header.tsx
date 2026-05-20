@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, Suspense, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import AuthModal from "./AuthModal";
 import RegisterModal from "./RegisterModal";
 import LeftPart from "./MainScreen/NavigationLeftPart";
@@ -39,6 +39,7 @@ function HeaderContent() {
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const knownNotificationIdsRef = useRef<Set<string>>(new Set());
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { toast } = useUiFeedback();
   const [searchQuery, setSearchQuery] = useState(
@@ -167,6 +168,21 @@ function HeaderContent() {
 
   const closeBurger = () => setIsBurgerOpen(false);
 
+  const handleOpenMicrochef = () => {
+    closeBurger();
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("microchef_open_from_burger", "1");
+      window.dispatchEvent(new Event("microchef-open-request"));
+    }
+    if (pathname === "/") {
+      const params = new URLSearchParams(searchParams?.toString() || "");
+      params.set("microchef", "1");
+      router.push(`/?${params.toString()}`, { scroll: false });
+      return;
+    }
+    router.push("/?microchef=1", { scroll: false });
+  };
+
   const getSafeAvatarUrl = (url: string | null) => {
     return normalizeImageUrl(url, "/avatar.jpg");
   };
@@ -239,14 +255,14 @@ function HeaderContent() {
           <div className="order-2 ml-auto flex items-center gap-2 md:gap-2.5 lg:order-none lg:ml-0">
             <Link
               href="/notifications"
-              className="relative h-9 w-9 rounded-full border border-umami-light-gray/50 flex justify-center items-center"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-umami-light-gray/50"
             >
               <Image
                 width={22}
                 height={22}
                 src="/Colocolchik.svg"
                 alt="notifications"
-                className="h-5.25 w-5.25"
+                className="h-6 w-6"
               />
               {unreadNotifications > 0 ? (
                 <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-umami-orange px-1 text-[10px] font-bold leading-none text-white">
@@ -277,9 +293,9 @@ function HeaderContent() {
           aria-label="Открыть меню"
         >
           <div className="flex flex-col gap-1">
-            <span className="h-[2px] w-4 rounded-full bg-umami-dark-gray" />
-            <span className="h-[2px] w-4 rounded-full bg-umami-dark-gray" />
-            <span className="h-[2px] w-4 rounded-full bg-umami-dark-gray" />
+            <span className="h-[2px] w-5 rounded-full bg-umami-dark-gray" />
+            <span className="h-[2px] w-5 rounded-full bg-umami-dark-gray" />
+            <span className="h-[2px] w-5 rounded-full bg-umami-dark-gray" />
           </div>
         </button>
       </header>
@@ -290,7 +306,7 @@ function HeaderContent() {
           onClick={closeBurger}
         >
           <div
-            className="h-full w-[88%] max-w-[368px] overflow-y-auto border-r border-umami-light-gray/40 bg-gradient-to-b from-[#fff8e8] to-[#fffdf7] p-4"
+            className="ml-auto h-full w-fit min-w-[244px] max-w-[88vw] overflow-y-auto border-l border-umami-light-gray/40 bg-gradient-to-b from-[#fff8e8] to-[#fffdf7] p-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">
@@ -306,6 +322,17 @@ function HeaderContent() {
             <LeftPart compact showCategories={false} onNavigate={closeBurger} />
           </div>
         </div>
+      ) : null}
+
+      {user ? (
+        <button
+          type="button"
+          onClick={handleOpenMicrochef}
+          className="fixed bottom-4 right-4 z-[65] flex h-12 w-12 items-center justify-center rounded-full bg-umami-orange shadow-lg transition hover:bg-[#dd8c45] lg:hidden"
+          aria-label="Открыть чат с микро-шефом"
+        >
+          <Image width={22} height={22} src="/ChatCircle.svg" alt="" />
+        </button>
       ) : null}
 
       <AuthModal

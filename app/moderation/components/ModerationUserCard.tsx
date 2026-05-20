@@ -61,8 +61,8 @@ export default function ModerationUserCard({
   }, []);
 
   return (
-    <div className="rounded-xl border border-umami-light-gray/50 bg-[#fffdfa] p-4">
-      <div className="flex items-center justify-between gap-3">
+    <div className="rounded-xl border border-umami-light-gray/50 bg-[#fffdfa] p-3 sm:p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -76,7 +76,7 @@ export default function ModerationUserCard({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="relative" ref={roleMenuRef}>
             <button
               type="button"
@@ -93,7 +93,7 @@ export default function ModerationUserCard({
             </button>
 
             {isAdmin && isRoleMenuOpen ? (
-              <div className="absolute right-0 top-7 z-20 min-w-[150px] rounded-xl border border-umami-light-gray/50 bg-white p-1 shadow-lg">
+              <div className="absolute left-0 top-7 z-20 min-w-[140px] rounded-xl border border-umami-light-gray/50 bg-white p-1 shadow-lg sm:left-auto sm:right-0 sm:min-w-[150px]">
                 {(["User", "Moderator", "Admin"] as const).map((role) => (
                   <button
                     key={role}
@@ -108,7 +108,7 @@ export default function ModerationUserCard({
                         : "text-umami-dark-gray hover:bg-[#f8f4ea]"
                     }`}
                   >
-                    {role}
+                    {role === "User" ? "Пользователь" : role === "Moderator" ? "Модератор" : "Администратор"}
                   </button>
                 ))}
               </div>
@@ -127,7 +127,7 @@ export default function ModerationUserCard({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-umami-light-gray/40 bg-white p-2">
+      <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-umami-light-gray/40 bg-white p-2 sm:gap-3">
         <Link
           href={`/users/${user.id}`}
           className="flex min-w-0 flex-1 items-center gap-3 hover:bg-[#faf7ef] rounded-lg p-1"
@@ -143,7 +143,7 @@ export default function ModerationUserCard({
             <p className="truncate text-sm font-bold text-umami-dark-gray">
               {user.name || "Без имени"}
             </p>
-            <p className="truncate text-sm text-umami-gray">
+            <p className="truncate text-xs text-umami-gray sm:text-sm">
               @{user.username || "unknown"}
             </p>
           </div>

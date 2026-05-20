@@ -790,6 +790,8 @@ export default function RecipeDetailsPage() {
       ? "/recipes/random"
       : fromQuery === "profile"
       ? "/profile"
+      : fromQuery === "week-menu"
+      ? "/week-menu"
       : fromQuery === "moderation"
       ? "/moderation"
       : "/";
@@ -878,18 +880,18 @@ export default function RecipeDetailsPage() {
       <div className="hidden lg:flex lg:w-55.75">
         <LeftPart />
       </div>
-      <div className="w-169.5">
-        <div className="mx-auto w-full max-w-[980px] rounded-[20px] bg-[#fffadd] p-5">
+      <div className="w-full lg:w-169.5">
+        <div className="mx-auto w-full max-w-[980px] rounded-[20px] bg-[#fffadd] p-3 sm:p-4 md:p-5">
           <div className="mb-5 flex items-center gap-2.5">
             <button
               type="button"
               onClick={handleGoBack}
-              className="inline-flex items-center gap-2.5 rounded-full bg-umami-orange px-2.5 py-1.25 font-nunito text-base text-white"
+              className="inline-flex items-center gap-1.5 rounded-full bg-umami-orange px-2 py-1 text-xs text-white sm:gap-2 sm:px-2.5 sm:py-1.25 sm:text-sm md:text-base"
             >
               <Image width={22} height={22} src="/ArrowLeft.svg" alt="back" />
               Назад
             </button>
-            <h1 className="min-w-0 flex-1 truncate font-nunito text-2xl font-bold leading-none text-umami-orange">
+            <h1 className="min-w-0 flex-1 truncate font-nunito text-base font-bold leading-none text-umami-orange sm:text-lg md:text-xl lg:text-2xl">
               {recipe.title}
             </h1>
             {(canModerate || Boolean(currentUserId)) && (
@@ -907,7 +909,7 @@ export default function RecipeDetailsPage() {
                   />
                 </button>
                 {recipeActionsOpen && (
-                  <div className="absolute right-0 top-10 z-20 min-w-[160px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
+                  <div className="absolute right-0 top-10 z-20 min-w-[132px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md md:min-w-[150px] lg:min-w-[160px]">
                     <button
                       type="button"
                       onClick={() => void handleReportRecipe()}
@@ -993,7 +995,7 @@ export default function RecipeDetailsPage() {
           <p className="text-wrap-safe mt-2 max-w-[637px] font-nunito text-sm text-umami-gray">
             {recipe.description}
           </p>
-          <div className="flex justify-between items-center mt-4">
+          <div className="mt-4 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
             <div className=" flex items-center gap-5 text-umami-gray">
               <button
                 type="button"
@@ -1052,7 +1054,7 @@ export default function RecipeDetailsPage() {
             <button
               type="button"
               onClick={handleCookedToggle}
-              className={`whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-nunito md:px-2.5 md:py-1.25 md:text-xs ${
+              className={`self-start whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-nunito md:px-2.5 md:py-1.25 md:text-xs lg:self-auto ${
                 isCooked
                   ? "bg-white border border-umami-gray/50 text-umami-orange"
                   : "bg-umami-orange text-white"
@@ -1062,7 +1064,7 @@ export default function RecipeDetailsPage() {
             </button>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-umami-light-gray/50 bg-white p-4">
+          <div className="mt-4">
             <p className="font-nunito text-base font-bold text-umami-dark-gray">
               Личная заметка
             </p>
@@ -1076,7 +1078,7 @@ export default function RecipeDetailsPage() {
               type="button"
               onClick={handleSavePersonalNote}
               disabled={noteSaving}
-              className="mt-2 rounded-full bg-umami-orange px-4 py-2 font-nunito text-sm text-white disabled:opacity-60"
+              className="mt-2 rounded-full bg-umami-orange px-3 py-1.5 font-nunito text-xs text-white disabled:opacity-60 md:text-sm"
             >
               {noteSaving ? "Сохраняем..." : "Сохранить заметку"}
             </button>
@@ -1136,7 +1138,7 @@ export default function RecipeDetailsPage() {
             {activeTab === "info" && (
               <div className="flex flex-col gap-3">
                 <div className="grid grid-cols-3 gap-2 md:gap-4">
-                  <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white">
+                  <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white text-center leading-tight">
                     <p className="font-nunito text-sm font-bold text-umami-orange md:text-base">
                       {recipe.cooking_time} мин
                     </p>
@@ -1144,7 +1146,7 @@ export default function RecipeDetailsPage() {
                       готовка
                     </p>
                   </div>
-                  <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white">
+                  <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white text-center leading-tight">
                     <p className="font-nunito text-sm font-bold text-umami-orange md:text-base">
                       {recipe.portion} порции
                     </p>
@@ -1152,7 +1154,7 @@ export default function RecipeDetailsPage() {
                       выход
                     </p>
                   </div>
-                  <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white">
+                  <div className="flex h-[60px] flex-col items-center justify-center rounded-[20px] border border-umami-light-gray/50 bg-white text-center leading-tight">
                     <p className="font-nunito text-sm font-bold text-umami-orange md:text-base">
                       {recipe.calorific ?? 0}
                     </p>
@@ -1331,7 +1333,7 @@ export default function RecipeDetailsPage() {
 
             {activeTab === "comments" && (
               <div className="space-y-4">
-                <div className="rounded-2xl border border-umami-light-gray/50 p-4">
+                <div>
                   <p className="font-nunito text-lg font-bold text-umami-dark-gray">
                     {replyToCommentId
                       ? "Ответ на комментарий"
@@ -1434,7 +1436,7 @@ export default function RecipeDetailsPage() {
                     type="button"
                     onClick={handleSubmitComment}
                     disabled={commentSending}
-                    className="mt-3 rounded-full bg-umami-orange px-4 py-2 font-nunito text-sm text-white disabled:opacity-60"
+                    className="mt-3 rounded-full bg-umami-orange px-3 py-1.5 font-nunito text-xs text-white disabled:opacity-60 sm:px-4 sm:py-2 sm:text-sm"
                   >
                     {commentSending ? "Отправляем..." : "Отправить"}
                   </button>
@@ -1538,7 +1540,7 @@ export default function RecipeDetailsPage() {
                                   </button>
                                   {commentActionsOpenId ===
                                     String(comment.id) && (
-                                    <div className="absolute right-0 top-8 z-20 min-w-[170px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
+                                    <div className="absolute right-0 top-8 z-20 min-w-[132px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md md:min-w-[150px] lg:min-w-[170px]">
                                       <button
                                         type="button"
                                         onClick={() =>
@@ -1727,7 +1729,7 @@ export default function RecipeDetailsPage() {
                                           </button>
                                           {commentActionsOpenId ===
                                             String(reply.id) && (
-                                            <div className="absolute right-0 top-7 z-20 min-w-[170px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
+                                            <div className="absolute right-0 top-7 z-20 min-w-[132px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md md:min-w-[150px] lg:min-w-[170px]">
                                               <button
                                                 type="button"
                                                 onClick={() =>

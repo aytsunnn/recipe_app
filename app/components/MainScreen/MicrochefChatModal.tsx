@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { RefObject } from "react";
@@ -74,16 +74,16 @@ export default function MicrochefChatModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3 py-4 sm:px-4 sm:py-6"
       onClick={onClose}
     >
       <div
-        className="grid h-[80vh] w-full max-w-[1080px] grid-cols-[minmax(0,1fr)_320px] gap-5"
+        className="grid h-[86vh] w-full max-w-[1080px] grid-cols-1 gap-3 lg:h-[80vh] lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-5"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex h-full flex-col overflow-hidden rounded-[20px] border border-[#eaeaea] bg-white p-4">
+        <div className="flex h-full flex-col overflow-hidden rounded-[20px] border border-[#eaeaea] bg-white p-3 sm:p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-nunito text-xl font-bold text-umami-dark-gray">
+            <h3 className="font-nunito text-lg font-bold text-umami-dark-gray sm:text-xl">
               Чат с микро-шефом
             </h3>
             <button type="button" onClick={onClose} aria-label="Закрыть чат">
@@ -108,7 +108,9 @@ export default function MicrochefChatModal({
             onSend={onSend}
           />
         </div>
-        <MicrochefHelpSidebar />
+        <div className="hidden lg:block">
+          <MicrochefHelpSidebar />
+        </div>
       </div>
     </div>
   );

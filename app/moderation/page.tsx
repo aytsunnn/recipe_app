@@ -579,7 +579,7 @@ export default function ModerationPage() {
         <div className="flex flex-col gap-4">
           <ModerationTabs activeTab={activeTab} onChange={setActiveTab} isAdmin={isAdmin} />
 
-          <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-5">
+          <div className="rounded-[20px] border border-umami-light-gray/50 bg-white p-3 sm:p-4 md:p-5">
             {activeTab === "analytics" && isAdmin ? (
               <ModerationAnalyticsPanel />
             ) : activeTab === "reports" ? (
@@ -661,7 +661,7 @@ export default function ModerationPage() {
               </>
             ) : activeTab === "users" ? (
               <>
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                   <div>
                     <h2 className="font-nunito text-lg font-bold text-umami-dark-gray">
                       Пользователи
@@ -670,7 +670,7 @@ export default function ModerationPage() {
                       Всего: {usersTotal}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={toggleSelectAllVisible}
@@ -728,7 +728,7 @@ export default function ModerationPage() {
                   </div>
                 )}
 
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-4 flex items-center justify-between gap-2">
                   <button
                     type="button"
                     disabled={usersPage <= 1 || actionLoading === "users-page"}
@@ -770,8 +770,8 @@ export default function ModerationPage() {
       </div>
 
       {editingUserId ? (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-umami-light-gray/50 bg-white p-5">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 p-3 sm:p-4">
+          <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-2xl border border-umami-light-gray/50 bg-white p-4 sm:p-5">
             <h3 className="font-nunito text-lg font-bold text-umami-dark-gray">
               Редактирование пользователя
             </h3>
@@ -834,7 +834,7 @@ export default function ModerationPage() {
                   className="w-full rounded-xl border border-umami-light-gray/50 px-3 py-2 text-sm focus:outline-none"
                 />
               </label>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                 <label className="block">
                   <span className="mb-1 block text-sm text-umami-gray">Роль</span>
                   <select

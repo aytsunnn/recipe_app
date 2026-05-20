@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -46,8 +46,8 @@ export default function ModerationReportCard({
   onDismiss,
 }: ModerationReportCardProps) {
   return (
-    <div className="rounded-xl border border-umami-light-gray/50 bg-[#fffdfa] p-4">
-      <div className="flex items-center justify-between gap-3">
+    <div className="rounded-xl border border-umami-light-gray/50 bg-[#fffdfa] p-3 sm:p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
         <p className="text-sm font-bold text-umami-dark-gray">Жалоба #{report.id}</p>
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-[#f3efe2] px-2 py-0.5 text-xs font-bold text-umami-dark-gray">
@@ -90,12 +90,8 @@ export default function ModerationReportCard({
             className="h-10 w-10 rounded-full object-cover"
           />
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-umami-dark-gray">
-              @{report.Reporter?.username || "unknown"}
-            </p>
-            <p className="truncate text-sm text-umami-gray">
-              {report.Reporter?.name || reporterLabel}
-            </p>
+            <p className="truncate text-sm font-bold text-umami-dark-gray">@unknown</p>
+            <p className="truncate text-sm text-umami-gray">{reporterLabel}</p>
           </div>
         </div>
       )}
@@ -153,19 +149,17 @@ export default function ModerationReportCard({
               : "bg-gray-100 text-umami-dark-gray hover:bg-gray-200"
           }`}
         >
-          Отказать
+          Отказано
         </button>
       </div>
 
       <p className="mt-3 text-xs text-umami-light-gray">Причина</p>
-      <p className="text-sm font-semibold text-umami-dark-gray">
-        {report.reason || "Без причины"}
-      </p>
+      <p className="text-sm font-semibold text-umami-dark-gray">{report.reason || "Без причины"}</p>
 
       {report.description ? (
         <>
           <p className="mt-2 text-xs text-umami-light-gray">Описание</p>
-          <p className="whitespace-pre-wrap text-sm text-umami-dark-gray">
+          <p className="whitespace-pre-wrap break-words text-sm text-umami-dark-gray">
             {report.description}
           </p>
         </>
@@ -182,13 +176,9 @@ export default function ModerationReportCard({
         <p className="text-sm font-semibold text-umami-dark-gray">{targetLabel}</p>
       )}
 
-      <div className="mt-2 flex items-center justify-between gap-3 text-sm text-umami-gray">
-        <p>Создано: {createdAtLabel}</p>
-        {showUpdatedAt ? (
-          <p className="text-right">Обновлено: {updatedAtLabel}</p>
-        ) : (
-          <span />
-        )}
+      <div className="mt-2 flex items-center justify-between gap-2 text-xs text-umami-gray">
+        <p className="truncate">Создано: {createdAtLabel}</p>
+        {showUpdatedAt ? <p className="truncate text-right">Обновлено: {updatedAtLabel}</p> : <span />}
       </div>
     </div>
   );

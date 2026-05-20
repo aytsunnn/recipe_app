@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Recipe } from "../../services/recipeService";
 
@@ -56,12 +56,12 @@ export default function MicrochefMessageList({
       {messages.map((message) => (
         <div
           key={message.id}
-          className={`${message.role === "user" ? "ml-auto" : ""} w-fit max-w-[85%]`}
+          className={`${message.role === "user" ? "ml-auto" : ""} w-fit max-w-[92%] sm:max-w-[85%]`}
         >
           {message.recipeCard || message.recipeDraft ? (
-            <div className="w-fit max-w-[560px] rounded-2xl border border-[#E9E1D2] bg-white p-4">
+            <div className="w-fit max-w-[560px] rounded-2xl border border-[#E9E1D2] bg-white p-3 sm:p-4">
               <div className="w-full text-left">
-                <p className="line-clamp-2 font-nunito text-lg font-bold text-umami-dark-gray">
+                <p className="line-clamp-2 font-nunito text-base font-bold text-umami-dark-gray sm:text-lg">
                   {message.recipeDraft?.title || message.recipeCard?.title}
                 </p>
                 <p className="mt-1 line-clamp-3 text-sm text-umami-gray">
@@ -78,7 +78,7 @@ export default function MicrochefMessageList({
                 </p>
               </div>
 
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {message.recipeDraft ? (
                   <button
                     type="button"
@@ -103,7 +103,7 @@ export default function MicrochefMessageList({
 
               {message.recipeDraft && expandedDraftIds.has(message.id) ? (
                 <div className="mt-3 space-y-3 rounded-xl border border-[#E6D6BE] bg-[#FFF8EC] p-3">
-                  <div className="grid grid-cols-2 gap-2 text-xs text-[#6A533A]">
+                  <div className="grid grid-cols-1 gap-1 text-xs text-[#6A533A] sm:grid-cols-2 sm:gap-2">
                     {typeof message.recipeDraft.calorific === "number" ? (
                       <p>Калории: {message.recipeDraft.calorific}</p>
                     ) : null}

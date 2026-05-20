@@ -98,11 +98,11 @@ export function UiFeedbackProvider({ children }: { children: React.ReactNode }) 
     <UiFeedbackContext.Provider value={value}>
       {children}
 
-      <div className="fixed bottom-4 right-4 z-[120] flex w-[340px] max-w-[calc(100vw-1rem)] flex-col gap-2">
+      <div className="fixed bottom-3 right-3 z-[120] flex w-[300px] max-w-[calc(100vw-1rem)] flex-col gap-2 sm:bottom-4 sm:right-4 sm:w-[340px]">
         {toasts.map((item) => (
           <div
             key={item.id}
-            className={`rounded-xl border bg-white px-3 py-2 shadow-md ${
+            className={`rounded-xl border bg-white px-2.5 py-2 shadow-md sm:px-3 ${
               item.type === "error"
                 ? "border-red-200"
                 : item.type === "success"
@@ -111,7 +111,7 @@ export function UiFeedbackProvider({ children }: { children: React.ReactNode }) 
             }`}
           >
             <div className="flex items-start justify-between gap-2">
-              <p className="font-inter text-sm text-umami-dark-gray">{item.message}</p>
+              <p className="font-inter text-xs text-umami-dark-gray sm:text-sm">{item.message}</p>
               <button
                 type="button"
                 onClick={() =>
@@ -128,10 +128,10 @@ export function UiFeedbackProvider({ children }: { children: React.ReactNode }) 
       </div>
 
       {confirmState ? (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-[420px] rounded-2xl bg-white p-4">
-            <p className="font-nunito text-lg font-bold text-umami-dark-gray">Подтверждение</p>
-            <p className="mt-2 font-inter text-sm text-umami-gray">{confirmState.message}</p>
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 px-3 sm:px-4">
+          <div className="w-full max-w-[420px] rounded-2xl bg-white p-3 sm:p-4">
+            <p className="font-nunito text-base font-bold text-umami-dark-gray sm:text-lg">Подтверждение</p>
+            <p className="mt-2 font-inter text-xs text-umami-gray sm:text-sm">{confirmState.message}</p>
             <div className="mt-4 flex gap-2">
               <button
                 type="button"
@@ -139,7 +139,7 @@ export function UiFeedbackProvider({ children }: { children: React.ReactNode }) 
                   confirmState.resolve(true);
                   setConfirmState(null);
                 }}
-                className="flex-1 rounded-full bg-umami-orange px-3 py-1.5 font-nunito text-sm font-bold text-white"
+                className="flex-1 rounded-full bg-umami-orange px-3 py-1.5 font-nunito text-xs font-bold text-white sm:text-sm"
               >
                 Подтвердить
               </button>
@@ -149,7 +149,7 @@ export function UiFeedbackProvider({ children }: { children: React.ReactNode }) 
                   confirmState.resolve(false);
                   setConfirmState(null);
                 }}
-                className="flex-1 rounded-full bg-[#ececec] px-3 py-1.5 font-nunito text-sm font-bold text-umami-dark-gray"
+                className="flex-1 rounded-full bg-[#ececec] px-3 py-1.5 font-nunito text-xs font-bold text-umami-dark-gray sm:text-sm"
               >
                 Отмена
               </button>
@@ -159,9 +159,9 @@ export function UiFeedbackProvider({ children }: { children: React.ReactNode }) 
       ) : null}
 
       {reportState ? (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-[480px] rounded-2xl bg-white p-4">
-            <p className="font-nunito text-lg font-bold text-umami-dark-gray">Отправить жалобу</p>
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/40 px-3 sm:px-4">
+          <div className="w-full max-w-[480px] rounded-2xl bg-white p-3 sm:p-4">
+            <p className="font-nunito text-base font-bold text-umami-dark-gray sm:text-lg">Отправить жалобу</p>
             <label className="mt-3 block">
               <span className="mb-1 block font-inter text-sm text-umami-gray">Тип жалобы</span>
               <select

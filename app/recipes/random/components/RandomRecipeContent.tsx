@@ -86,15 +86,15 @@ export default function RandomRecipeContent() {
       </div>
 
       <div className="w-full pb-10 lg:w-169.5">
-        <div className="mb-4 rounded-lg border border-umami-light-gray/50 bg-white p-4">
+        <div className="mb-3 rounded-lg border border-umami-light-gray/50 bg-white p-3 sm:mb-4 sm:p-4">
           <div className="flex items-center justify-between">
-            <h1 className="font-nunito text-2xl font-bold text-umami-dark-gray">
+            <h1 className="font-nunito text-lg font-bold text-umami-dark-gray sm:text-xl md:text-2xl">
               Случайный рецепт
             </h1>
             <button
               type="button"
               onClick={() => void loadRandom()}
-              className="rounded-full bg-umami-green px-4 py-2 font-inter text-sm font-medium text-white transition-colors hover:bg-[#6A805E]"
+              className="rounded-full bg-umami-green px-3 py-1.5 font-inter text-xs font-medium text-white transition-colors hover:bg-[#6A805E] sm:px-4 sm:py-2 sm:text-sm"
             >
               Другой рецепт
             </button>

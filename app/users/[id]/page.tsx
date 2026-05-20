@@ -258,9 +258,9 @@ export default function PublicUserPage() {
 
         {!loading && !error && profile && (
           <div className="flex flex-col gap-4">
-            <div className="relative flex h-[190px] items-center rounded-[20px] border border-[#eaeaea] bg-white p-5">
+            <div className="relative rounded-[20px] border border-[#eaeaea] bg-white p-3 sm:p-4 lg:h-[190px] lg:p-5">
               {!isOwnProfile && isAdmin ? (
-                <div ref={adminMenuRef} className="absolute right-5 top-5 z-20">
+                <div ref={adminMenuRef} className="absolute right-3 top-3 z-20 sm:right-4 sm:top-4 lg:right-5 lg:top-5">
                   <button
                     type="button"
                     onClick={() => setAdminMenuOpen((prev) => !prev)}
@@ -297,19 +297,19 @@ export default function PublicUserPage() {
                 </div>
               ) : null}
 
-              <div className="flex w-full items-center gap-5">
+              <div className="flex w-full items-start gap-3 sm:gap-4 lg:items-center lg:gap-5">
                 <Image
                   src={getSafeImageUrl(profile.avatar_url)}
                   alt={profile.name}
                   width={150}
                   height={150}
-                  className="h-[150px] w-[150px] rounded-full object-cover"
+                  className="h-18 w-18 shrink-0 rounded-full object-cover sm:h-24 sm:w-24 lg:h-[150px] lg:w-[150px]"
                 />
-                <div className="min-w-0 flex-1 pr-10">
-                  <h1 className="truncate font-nunito text-xl font-bold text-black">
+                <div className="min-w-0 flex-1 pr-2 sm:pr-8 lg:pr-10">
+                  <h1 className="truncate font-nunito text-base font-bold text-black sm:text-lg lg:text-xl">
                     {profile.name}
                   </h1>
-                  <p className="font-inter text-sm text-umami-gray">
+                  <p className="truncate font-inter text-xs text-umami-gray sm:text-sm">
                     @{profile.username}
                   </p>
                   {profile.is_blocked ? (
@@ -318,36 +318,36 @@ export default function PublicUserPage() {
                     </p>
                   ) : null}
                   {profile.bio ? (
-                    <p className="mt-1 line-clamp-2 max-w-[560px] font-inter text-sm text-umami-gray">
+                    <p className="mt-1 line-clamp-2 max-w-[560px] font-inter text-xs text-umami-gray sm:text-sm">
                       О себе: {profile.bio}
                     </p>
                   ) : null}
-                  <div className="mt-2 flex gap-6 text-center text-black">
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-center text-black sm:flex sm:gap-6">
                     <div>
-                      <p className="font-nunito text-xl font-semibold leading-none">
+                      <p className="font-nunito text-base font-semibold leading-none sm:text-xl">
                         {stats.recipes}
                       </p>
-                      <p className="mt-1 font-nunito text-sm">Рецепты</p>
+                      <p className="mt-1 font-nunito text-xs sm:text-sm">Рецепты</p>
                     </div>
                     <div>
-                      <p className="font-nunito text-xl font-semibold leading-none">
+                      <p className="font-nunito text-base font-semibold leading-none sm:text-xl">
                         {stats.following}
                       </p>
-                      <p className="mt-1 font-nunito text-sm">Подписки</p>
+                      <p className="mt-1 font-nunito text-xs sm:text-sm">Подписки</p>
                     </div>
                     <div>
-                      <p className="font-nunito text-xl font-semibold leading-none">
+                      <p className="font-nunito text-base font-semibold leading-none sm:text-xl">
                         {stats.followers}
                       </p>
-                      <p className="mt-1 font-nunito text-sm">Подписчики</p>
+                      <p className="mt-1 font-nunito text-xs sm:text-sm">Подписчики</p>
                     </div>
                   </div>
                   {!isOwnProfile && authService.isAuthenticated() ? (
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => void toggleFollow()}
-                        className={`rounded-full px-3 py-1 font-nunito text-xs font-bold ${
+                        className={`rounded-full px-2.5 py-1 font-nunito text-xs font-bold sm:px-3 ${
                           isFollowing
                             ? "bg-[#f1ebdb] text-umami-dark-gray"
                             : "bg-umami-green text-white"
@@ -358,7 +358,7 @@ export default function PublicUserPage() {
                       <button
                         type="button"
                         onClick={() => void handleReportProfile()}
-                        className="rounded-full border border-umami-light-gray/60 bg-white px-3 py-1 font-nunito text-xs font-bold text-umami-dark-gray hover:bg-[#f7f4ea]"
+                        className="rounded-full border border-umami-light-gray/60 bg-white px-2.5 py-1 font-nunito text-xs font-bold text-umami-dark-gray hover:bg-[#f7f4ea] sm:px-3"
                       >
                         Пожаловаться
                       </button>

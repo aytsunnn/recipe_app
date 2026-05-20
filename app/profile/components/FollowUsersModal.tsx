@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -21,10 +21,10 @@ export default function FollowUsersModal({
   if (!type) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-[520px] rounded-[20px] bg-white p-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3 sm:px-4">
+      <div className="w-full max-w-[520px] rounded-[20px] bg-white p-3 sm:p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-nunito text-xl font-bold text-umami-dark-gray">
+          <h3 className="font-nunito text-base font-bold text-umami-dark-gray sm:text-xl">
             {type === "following" ? "Подписки" : "Подписчики"}
           </h3>
           <button
@@ -40,7 +40,7 @@ export default function FollowUsersModal({
         ) : users.length === 0 ? (
           <p className="py-4 text-sm text-umami-gray">Список пуст</p>
         ) : (
-          <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+          <div className="modal-thin-scroll max-h-[68vh] space-y-2 overflow-y-auto pr-1">
             {users.map((person) => (
               <Link
                 key={person.id}
@@ -53,7 +53,7 @@ export default function FollowUsersModal({
                   height={40}
                   src={normalizeImageUrl(person.avatar_url, "/avatar.jpg")}
                   alt={person.name}
-                  className="h-10 w-10 rounded-full object-cover"
+                  className="h-10 w-10 shrink-0 rounded-full object-cover"
                 />
                 <div className="min-w-0">
                   <p className="truncate font-nunito text-sm font-bold text-umami-dark-gray">

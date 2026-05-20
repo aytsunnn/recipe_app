@@ -206,7 +206,7 @@ function TopHorizontalList({ title, items }: { title: string; items: TopItem[] }
   const max = Math.max(...items.map((i) => i.count), 1);
   return (
     <div className="rounded-xl border border-umami-light-gray/50 bg-white p-3">
-      <h3 className="mb-3 font-nunito text-base font-bold text-umami-dark-gray">{title}</h3>
+      <h3 className="mb-3 font-nunito text-sm font-bold text-umami-dark-gray sm:text-base">{title}</h3>
       <div className="space-y-2">
         {items.map((item) => (
           <Link
@@ -222,10 +222,10 @@ function TopHorizontalList({ title, items }: { title: string; items: TopItem[] }
               alt={item.title}
               width={44}
               height={44}
-              className="h-11 w-11 rounded-lg object-cover"
+              className="h-9 w-9 rounded-lg object-cover sm:h-11 sm:w-11"
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-umami-dark-gray">{item.title}</p>
+              <p className="truncate text-xs font-bold text-umami-dark-gray sm:text-sm">{item.title}</p>
               <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-[#f1ebdb]">
                 <div
                   className="h-full bg-umami-orange"
@@ -233,7 +233,7 @@ function TopHorizontalList({ title, items }: { title: string; items: TopItem[] }
                 />
               </div>
             </div>
-            <p className="w-12 text-right text-xs font-bold text-umami-dark-gray">{item.count}</p>
+            <p className="w-10 text-right text-xs font-bold text-umami-dark-gray sm:w-12">{item.count}</p>
           </Link>
         ))}
       </div>
@@ -243,10 +243,10 @@ function TopHorizontalList({ title, items }: { title: string; items: TopItem[] }
 
 function AnalyticsPlot({ title, points, mode }: { title: string; points: ChartPoint[]; mode: "bar" | "line" }) {
   const max = Math.max(...points.map((point) => point.value), 1);
-  const chartHeight = 220;
-  const chartWidth = Math.max(640, points.length * 64);
+  const chartHeight = 180;
+  const chartWidth = Math.max(260, points.length * 42);
   const step = chartWidth / Math.max(points.length, 1);
-  const barWidth = Math.max(18, Math.min(42, step * 0.55));
+  const barWidth = Math.max(12, Math.min(26, step * 0.5));
   const linePath = points
     .map((point, index) => {
       const x = index * step + step / 2;
@@ -257,9 +257,9 @@ function AnalyticsPlot({ title, points, mode }: { title: string; points: ChartPo
 
   return (
     <div className="rounded-xl border border-umami-light-gray/50 bg-white p-3">
-      <h3 className="mb-3 font-nunito text-base font-bold text-umami-dark-gray">{title}</h3>
+      <h3 className="mb-2 font-nunito text-sm font-bold text-umami-dark-gray sm:text-base">{title}</h3>
       <div className="w-full overflow-x-auto">
-        <svg width={chartWidth} height={280} role="img" aria-label={title}>
+        <svg width={chartWidth} height={232} role="img" aria-label={title}>
           <line x1={0} y1={chartHeight} x2={chartWidth} y2={chartHeight} stroke="#e6e0d2" />
           {[0.25, 0.5, 0.75, 1].map((k) => {
             const y = chartHeight - (chartHeight - 16) * k;
@@ -280,7 +280,7 @@ function AnalyticsPlot({ title, points, mode }: { title: string; points: ChartPo
                       x={x + barWidth / 2}
                       y={chartHeight + 16}
                       textAnchor="middle"
-                      fontSize="11"
+                      fontSize="10"
                       fill="#7f7f7f"
                     >
                       {point.label.slice(0, 12)}
@@ -303,7 +303,7 @@ function AnalyticsPlot({ title, points, mode }: { title: string; points: ChartPo
                           x={x}
                           y={chartHeight + 16}
                           textAnchor="middle"
-                          fontSize="11"
+                          fontSize="10"
                           fill="#7f7f7f"
                         >
                           {point.label.slice(0, 12)}
@@ -444,8 +444,8 @@ export default function ModerationAnalyticsPanel() {
               key={metric.key}
               className="rounded-xl border border-umami-light-gray/50 bg-[#fcfbf8] p-3"
             >
-              <p className="text-xs text-umami-gray">{titleRu(metric.key)}</p>
-              <p className="mt-1 font-nunito text-2xl font-bold text-umami-dark-gray">{metric.value}</p>
+              <p className="text-[11px] text-umami-gray sm:text-xs">{titleRu(metric.key)}</p>
+              <p className="mt-1 font-nunito text-lg font-bold text-umami-dark-gray sm:text-2xl">{metric.value}</p>
             </div>
           ))}
         </div>

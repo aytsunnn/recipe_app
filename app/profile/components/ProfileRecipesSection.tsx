@@ -48,9 +48,9 @@ export default function ProfileRecipesSection({
         <button
           type="button"
           onClick={onAddRecipeClick}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-umami-orange px-4 py-2 font-nunito text-sm text-white transition-colors hover:bg-[#dd8c45]"
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-umami-orange px-3 py-1.5 font-nunito text-xs text-white transition-colors hover:bg-[#dd8c45] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
         >
-          <Image width={18} height={18} src="/pluscircle.svg" alt="add-recipe" />
+          <Image width={16} height={16} src="/pluscircle.svg" alt="add-recipe" className="sm:h-[18px] sm:w-[18px]" />
           Добавить рецепт
         </button>
       </div>
@@ -75,7 +75,7 @@ export default function ProfileRecipesSection({
               <button
                 type="button"
                 onClick={() => onToggleVisibility(recipe)}
-                className="inline-flex items-center gap-2 rounded-full px-2 py-1 hover:bg-[#f3efe2]"
+                className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.75 hover:bg-[#f3efe2] sm:gap-2 sm:py-1"
               >
                 <Image
                   width={20}
@@ -83,7 +83,7 @@ export default function ProfileRecipesSection({
                   src={recipe.is_private ? "/LockSimple.svg" : "/LockSimpleOpen.svg"}
                   alt="visibility"
                 />
-                <span className="font-nunito text-sm font-semibold text-umami-gray">
+                <span className="font-nunito text-xs font-semibold text-umami-gray sm:text-sm">
                   <span
                     className={
                       recipe.is_private ? "text-umami-gray" : "text-umami-green"
