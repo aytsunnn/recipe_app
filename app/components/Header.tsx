@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -228,7 +228,7 @@ function HeaderContent() {
           </div>
           <button
             onClick={handleSearch}
-            className="custom-button h-8.5 whitespace-nowrap bg-umami-green px-2.5 font-nunito text-[11px] font-medium md:h-9 md:px-3 md:text-xs lg:h-9.25 lg:px-0 lg:text-sm"
+            className="custom-button h-8.5 whitespace-nowrap bg-umami-green px-4 font-nunito text-[11px] font-semibold text-white hover:bg-[#6b7f60] transition-all duration-300 active:scale-95 shadow-sm md:h-9 md:px-5 md:text-xs lg:h-9.25 lg:px-6 lg:text-sm"
           >
             Найти рецепт
           </button>
@@ -272,15 +272,15 @@ function HeaderContent() {
             </Link>
             <Link
               href="/profile"
-              className="hidden h-10.25 w-auto items-center justify-center gap-5 rounded-full bg-umami-orange pr-0 pl-4 lg:flex"
+              className="hidden h-10.25 w-auto items-center justify-center gap-3.5 rounded-full bg-umami-orange pl-5 pr-1.5 text-white hover:bg-[#dd8c45] transition-all duration-300 shadow-sm border border-transparent hover:scale-[1.02] lg:flex"
             >
-              <p>{user.username}</p>
+              <p className="font-nunito text-sm font-bold tracking-wide">{user.username}</p>
               <Image
-                width={36}
-                height={36}
+                width={32}
+                height={32}
                 src={getSafeAvatarUrl(user.avatar_url)}
                 alt="avatar"
-                className="h-10.25 w-10.25 rounded-full border border-white object-cover"
+                className="h-8 w-8 rounded-full border border-white object-cover shadow-inner"
               />
             </Link>
           </div>

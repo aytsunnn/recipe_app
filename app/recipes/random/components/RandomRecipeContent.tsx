@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Suspense, useEffect, useState } from "react";
 import FeedCard from "../../../components/feed-card/FeedCard";
@@ -129,7 +129,7 @@ export default function RandomRecipeContent() {
         )}
       </div>
 
-      <div className="hidden lg:flex lg:w-63.75">
+      <div className="lg:w-63.75">
         <RightPart />
       </div>
     </div>

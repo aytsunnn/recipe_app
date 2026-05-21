@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import LeftPart from "../components/MainScreen/NavigationLeftPart";
@@ -21,6 +21,8 @@ import WeekMenuAdminPanel from "./components/WeekMenuAdminPanel";
 import ModerationAnalyticsPanel from "./components/ModerationAnalyticsPanel";
 import ModerationBroadcastPanel from "./components/ModerationBroadcastPanel";
 import ModerationMetaPanel from "./components/ModerationMetaPanel";
+import ModerationAppealsPanel from "./components/ModerationAppealsPanel";
+import ModerationAuditLogsPanel from "./components/ModerationAuditLogsPanel";
 
 const toIdList = (value: string): number[] =>
   value
@@ -34,7 +36,7 @@ export default function ModerationPage() {
   const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "analytics" | "reports" | "users" | "week-menu" | "broadcast" | "meta"
+    "analytics" | "reports" | "users" | "week-menu" | "broadcast" | "meta" | "appeals" | "audit-logs"
   >("reports");
   const [reports, setReports] = useState<ModerationReport[]>([]);
   const [users, setUsers] = useState<ModerationUser[]>([]);
@@ -763,6 +765,10 @@ export default function ModerationPage() {
               <ModerationBroadcastPanel />
             ) : activeTab === "meta" && isAdmin ? (
               <ModerationMetaPanel />
+            ) : activeTab === "appeals" ? (
+              <ModerationAppealsPanel />
+            ) : activeTab === "audit-logs" && isAdmin ? (
+              <ModerationAuditLogsPanel />
             ) : null}
           </div>
         </div>

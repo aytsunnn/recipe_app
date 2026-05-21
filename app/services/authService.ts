@@ -1,4 +1,4 @@
-﻿// app/services/authService.ts
+// app/services/authService.ts
 import { ApiError, apiClient } from './api';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
@@ -49,6 +49,7 @@ export interface User {
   avatar_url: string | null;
   bio?: string | null;
   role?: string;
+  is_blocked?: boolean;
 }
 
 class AuthService {

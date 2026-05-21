@@ -1,4 +1,4 @@
-﻿// app/services/recipeService.ts
+// app/services/recipeService.ts
 import { apiClient } from './api';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
@@ -211,16 +211,19 @@ class RecipeService {
     await apiClient.patch<unknown>(`/recipes/${id}/personal-note`, { note });
   }
 
-  async getRecommendations(page = 1, limit = 8): Promise<Recipe[]> {
+  async getRecommendations(page = 1, limit = 8, excludeIds?: string[]): Promise<Recipe[]> {
     try {
       const queryParams = new URLSearchParams({
         page: String(page),
         limit: String(limit),
       });
+      if (excludeIds && excludeIds.length > 0) {
+        queryParams.append("exclude_ids", excludeIds.join(","));
+      }
       const recipes = await apiClient.get<Recipe[]>(`/recipes/recommendations?${queryParams.toString()}`);
       return recipes.map(recipe => this.fixRecipeImages(recipe));
     } catch (error) {
-      console.error('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё СЂРµРєРѕРјРµРЅРґР°С†РёР№, РїРѕРєР°Р·С‹РІР°РµРј РѕР±С‰СѓСЋ Р»РµРЅС‚Сѓ:', error);
+      console.error('Ошибка загрузки рекомендаций, показываем общую ленту:', error);
       return this.getAll({ page, limit });
     }
   }

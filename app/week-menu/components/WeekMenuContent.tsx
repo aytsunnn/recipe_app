@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
@@ -200,7 +200,7 @@ export default function WeekMenuContent({ editable }: WeekMenuContentProps) {
                     }}
                     aria-label="Открыть выбор рецепта"
                   >
-                    <Image src="/pluscirclegray.svg" alt="" width={22} height={22} />
+                    <Image src="/PlusCircleGray.svg" alt="" width={22} height={22} />
                   </button>
                 </div>
               ) : null}
@@ -266,9 +266,9 @@ export default function WeekMenuContent({ editable }: WeekMenuContentProps) {
               <button
                 type="button"
                 onClick={() => setPickerDayId(null)}
-                className="rounded-full border border-umami-light-gray/60 px-3 py-1 text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-umami-light-gray/50 bg-white hover:bg-umami-light-gray/10 transition-colors duration-200"
               >
-                Закрыть
+                <Image width={12} height={12} src="/X.svg" alt="close" />
               </button>
             </div>
 

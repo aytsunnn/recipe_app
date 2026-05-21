@@ -75,6 +75,23 @@ export type MetaEntityType =
   | "ingredients";
 export type MetaItem = Record<string, unknown> & { id: string | number };
 
+export interface AuditLog {
+  id: string | number;
+  admin_id: string | number;
+  action: string;
+  entity?: string | null;
+  entity_id?: string | number | null;
+  details?: any | null;
+  created_at?: string;
+  createdAt?: string;
+  updated_at?: string;
+  updatedAt?: string;
+  User?: {
+    id: string | number;
+    username: string;
+  } | null;
+}
+
 class ModerationService {
   private normalizeUsers(rawList: unknown[]): ModerationUser[] {
     return rawList
@@ -454,6 +471,17 @@ class ModerationService {
 
   async deleteMetaItem(type: MetaEntityType, id: string | number): Promise<void> {
     await apiClient.delete(`/meta/${type}/${id}`);
+  }
+
+  async getAuditLogs(): Promise<AuditLog[]> {
+    const data = await apiClient.get<unknown>("/admin/audit-logs");
+    if (Array.isArray(data)) return data as AuditLog[];
+    if (data && typeof data === "object") {
+      const raw = data as Record<string, unknown>;
+      const candidate = raw.items || raw.data || raw.rows;
+      if (Array.isArray(candidate)) return candidate as AuditLog[];
+    }
+    return [];
   }
 }
 

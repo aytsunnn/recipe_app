@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { RefObject } from "react";
 import Image from "next/image";
@@ -38,10 +38,6 @@ export default function ProfileRecipesSection({
   onToggleVisibility,
   feedColumnRef,
 }: ProfileRecipesSectionProps) {
-  if (recipes.length === 0) {
-    return <ProfileRecipesEmptyState variant="empty" />;
-  }
-
   return (
     <div ref={feedColumnRef} className="flex flex-col gap-2.5 pb-10">
       <div className="mb-0.5 flex items-center justify-start">
@@ -50,62 +46,69 @@ export default function ProfileRecipesSection({
           onClick={onAddRecipeClick}
           className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-umami-orange px-3 py-1.5 font-nunito text-xs text-white transition-colors hover:bg-[#dd8c45] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
         >
-          <Image width={16} height={16} src="/pluscircle.svg" alt="add-recipe" className="sm:h-[18px] sm:w-[18px]" />
+          <Image width={16} height={16} src="/PlusCircle.svg" alt="add-recipe" className="sm:h-[18px] sm:w-[18px]" />
           Добавить рецепт
         </button>
       </div>
-      <RecipeVisibilityFilter
-        value={recipeFilter}
-        totalCount={recipes.length}
-        publicCount={recipes.filter((r) => !r.is_private).length}
-        privateCount={recipes.filter((r) => r.is_private).length}
-        onChange={setRecipeFilter}
-      />
 
-      {filteredRecipes.length > 0 ? (
-        filteredRecipes.map((recipe) => (
-          <FeedCard
-            key={recipe.id}
-            recipe={recipe}
-            currentUserId={currentUserId}
-            isFollowing={false}
-            showAuthorHeader={false}
-            detailsQuery="from=profile"
-            headerLeftSlot={
-              <button
-                type="button"
-                onClick={() => onToggleVisibility(recipe)}
-                className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.75 hover:bg-[#f3efe2] sm:gap-2 sm:py-1"
-              >
-                <Image
-                  width={20}
-                  height={20}
-                  src={recipe.is_private ? "/LockSimple.svg" : "/LockSimpleOpen.svg"}
-                  alt="visibility"
-                />
-                <span className="font-nunito text-xs font-semibold text-umami-gray sm:text-sm">
-                  <span
-                    className={
-                      recipe.is_private ? "text-umami-gray" : "text-umami-green"
-                    }
-                  >
-                    {recipe.is_private ? "Приватный" : "Публичный"}
-                  </span>
-                </span>
-              </button>
-            }
-            headerRightSlot={
-              <RecipeActionsMenu
-                isOpen={openRecipeActionsId === recipe.id}
-                onToggle={() => onToggleRecipeActions(recipe.id)}
-                onEdit={() => onEditRecipe(recipe)}
-                onDelete={() => onDeleteRecipe(recipe.id)}
-              />
-            }
-          />
-        ))
+      {recipes.length === 0 ? (
+        <ProfileRecipesEmptyState variant="empty" onAddClick={onAddRecipeClick} />
       ) : (
-        <ProfileRecipesEmptyState variant="filtered" />
+        <>
+          <RecipeVisibilityFilter
+            value={recipeFilter}
+            totalCount={recipes.length}
+            publicCount={recipes.filter((r) => !r.is_private).length}
+            privateCount={recipes.filter((r) => r.is_private).length}
+            onChange={setRecipeFilter}
+          />
+
+          {filteredRecipes.length > 0 ? (
+            filteredRecipes.map((recipe) => (
+              <FeedCard
+                key={recipe.id}
+                recipe={recipe}
+                currentUserId={currentUserId}
+                isFollowing={false}
+                showAuthorHeader={false}
+                detailsQuery="from=profile"
+                headerLeftSlot={
+                  <button
+                    type="button"
+                    onClick={() => onToggleVisibility(recipe)}
+                    className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.75 hover:bg-[#f3efe2] sm:gap-2 sm:py-1"
+                  >
+                    <Image
+                      width={20}
+                      height={20}
+                      src={recipe.is_private ? "/LockSimple.svg" : "/LockSimpleOpen.svg"}
+                      alt="visibility"
+                    />
+                    <span className="font-nunito text-xs font-semibold text-umami-gray sm:text-sm">
+                      <span
+                        className={
+                          recipe.is_private ? "text-umami-gray" : "text-umami-green"
+                        }
+                      >
+                        {recipe.is_private ? "Приватный" : "Публичный"}
+                      </span>
+                    </span>
+                  </button>
+                }
+                headerRightSlot={
+                  <RecipeActionsMenu
+                    isOpen={openRecipeActionsId === recipe.id}
+                    onToggle={() => onToggleRecipeActions(recipe.id)}
+                    onEdit={() => onEditRecipe(recipe)}
+                    onDelete={() => onDeleteRecipe(recipe.id)}
+                  />
+                }
+              />
+            ))
+          ) : (
+            <ProfileRecipesEmptyState variant="filtered" />
+          )}
+        </>
       )}
       <ScrollToTopButton anchorRef={feedColumnRef} />
     </div>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Suspense } from "react";
 import LeftPart from "../components/MainScreen/NavigationLeftPart";
@@ -18,7 +18,7 @@ export default function WeekMenuPage() {
         <WeekMenuContent editable={false} />
       </div>
 
-      <div className="hidden lg:flex lg:w-63.75">
+      <div className="lg:w-63.75">
         <RightPart />
       </div>
     </div>

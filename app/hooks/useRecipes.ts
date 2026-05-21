@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { recipeService, Recipe, GetRecipesParams } from '../services/recipeService';
@@ -159,7 +159,8 @@ export function useRecipes(options: UseRecipesOptions = {}) {
           return;
         }
 
-        data = await recipeService.getRecommendations(pageToLoad, pageSize);
+        const excludeIds = replace ? [] : recipes.map(r => r.id);
+        data = await recipeService.getRecommendations(1, pageSize, excludeIds);
       } else {
         data = await recipeService.getAll({
           ...currentParams,
@@ -185,11 +186,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
             applyLikeOverridesFromStorage(resolvedRecipes)
           );
         });
-        const nextHasMore = shouldUseRecommendations
-          ? replace
-            ? data.length > 0
-            : data.length > 0 && appendedCount > 0
-          : replace
+        const nextHasMore = replace
           ? data.length >= pageSize
           : data.length >= pageSize && appendedCount > 0;
         setHasMore(nextHasMore);

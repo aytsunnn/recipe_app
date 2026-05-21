@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { RefObject } from "react";
@@ -38,7 +38,7 @@ export default function MicrochefChatComposer({
         }}
         placeholder="Например: курица, рис, сливки, чеснок"
         rows={1}
-        className="modal-thin-scroll max-h-34 min-h-9 flex-1 resize-none overflow-y-auto rounded-xl border border-[#E4DDCF] bg-[#FFFEFC] px-3 py-2 text-sm leading-5 outline-none transition-colors focus:border-[#D9C5A6]"
+        className="no-scrollbar max-h-34 min-h-9 flex-1 resize-none overflow-y-auto rounded-xl border border-[#E4DDCF] bg-[#FFFEFC] px-3 py-2 text-sm leading-5 outline-none transition-colors focus:border-[#D9C5A6]"
       />
       <button
         type="button"

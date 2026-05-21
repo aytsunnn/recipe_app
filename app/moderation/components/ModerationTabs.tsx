@@ -1,8 +1,8 @@
-﻿"use client";
+"use client";
 
 interface ModerationTabsProps {
-  activeTab: "analytics" | "reports" | "users" | "week-menu" | "broadcast" | "meta";
-  onChange: (tab: "analytics" | "reports" | "users" | "week-menu" | "broadcast" | "meta") => void;
+  activeTab: "analytics" | "reports" | "users" | "week-menu" | "broadcast" | "meta" | "appeals" | "audit-logs";
+  onChange: (tab: "analytics" | "reports" | "users" | "week-menu" | "broadcast" | "meta" | "appeals" | "audit-logs") => void;
   isAdmin: boolean;
 }
 
@@ -34,6 +34,18 @@ export default function ModerationTabs({ activeTab, onChange, isAdmin }: Moderat
           }`}
         >
           Жалобы
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onChange("appeals")}
+          className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors sm:px-4 ${
+            activeTab === "appeals"
+              ? "bg-umami-orange text-white"
+              : "bg-[#f3efe2] text-umami-dark-gray hover:bg-[#ece4cf]"
+          }`}
+        >
+          Апелляции
         </button>
 
         <button
@@ -82,6 +94,17 @@ export default function ModerationTabs({ activeTab, onChange, isAdmin }: Moderat
               }`}
             >
               Meta
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange("audit-logs")}
+              className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors sm:px-4 ${
+                activeTab === "audit-logs"
+                  ? "bg-umami-orange text-white"
+                  : "bg-[#f3efe2] text-umami-dark-gray hover:bg-[#ece4cf]"
+              }`}
+            >
+              Лог действий
             </button>
           </>
         ) : null}

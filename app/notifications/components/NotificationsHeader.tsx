@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 
@@ -39,7 +39,7 @@ export default function NotificationsHeader({
             title="Прочитать все"
             aria-label="Прочитать все"
           >
-            <Image width={18} height={18} src="/checks.svg" alt="read-all" />
+            <Image width={18} height={18} src="/Checks.svg" alt="read-all" />
           </button>
           <button
             type="button"
@@ -49,7 +49,7 @@ export default function NotificationsHeader({
             title="Очистить историю"
             aria-label="Очистить историю"
           >
-            <Image width={18} height={18} src="/trashsimple.svg" alt="clear-all" />
+            <Image width={18} height={18} src="/TrashSimple.svg" alt="clear-all" />
           </button>
         </div>
       </div>

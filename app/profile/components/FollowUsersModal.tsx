@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -30,9 +30,9 @@ export default function FollowUsersModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full bg-umami-gray px-3 py-1 font-nunito text-xs text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-umami-light-gray/50 bg-white hover:bg-umami-light-gray/10 transition-colors duration-200"
           >
-            Закрыть
+            <Image width={12} height={12} src="/X.svg" alt="close" />
           </button>
         </div>
         {loading ? (

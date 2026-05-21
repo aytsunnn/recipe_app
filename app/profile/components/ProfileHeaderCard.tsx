@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -52,55 +52,62 @@ export default function ProfileHeaderCard({
 
   return (
     <div className="relative flex min-h-[190px] flex-col rounded-[20px] border border-[#eaeaea] bg-white p-4 sm:p-5 md:min-h-[210px] lg:h-[190px] lg:min-h-0 lg:flex-row lg:items-center">
-      <div ref={actionsRef} className="absolute right-4 top-4 z-20 sm:right-5 sm:top-5">
+      <div ref={actionsRef} className="absolute right-4 top-4 z-20 flex items-center gap-2 sm:right-5 sm:top-5">
         <button
           type="button"
-          onClick={() => setActionsOpen((prev) => !prev)}
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-umami-light-gray/60 bg-white hover:bg-[#f7f4ea]"
-          aria-label="Действия профиля"
+          onClick={onLogoutClick}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-umami-light-gray/60 bg-white hover:bg-[#f7f4ea] transition-all duration-300 active:scale-90 shadow-sm"
+          title="Выйти"
+          aria-label="Выйти"
         >
           <Image
             width={18}
             height={18}
-            src="/DotsThreeOutlineVertical.svg"
-            alt="profile-actions"
+            src="/SignOut.svg"
+            alt="logout"
           />
         </button>
-        {actionsOpen ? (
-          <div className="absolute right-0 top-9 min-w-[190px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
-            <button
-              type="button"
-              onClick={() => {
-                setActionsOpen(false);
-                onEditProfileClick();
-              }}
-              className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
-            >
-              Редактировать профиль
-            </button>
-            <button
-              type="button"
-              disabled={recipeActionLoading}
-              onClick={() => {
-                setActionsOpen(false);
-                onDeleteProfileClick();
-              }}
-              className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
-            >
-              Удалить профиль
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActionsOpen(false);
-                onLogoutClick();
-              }}
-              className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
-            >
-              Выйти
-            </button>
-          </div>
-        ) : null}
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setActionsOpen((prev) => !prev)}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-umami-light-gray/60 bg-white hover:bg-[#f7f4ea] transition-all"
+            aria-label="Действия профиля"
+          >
+            <Image
+              width={18}
+              height={18}
+              src="/DotsThreeOutlineVertical.svg"
+              alt="profile-actions"
+            />
+          </button>
+          {actionsOpen ? (
+            <div className="absolute right-0 top-9 min-w-[190px] rounded-xl border border-umami-light-gray/60 bg-white p-1 shadow-md">
+              <button
+                type="button"
+                onClick={() => {
+                  setActionsOpen(false);
+                  onEditProfileClick();
+                }}
+                className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-umami-dark-gray hover:bg-[#f7f4ea]"
+              >
+                Редактировать профиль
+              </button>
+              <button
+                type="button"
+                disabled={recipeActionLoading}
+                onClick={() => {
+                  setActionsOpen(false);
+                  onDeleteProfileClick();
+                }}
+                className="w-full rounded-lg px-3 py-2 text-left font-inter text-sm text-red-500 hover:bg-red-50 disabled:opacity-60"
+              >
+                Удалить профиль
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex w-full flex-col items-center gap-3 pr-0 md:gap-4 lg:flex-row lg:items-center lg:gap-5">

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -642,7 +642,7 @@ export default function RightPart() {
 
   return (
     <>
-      <div className="flex w-full flex-col gap-4">
+      <div className="hidden lg:flex w-full flex-col gap-4">
         <MicrochefLauncherCard
           isVisible={isAuthenticated}
           onOpen={() => setIsChatOpen(true)}

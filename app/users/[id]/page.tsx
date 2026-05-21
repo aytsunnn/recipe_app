@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -390,7 +390,7 @@ export default function PublicUserPage() {
         )}
       </div>
 
-      <div className="hidden lg:flex lg:w-63.75">
+      <div className="lg:w-63.75">
         <RightPart />
       </div>
     </div>

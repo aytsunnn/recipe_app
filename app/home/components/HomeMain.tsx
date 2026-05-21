@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { Suspense, useEffect, useState } from "react";
@@ -119,7 +119,7 @@ export default function HomeMain() {
               <MainPart />
             </Suspense>
           </div>
-          <div className="hidden lg:flex lg:w-63.75">
+          <div className="lg:w-63.75">
             <RightPart />
           </div>
         </div>

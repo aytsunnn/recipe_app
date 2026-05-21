@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { authService, RegisterData } from "../services/authService";
@@ -181,15 +181,15 @@ export default function RegisterModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-umami-dark-gray/80"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-umami-dark-gray/80 px-3 py-4 sm:px-4"
       onClick={handleBackdropClick}
     >
       <div
         ref={modalRef}
-        className="flex h-134 w-178.5 flex-row rounded-2xl bg-white shadow-2xl"
+        className="flex w-full max-w-[714px] overflow-hidden rounded-2xl bg-white shadow-2xl lg:h-134 lg:w-178.5 lg:max-w-none"
       >
-        <div className="flex w-127 items-center justify-center px-20 text-center">
-          <div className="flex w-77 flex-col justify-center gap-2.5">
+        <div className="flex w-full items-center justify-center px-4 py-6 sm:px-6 md:px-10 lg:px-20 text-center">
+          <div className="w-full max-w-[360px] lg:w-77 lg:max-w-none flex flex-col justify-center gap-2.5">
             <p className="font-nunito text-xl font-black text-umami-green">
               {isVerifyStep ? "ПОДТВЕРЖДЕНИЕ EMAIL" : "РЕГИСТРАЦИЯ"}
             </p>
@@ -203,7 +203,7 @@ export default function RegisterModal({
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="rounded-full border border-umami-green px-2.5 py-1.25 text-sm"
+                className="rounded-full border border-umami-green px-3 py-2 text-sm text-umami-green"
                 placeholder="Имя"
                 disabled={isVerifyStep}
               />
@@ -215,7 +215,7 @@ export default function RegisterModal({
                 type="text"
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                className="rounded-full border border-umami-green px-2.5 py-1.25 text-sm"
+                className="rounded-full border border-umami-green px-3 py-2 text-sm text-umami-green"
                 placeholder="Логин"
                 disabled={isVerifyStep}
               />
@@ -227,7 +227,7 @@ export default function RegisterModal({
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="rounded-full border border-umami-green px-2.5 py-1.25 text-sm"
+                className="rounded-full border border-umami-green px-3 py-2 text-sm text-umami-green"
                 placeholder="Email"
                 disabled={isVerifyStep}
               />
@@ -241,7 +241,7 @@ export default function RegisterModal({
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="rounded-full border border-umami-green px-2.5 py-1.25 text-sm"
+                    className="rounded-full border border-umami-green px-3 py-2 text-sm text-umami-green"
                     placeholder="Пароль"
                     autoComplete="new-password"
                   />
@@ -253,7 +253,7 @@ export default function RegisterModal({
                     type="password"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    className="rounded-full border border-umami-green px-2.5 py-1.25 text-sm"
+                    className="rounded-full border border-umami-green px-3 py-2 text-sm text-umami-green"
                     placeholder="Повторите пароль"
                     autoComplete="new-password"
                   />
@@ -289,11 +289,19 @@ export default function RegisterModal({
                     ? "Подтвердить email"
                     : "Зарегистрироваться"}
               </button>
+
+              <button
+                type="button"
+                onClick={onSwitchToLogin}
+                className="mt-3 w-full rounded-full border border-umami-green/30 px-4 py-2 text-sm font-nunito font-bold text-umami-green md:hidden"
+              >
+                Уже есть аккаунт? Войти
+              </button>
             </form>
           </div>
         </div>
 
-        <div className="flex h-full w-60.5 flex-col gap-8 rounded-r-2xl bg-umami-green px-8 py-25">
+        <div className="hidden w-[242px] flex-col gap-6 bg-umami-green px-6 py-8 text-white md:flex lg:w-60.5 lg:gap-8 lg:px-8 lg:py-25">
           <div className="flex flex-col text-end">
             <p className="font-nunito text-xl font-black text-white">АВТОРИЗАЦИЯ</p>
             <p className="font-nunito text-sm text-white">Уже есть аккаунт?</p>

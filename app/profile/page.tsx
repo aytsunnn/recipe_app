@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +36,7 @@ interface UserStats {
 interface IngredientRow {
   ingredient_id: number | null;
   ingredient_name: string;
-  quantity: number;
+  quantity: number | "";
   unit_of_measurement: string;
   note: string;
 }
@@ -52,12 +52,12 @@ interface RecipeFormData {
   title: string;
   description: string;
   difficulty: string;
-  portion: number;
-  cooking_time: number;
-  calorific: number;
-  proteins: number;
-  fats: number;
-  carbohydrates: number;
+  portion: number | "";
+  cooking_time: number | "";
+  calorific: number | "";
+  proteins: number | "";
+  fats: number | "";
+  carbohydrates: number | "";
   image_url: string;
   image_file: File | null;
   image_preview: string;
@@ -985,7 +985,7 @@ function ProfilePageContent() {
                 quantity,
                 unit_of_measurement: unit,
                 note: "",
-              } satisfies IngredientRow;
+              } as IngredientRow;
             })
             .filter((item): item is IngredientRow => Boolean(item))
         : [];
@@ -1476,9 +1476,9 @@ function ProfilePageContent() {
                     setEditingRecipeId(null);
                     setRecipeForm(emptyRecipeForm);
                   }}
-                  className="rounded-full bg-umami-gray px-4 py-1.5 font-nunito text-sm text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-umami-light-gray/50 bg-white hover:bg-umami-light-gray/10 transition-colors duration-200"
                 >
-                  Закрыть
+                  <Image width={12} height={12} src="/X.svg" alt="close" />
                 </button>
               </div>
               <p className="px-6 pt-3 font-inter text-sm text-umami-gray">
@@ -1621,7 +1621,7 @@ function ProfilePageContent() {
                         onChange={(e) =>
                           setRecipeForm({
                             ...recipeForm,
-                            portion: Number(e.target.value) || 1,
+                            portion: e.target.value === "" ? "" : Number(e.target.value),
                           })
                         }
                         className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
@@ -1639,7 +1639,7 @@ function ProfilePageContent() {
                         onChange={(e) =>
                           setRecipeForm({
                             ...recipeForm,
-                            cooking_time: Number(e.target.value) || 1,
+                            cooking_time: e.target.value === "" ? "" : Number(e.target.value),
                           })
                         }
                         className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
@@ -1666,7 +1666,7 @@ function ProfilePageContent() {
                         onChange={(e) =>
                           setRecipeForm({
                             ...recipeForm,
-                            calorific: Number(e.target.value) || 0,
+                            calorific: e.target.value === "" ? "" : Number(e.target.value),
                           })
                         }
                         className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
@@ -1684,7 +1684,7 @@ function ProfilePageContent() {
                         onChange={(e) =>
                           setRecipeForm({
                             ...recipeForm,
-                            proteins: Number(e.target.value) || 0,
+                            proteins: e.target.value === "" ? "" : Number(e.target.value),
                           })
                         }
                         className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
@@ -1702,7 +1702,7 @@ function ProfilePageContent() {
                         onChange={(e) =>
                           setRecipeForm({
                             ...recipeForm,
-                            fats: Number(e.target.value) || 0,
+                            fats: e.target.value === "" ? "" : Number(e.target.value),
                           })
                         }
                         className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
@@ -1720,7 +1720,7 @@ function ProfilePageContent() {
                         onChange={(e) =>
                           setRecipeForm({
                             ...recipeForm,
-                            carbohydrates: Number(e.target.value) || 0,
+                            carbohydrates: e.target.value === "" ? "" : Number(e.target.value),
                           })
                         }
                         className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
@@ -1894,7 +1894,7 @@ function ProfilePageContent() {
                             value={item.quantity}
                             onChange={(e) =>
                               setIngredient(index, {
-                                quantity: Number(e.target.value) || 1,
+                                quantity: e.target.value === "" ? "" : Number(e.target.value),
                               })
                             }
                             placeholder="Кол-во"

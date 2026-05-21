@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -1782,7 +1782,7 @@ export default function RecipeDetailsPage() {
           </div>
         </div>
       </div>
-      <div className="hidden lg:flex lg:w-63.75">
+      <div className="lg:w-63.75">
         <RightPart />
       </div>
     </div>
