@@ -133,6 +133,14 @@ export function useRecipes(options: UseRecipesOptions = {}) {
 
   const fetchRecipesPage = useCallback(async (pageToLoad: number, replace = false, fetchParams?: GetRecipesParams) => {
     try {
+      console.log("[useRecipes] fetchRecipesPage called:", {
+        pageToLoad,
+        replace,
+        params,
+        fetchParams,
+        useRecommendations,
+        shouldUseRecommendations: useRecommendations && !hasActiveParams(fetchParams || params)
+      });
       if (replace) {
         setLoading(true);
         setError(null);
@@ -223,6 +231,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
   }, [fetchRecipesPage, hasMore, loading, loadingMore, page]);
 
   const updateParams = useCallback((newParams: Partial<GetRecipesParams>) => {
+    console.log("[useRecipes] updateParams called with:", newParams);
     setParams((prev) => {
       const merged = { ...prev, ...newParams };
 
@@ -230,6 +239,8 @@ export function useRecipes(options: UseRecipesOptions = {}) {
         const typedKey = key as keyof GetRecipesParams;
         return merged[typedKey] !== prev[typedKey];
       });
+
+      console.log("[useRecipes] updateParams changed check:", { changed, prev, merged });
 
       if (!changed) return prev;
 
@@ -251,6 +262,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
 
   // Р—Р°РіСЂСѓР·РєР° РїСЂРё РёР·РјРµРЅРµРЅРёРё РїР°СЂР°РјРµС‚СЂРѕРІ
   useEffect(() => {
+    console.log("[useRecipes] fetch useEffect triggered:", { autoFetch, hasFetchRecipesPage: !!fetchRecipesPage });
     if (!autoFetch) return;
     
     if (isFirstRender.current) {

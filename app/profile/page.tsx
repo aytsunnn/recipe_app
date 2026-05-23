@@ -36,7 +36,7 @@ interface UserStats {
 interface IngredientRow {
   ingredient_id: number | null;
   ingredient_name: string;
-  quantity: number | "";
+  quantity: number | string;
   unit_of_measurement: string;
   note: string;
 }
@@ -52,12 +52,12 @@ interface RecipeFormData {
   title: string;
   description: string;
   difficulty: string;
-  portion: number | "";
-  cooking_time: number | "";
-  calorific: number | "";
-  proteins: number | "";
-  fats: number | "";
-  carbohydrates: number | "";
+  portion: number | string;
+  cooking_time: number | string;
+  calorific: number | string;
+  proteins: number | string;
+  fats: number | string;
+  carbohydrates: number | string;
   image_url: string;
   image_file: File | null;
   image_preview: string;
@@ -235,6 +235,7 @@ function ProfilePageContent() {
     []
   );
   const [units, setUnits] = useState<Unit[]>([]);
+  const [focusedIngredientIndex, setFocusedIngredientIndex] = useState<number | null>(null);
   const [parseLoading, setParseLoading] = useState(false);
   const [parseWarnings, setParseWarnings] = useState<string[]>([]);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
@@ -1162,7 +1163,9 @@ function ProfilePageContent() {
 
       const normalizedIngredients = recipeForm.ingredients
         .filter(
-          (item) => Number(item.ingredient_id) > 0 && Number(item.quantity) > 0
+          (item) =>
+            (Number(item.ingredient_id) > 0 || item.ingredient_name.trim().length > 0) &&
+            Number(item.quantity) > 0
         )
         .map((item) => {
           const unitRaw = item.unit_of_measurement.trim();
@@ -1176,9 +1179,11 @@ function ProfilePageContent() {
               ) || null
             : null;
 
-          const linkedIngredient = ingredientsCatalog.find(
-            (entry) => Number(entry.id) === Number(item.ingredient_id)
-          );
+          const linkedIngredient = item.ingredient_id
+            ? ingredientsCatalog.find(
+                (entry) => Number(entry.id) === Number(item.ingredient_id)
+              )
+            : null;
           const linkedUnit = (linkedIngredient?.unit_of_measurement || "").trim();
           const finalNote = mergeNoteWithUnitOverride(
             item.note,
@@ -1187,7 +1192,9 @@ function ProfilePageContent() {
           );
 
           return {
-            id: Number(item.ingredient_id),
+            ...(item.ingredient_id
+              ? { id: Number(item.ingredient_id) }
+              : { name: item.ingredient_name.trim() }),
             quantity: Number(item.quantity),
             ...(unitRaw ? { unit_of_measurement: unitRaw } : {}),
             ...(unitRaw ? { unit: unitRaw } : {}),
@@ -1615,15 +1622,17 @@ function ProfilePageContent() {
                         Порции
                       </span>
                       <input
-                        type="number"
-                        min={1}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={recipeForm.portion}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
                           setRecipeForm({
                             ...recipeForm,
-                            portion: e.target.value === "" ? "" : Number(e.target.value),
-                          })
-                        }
+                            portion: val === "" ? "" : Number(val),
+                          });
+                        }}
                         className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                       />
                     </label>
@@ -1633,15 +1642,17 @@ function ProfilePageContent() {
                         Время приготовления (мин)
                       </span>
                       <input
-                        type="number"
-                        min={1}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={recipeForm.cooking_time}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
                           setRecipeForm({
                             ...recipeForm,
-                            cooking_time: e.target.value === "" ? "" : Number(e.target.value),
-                          })
-                        }
+                            cooking_time: val === "" ? "" : Number(val),
+                          });
+                        }}
                         className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                       />
                     </label>
@@ -1660,15 +1671,17 @@ function ProfilePageContent() {
                         Калории
                       </span>
                       <input
-                        type="number"
-                        min={0}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         value={recipeForm.calorific}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
                           setRecipeForm({
                             ...recipeForm,
-                            calorific: e.target.value === "" ? "" : Number(e.target.value),
-                          })
-                        }
+                            calorific: val === "" ? "" : Number(val),
+                          });
+                        }}
                         className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                       />
                     </label>
@@ -1678,15 +1691,16 @@ function ProfilePageContent() {
                         Белки
                       </span>
                       <input
-                        type="number"
-                        min={0}
+                        type="text"
+                        inputMode="decimal"
                         value={recipeForm.proteins}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value.replace(",", ".").replace(/[^\d.]/g, "");
                           setRecipeForm({
                             ...recipeForm,
-                            proteins: e.target.value === "" ? "" : Number(e.target.value),
-                          })
-                        }
+                            proteins: val === "" ? "" : val,
+                          });
+                        }}
                         className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                       />
                     </label>
@@ -1696,15 +1710,16 @@ function ProfilePageContent() {
                         Жиры
                       </span>
                       <input
-                        type="number"
-                        min={0}
+                        type="text"
+                        inputMode="decimal"
                         value={recipeForm.fats}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value.replace(",", ".").replace(/[^\d.]/g, "");
                           setRecipeForm({
                             ...recipeForm,
-                            fats: e.target.value === "" ? "" : Number(e.target.value),
-                          })
-                        }
+                            fats: val === "" ? "" : val,
+                          });
+                        }}
                         className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                       />
                     </label>
@@ -1714,15 +1729,16 @@ function ProfilePageContent() {
                         Углеводы
                       </span>
                       <input
-                        type="number"
-                        min={0}
+                        type="text"
+                        inputMode="decimal"
                         value={recipeForm.carbohydrates}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value.replace(",", ".").replace(/[^\d.]/g, "");
                           setRecipeForm({
                             ...recipeForm,
-                            carbohydrates: e.target.value === "" ? "" : Number(e.target.value),
-                          })
-                        }
+                            carbohydrates: val === "" ? "" : val,
+                          });
+                        }}
                         className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
                       />
                     </label>
@@ -1874,31 +1890,70 @@ function ProfilePageContent() {
                           key={index}
                           className="grid grid-cols-1 gap-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-3 sm:grid-cols-2 lg:grid-cols-4"
                         >
-                          <select
-                            value={item.ingredient_id ?? ""}
-                            onChange={(e) =>
-                              handleIngredientSelect(index, e.target.value)
-                            }
-                            className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-                          >
-                            <option value="">Ингредиент</option>
-                            {ingredientsCatalog.map((ingredient) => (
-                              <option key={ingredient.id} value={ingredient.id}>
-                                {ingredient.name}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={item.ingredient_name}
+                              onFocus={() => setFocusedIngredientIndex(index)}
+                              onBlur={() => {
+                                setTimeout(() => {
+                                  setFocusedIngredientIndex((current) => current === index ? null : current);
+                                }, 250);
+                              }}
+                              onChange={(e) =>
+                                setIngredient(index, {
+                                  ingredient_id: null,
+                                  ingredient_name: e.target.value,
+                                })
+                              }
+                              placeholder="Ингредиент..."
+                              className="w-full rounded-full border border-umami-light-gray px-4 py-2 text-sm outline-none focus:border-umami-orange/60"
+                            />
+                            {focusedIngredientIndex === index && (
+                              <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-xl border border-umami-light-gray bg-white shadow-lg">
+                                {ingredientsCatalog
+                                  .filter((ing) =>
+                                    (ing.name || "")
+                                      .toLowerCase()
+                                      .includes((item.ingredient_name || "").toLowerCase())
+                                  )
+                                  .slice(0, 10)
+                                  .map((ing) => (
+                                    <button
+                                      key={ing.id}
+                                      type="button"
+                                      onMouseDown={() => {
+                                        handleIngredientSelect(index, String(ing.id));
+                                      }}
+                                      className="w-full px-4 py-2 text-left text-sm hover:bg-[#faf9f6] transition-colors"
+                                    >
+                                      {ing.name}
+                                    </button>
+                                  ))}
+                                {ingredientsCatalog.filter((ing) =>
+                                  (ing.name || "")
+                                    .toLowerCase()
+                                    .includes((item.ingredient_name || "").toLowerCase())
+                                ).length === 0 && (
+                                  <div className="px-4 py-2 text-xs text-umami-gray">
+                                    Свой ингредиент (сохранится)
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                           <input
-                            type="number"
-                            min={0}
+                            type="text"
+                            inputMode="decimal"
                             value={item.quantity}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              const val = e.target.value.replace(",", ".").replace(/[^\d.]/g, "");
                               setIngredient(index, {
-                                quantity: e.target.value === "" ? "" : Number(e.target.value),
-                              })
-                            }
+                                quantity: val === "" ? "" : val as any,
+                              });
+                            }}
                             placeholder="Кол-во"
-                            className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
+                            className="rounded-full border border-umami-light-gray px-4 py-2 text-sm outline-none focus:border-umami-orange/60"
                           />
                           <select
                             value={item.unit_of_measurement}

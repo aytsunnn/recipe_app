@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { authService, LoginData } from "../services/authService";
@@ -129,19 +129,12 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
 
     if (!normalizedEmail) return setFieldErrors({ email: "Введите email" });
     if (!validateEmail(normalizedEmail)) return setFieldErrors({ email: "Некорректный email" });
-    if (code.length < 4) return setFieldErrors({ code: "Введите корректный код" });
+    if (code.length < 6) return setFieldErrors({ code: "Введите корректный 6-значный код" });
 
-    setIsLoading(true);
-    try {
-      await authService.verifyEmail({ email: normalizedEmail, code });
-      setRecoveryData((prev) => ({ ...prev, verifiedCode: code }));
-      setMode("recovery-reset");
-      setFieldErrors({ general: "Код подтвержден" });
-    } catch (error) {
-      setFieldErrors({ general: error instanceof Error ? error.message : "Неверный код" });
-    } finally {
-      setIsLoading(false);
-    }
+    // Сохраняем введенный код и переходим к вводу нового пароля.
+    // Код и новый пароль будут проверены атомарно при отправке на бэкенд /auth/reset-password.
+    setRecoveryData((prev) => ({ ...prev, verifiedCode: code }));
+    setMode("recovery-reset");
   };
 
   const handleRecoveryReset = async (e: React.FormEvent) => {
