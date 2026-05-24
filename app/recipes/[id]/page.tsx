@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -43,6 +43,20 @@ function parseUnitOverrideFromNote(
   if (!marker) return null;
   const unit = marker.slice(UNIT_OVERRIDE_MARKER.length).trim();
   return unit || null;
+}
+
+function parseCleanNote(note: string | null | undefined): string {
+  const raw = (note || "").trim();
+  if (!raw) return "";
+  return raw
+    .split(/\s+/)
+    .filter((part) => !part.startsWith(UNIT_OVERRIDE_MARKER))
+    .join(" ")
+    .trim();
+}
+
+function normalizeUnitToken(value: string): string {
+  return value.replace(/\s+/g, "").replace(/\./g, "").toLowerCase();
 }
 
 export default function RecipeDetailsPage() {
@@ -661,7 +675,10 @@ export default function RecipeDetailsPage() {
       try {
         await loadComments();
       } catch (refreshError) {
-        console.warn("Комментарий удален, но не удалось обновить список:", refreshError);
+        console.warn(
+          "Комментарий удален, но не удалось обновить список:",
+          refreshError
+        );
       }
     } catch (error) {
       console.error("Ошибка удаления комментария:", error);
@@ -1264,6 +1281,9 @@ export default function RecipeDetailsPage() {
                   const quantity = scaleIngredientQuantity(
                     ingredient.RecipeIngredient?.quantity ?? "—"
                   );
+                  const cleanNote = parseCleanNote(
+                    ingredient.RecipeIngredient?.note ?? ""
+                  );
                   const unit =
                     parseUnitOverrideFromNote(
                       ingredient.RecipeIngredient?.note ?? ""
@@ -1277,6 +1297,21 @@ export default function RecipeDetailsPage() {
                     ingredient.Unit?.name ||
                     ingredient.unit_of_measurement ||
                     "";
+                  const quantityText = String(quantity ?? "").trim();
+                  const unitText = String(unit || "").trim();
+                  const quantityContainsLetters = /[a-zA-Zа-яА-ЯёЁ]/.test(
+                    quantityText
+                  );
+                  const quantityNorm = normalizeUnitToken(quantityText);
+                  const unitNorm = normalizeUnitToken(unitText);
+                  const quantityHasSameUnit =
+                    Boolean(quantityNorm && unitNorm) &&
+                    quantityNorm.endsWith(unitNorm);
+                  const quantityWithUnit = quantityHasSameUnit
+                    ? quantityText
+                    : quantityContainsLetters
+                    ? quantityText
+                    : [quantityText, unitText].filter(Boolean).join(" ");
                   return (
                     <div
                       key={ingredient.id}
@@ -1285,8 +1320,13 @@ export default function RecipeDetailsPage() {
                       <p className="font-inter text-sm text-umami-dark-gray">
                         {ingredient.name}
                       </p>
-                      <p className="font-inter text-sm text-umami-gray">
-                        {quantity} {unit}
+                      <p className="text-right font-inter text-sm text-umami-gray">
+                        {quantityWithUnit}
+                        {cleanNote ? (
+                          <span className="ml-1 text-xs text-umami-light-gray">
+                            ({cleanNote})
+                          </span>
+                        ) : null}
                       </p>
                     </div>
                   );
@@ -1550,7 +1590,9 @@ export default function RecipeDetailsPage() {
                                       >
                                         Пожаловаться
                                       </button>
-                                      {canModerate || String(comment.user_id) === String(currentUserId) ? (
+                                      {canModerate ||
+                                      String(comment.user_id) ===
+                                        String(currentUserId) ? (
                                         <button
                                           type="button"
                                           disabled={Boolean(
@@ -1741,7 +1783,9 @@ export default function RecipeDetailsPage() {
                                               >
                                                 Пожаловаться
                                               </button>
-                                              {canModerate || String(reply.user_id) === String(currentUserId) ? (
+                                              {canModerate ||
+                                              String(reply.user_id) ===
+                                                String(currentUserId) ? (
                                                 <button
                                                   type="button"
                                                   disabled={Boolean(
@@ -1788,9 +1832,3 @@ export default function RecipeDetailsPage() {
     </div>
   );
 }
-
-
-
-
-
-

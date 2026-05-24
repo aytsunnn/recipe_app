@@ -64,6 +64,21 @@ interface FeedCardProps {
   headerRightSlot?: ReactNode;
 }
 
+const countCommentsDeep = (items: Comment[]): number => {
+  const visited = new Set<string>();
+  const walk = (comment: Comment | null | undefined) => {
+    if (!comment) return;
+    const id = String(comment.id ?? "");
+    if (id) visited.add(id);
+    const replies = (comment as Comment & { Replies?: Comment[] }).Replies;
+    if (Array.isArray(replies)) {
+      replies.forEach((reply) => walk(reply));
+    }
+  };
+  items.forEach((comment) => walk(comment));
+  return visited.size > 0 ? visited.size : items.length;
+};
+
 export default function FeedCard({
   recipe,
   isFollowing = false,
@@ -222,6 +237,23 @@ export default function FeedCard({
     } catch {
       // ignore broken localStorage
     }
+  }, [recipe.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    commentService
+      .getByRecipe(recipe.id)
+      .then((comments) => {
+        if (!cancelled) {
+          setCommentsCountState(countCommentsDeep(comments));
+        }
+      })
+      .catch(() => {
+        // keep fallback count
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [recipe.id]);
 
   useEffect(() => {

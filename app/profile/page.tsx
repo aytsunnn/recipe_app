@@ -1204,10 +1204,6 @@ function ProfilePageContent() {
               : { name: item.ingredient_name.trim() }),
             quantity: Number(item.quantity),
             ...(unitRaw ? { unit_of_measurement: unitRaw } : {}),
-            ...(unitRaw ? { unit: unitRaw } : {}),
-            ...(unitRaw ? { unit_name: unitRaw } : {}),
-            ...(unitRaw ? { unit_short_name: unitRaw } : {}),
-            ...(unitRaw ? { measure: unitRaw } : {}),
             ...(matchedUnit ? { unit_id: Number(matchedUnit.id) } : {}),
             ...(finalNote ? { note: finalNote } : {}),
           };
