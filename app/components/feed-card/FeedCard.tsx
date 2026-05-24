@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -209,24 +209,6 @@ export default function FeedCard({
     recipe.comments_count,
     recipe.Comments?.length,
   ]);
-
-  useEffect(() => {
-    let cancelled = false;
-    commentService
-      .getByRecipe(recipe.id)
-      .then((comments) => {
-        if (!cancelled) {
-          setCommentsCountState(comments.length);
-        }
-      })
-      .catch(() => {
-        // fallback already handled by resolveCommentsCount
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [recipe.id]);
 
   useEffect(() => {
     const raw = localStorage.getItem("recipe_comments_overrides");

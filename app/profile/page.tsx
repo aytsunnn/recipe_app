@@ -328,7 +328,12 @@ function ProfilePageContent() {
       setUser(userData);
 
       try {
-        await Promise.all([loadMeta(), loadProfile(userData)]);
+        const shouldLoadMeta = searchParams?.get("create") === "1";
+        if (shouldLoadMeta) {
+          await Promise.all([loadMeta(), loadProfile(userData)]);
+        } else {
+          await loadProfile(userData);
+        }
       } catch (error) {
         console.error("Ошибка при загрузке профиля:", error);
       } finally {
@@ -341,7 +346,7 @@ function ProfilePageContent() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, searchParams]);
 
   const handleEditProfile = () => {
     if (!user) return;
@@ -476,11 +481,12 @@ function ProfilePageContent() {
     }
   };
 
-  const openCreateRecipeEditor = () => {
+  const openCreateRecipeEditor = async () => {
     setEditingRecipeId(null);
     setRecipeForm(emptyRecipeForm);
     setParseWarnings([]);
     setIsRecipeEditorOpen(true);
+    await loadMeta();
   };
 
   useEffect(() => {
@@ -612,6 +618,7 @@ function ProfilePageContent() {
   ]);
 
   const openEditRecipeEditor = async (recipe: Recipe) => {
+    void loadMeta();
     let fullRecipe = recipe;
     try {
       fullRecipe = await recipeService.getById(recipe.id);

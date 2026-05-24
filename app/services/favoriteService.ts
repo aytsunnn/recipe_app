@@ -12,22 +12,43 @@ export interface Favorite {
 type FavoriteEntry = Favorite | { id: string; recipe_id?: string };
 
 class FavoriteService {
+  private favoritesCache: FavoriteEntry[] | null = null;
+  private cachePromise: Promise<FavoriteEntry[]> | null = null;
+
   async addToFavorites(recipeId: string): Promise<Favorite> {
+    this.favoritesCache = null;
     return apiClient.post<Favorite>(`/recipes/${recipeId}/favorite`, {
       is_downloaded: false,
     });
   }
 
   async removeFromFavorites(recipeId: string): Promise<void> {
+    this.favoritesCache = null;
     return apiClient.delete(`/recipes/${recipeId}/favorite`);
   }
 
-  async getUserFavorites(): Promise<FavoriteEntry[]> {
-    return apiClient.get<FavoriteEntry[]>('/favorites');
+  async getUserFavorites(forceRefresh = false): Promise<FavoriteEntry[]> {
+    if (!forceRefresh && this.favoritesCache) {
+      return this.favoritesCache;
+    }
+    if (this.cachePromise && !forceRefresh) {
+      return this.cachePromise;
+    }
+
+    this.cachePromise = apiClient.get<FavoriteEntry[]>('/favorites').then((data) => {
+      this.favoritesCache = data;
+      this.cachePromise = null;
+      return data;
+    }).catch((err) => {
+      this.cachePromise = null;
+      throw err;
+    });
+
+    return this.cachePromise;
   }
 
   async getFavoriteRecipes(): Promise<Recipe[]> {
-    const payload = await apiClient.get<unknown[]>('/favorites');
+    const payload = await this.getUserFavorites(true);
     if (!Array.isArray(payload)) return [];
 
     const recipeLike = payload.filter((item): item is Recipe => {
