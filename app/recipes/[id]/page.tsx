@@ -59,6 +59,19 @@ function normalizeUnitToken(value: string): string {
   return value.replace(/\s+/g, "").replace(/\./g, "").toLowerCase();
 }
 
+function parseLeadingNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+  const normalized = value.replace(",", ".").trim();
+  if (!normalized) return null;
+  const direct = Number(normalized);
+  if (Number.isFinite(direct)) return direct;
+  const match = normalized.match(/^([+-]?\d+(?:\.\d+)?)/);
+  if (!match) return null;
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export default function RecipeDetailsPage() {
   const { toast, confirm, requestReport } = useUiFeedback();
   const params = useParams<{ id: string }>();
@@ -200,20 +213,25 @@ export default function RecipeDetailsPage() {
     quantity: string | number | null | undefined
   ): string | number => {
     if (quantity === null || quantity === undefined) return "—";
-    const basePortions =
-      recipe?.portion && recipe.portion > 0 ? recipe.portion : 1;
-    const ratio = desiredPortions > 0 ? desiredPortions / basePortions : 1;
+    const baseRaw = parseLeadingNumber(recipe?.portion);
+    const basePortions = baseRaw && baseRaw > 0 ? baseRaw : 1;
+    const desiredRaw = parseLeadingNumber(desiredPortions);
+    const desired = desiredRaw && desiredRaw > 0 ? desiredRaw : 1;
+    const ratio = desired / basePortions;
 
-    if (typeof quantity === "number") {
-      const next = quantity * ratio;
-      return Math.max(1, Math.ceil(next));
-    }
-
-    const normalized = String(quantity).replace(",", ".").trim();
-    const numeric = Number(normalized);
-    if (Number.isFinite(numeric)) {
-      const next = numeric * ratio;
-      return Math.max(1, Math.ceil(next));
+    const quantityNumber = parseLeadingNumber(quantity);
+    if (quantityNumber !== null) {
+      const next = quantityNumber * ratio;
+      const suffix =
+        typeof quantity === "string"
+          ? String(quantity)
+              .replace(",", ".")
+              .trim()
+              .replace(/^[+-]?\d+(?:\.\d+)?/, "")
+              .trim()
+          : "";
+      const rounded = Math.max(1, Math.ceil(next));
+      return suffix ? `${rounded} ${suffix}` : rounded;
     }
 
     return quantity;
@@ -336,7 +354,8 @@ export default function RecipeDetailsPage() {
     setLikesCountState(recipe._count?.Likes ?? recipe.Likes?.length ?? 0);
     setCommentsCountState(recipe._count?.Comments ?? comments.length ?? 0);
     setPersonalNote(recipe.personal_note ?? "");
-    setDesiredPortions(recipe.portion > 0 ? recipe.portion : 1);
+    const basePortions = parseLeadingNumber(recipe.portion);
+    setDesiredPortions(basePortions && basePortions > 0 ? basePortions : 1);
   }, [recipe]);
 
   useEffect(() => {
