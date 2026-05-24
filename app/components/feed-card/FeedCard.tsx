@@ -145,7 +145,7 @@ export default function FeedCard({
     }).format(date);
   })();
   const [following, setFollowing] = useState(isFollowing);
-  const [justFollowed, setJustFollowed] = useState(false); // РћС‚СЃР»РµР¶РёРІР°РµРј РїРѕРґРїРёСЃРєСѓ РІ С‚РµРєСѓС‰РµР№ СЃРµСЃСЃРёРё
+  const [justFollowed, setJustFollowed] = useState(false); // Отслеживаем подписку в текущей сессии
   const [lastComment, setLastComment] = useState<Comment | null>(null);
   const [loadingComment, setLoadingComment] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -157,13 +157,13 @@ export default function FeedCard({
   const actionsMenuRef = useRef<HTMLDivElement | null>(null);
   const metaInfoRef = useRef<HTMLDivElement | null>(null);
 
-  // РџСЂРѕРІРµСЂСЏРµРј, СЏРІР»СЏРµС‚СЃСЏ Р»Рё С‚РµРєСѓС‰РёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ Р°РІС‚РѕСЂРѕРј РїРѕСЃС‚Р°
+  // Проверяем, является ли текущий пользователь автором поста
   const isOwnPost = currentUserId && currentUserId === recipe.user_id;
 
-  // РџСЂРѕРІРµСЂСЏРµРј, Р°РІС‚РѕСЂРёР·РѕРІР°РЅ Р»Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ
+  // Проверяем, авторизован ли пользователь
   const isAuthenticated = !!currentUserId;
 
-  // РџСЂРѕРІРµСЂСЏРµРј, Р»Р°Р№РєРЅСѓР» Р»Рё С‚РµРєСѓС‰РёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ СЌС‚РѕС‚ СЂРµС†РµРїС‚
+  // Проверяем, лайкнул ли текущий пользователь этот рецепт
   const isLikedByUser = currentUserId
     ? recipe.Likes?.some((like) => like.user_id === currentUserId)
     : false;
@@ -202,12 +202,12 @@ export default function FeedCard({
   );
   const commentsCount = commentsCountState;
 
-  // РЎРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµРј СЃРѕСЃС‚РѕСЏРЅРёРµ following СЃ РїСЂРѕРїСЃРѕРј isFollowing
+  // Синхронизируем состояние following с пропсом isFollowing
   useEffect(() => {
     setFollowing(isFollowing);
   }, [isFollowing]);
 
-  // РћР±РЅРѕРІР»СЏРµРј СЃРѕСЃС‚РѕСЏРЅРёРµ Р»Р°Р№РєР° РїСЂРё РёР·РјРµРЅРµРЅРёРё currentUserId РёР»Рё РґР°РЅРЅС‹С… СЂРµС†РµРїС‚Р°
+  // Обновляем состояние лайка при изменении currentUserId или данных рецепта
   useEffect(() => {
     const liked = currentUserId
       ? recipe.Likes?.some((like) => like.user_id === currentUserId)
@@ -379,7 +379,7 @@ export default function FeedCard({
     }
   }, [recipe.id]);
 
-  // Р—Р°РіСЂСѓР¶Р°РµРј РїРѕСЃР»РµРґРЅРёР№ РєРѕРјРјРµРЅС‚Р°СЂРёР№, РµСЃР»Рё РЅСѓР¶РЅРѕ РїРѕРєР°Р·С‹РІР°С‚СЊ РєРѕРјРјРµРЅС‚Р°СЂРёРё
+  // Загружаем последний комментарий, если нужно показывать комментарии
   useEffect(() => {
     if (showComments && commentsCount > 0) {
       setLoadingComment(true);
@@ -387,12 +387,12 @@ export default function FeedCard({
         .getByRecipe(recipe.id)
         .then((comments) => {
           if (comments.length > 0) {
-            // Р‘РµСЂРµРј РїРѕСЃР»РµРґРЅРёР№ РєРѕРјРјРµРЅС‚Р°СЂРёР№
+            // Берем последний комментарий
             setLastComment(comments[comments.length - 1]);
           }
         })
         .catch((error) => {
-          console.error("РћС€РёР±РєР° РїСЂРё Р·Р°РіСЂСѓР·РєРµ РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ:", error);
+          console.error("Ошибка при загрузке комментариев:", error);
         })
         .finally(() => {
           setLoadingComment(false);
@@ -405,7 +405,7 @@ export default function FeedCard({
     e.stopPropagation();
 
     if (!isAuthenticated) {
-      toast("РќРµРѕР±С…РѕРґРёРјРѕ Р°РІС‚РѕСЂРёР·РѕРІР°С‚СЊСЃСЏ", "error");
+      toast("Необходимо авторизоваться", "error");
       return;
     }
 
@@ -414,24 +414,24 @@ export default function FeedCard({
 
     try {
       if (justFollowed) {
-        // РћС‚РїРёСЃС‹РІР°РµРјСЃСЏ (РєРЅРѕРїРєР° "РџРѕРґРїРёСЃРєРё")
+        // Отписываемся (кнопка "Подписки")
         setFollowing(false);
         setJustFollowed(false);
         await followService.unfollow(recipe.user_id);
-        console.log(`РЈСЃРїРµС€РЅРѕ РѕС‚РїРёСЃР°Р»РёСЃСЊ РѕС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ ${recipe.user_id}`);
+        console.log(`Успешно отписались от пользователя ${recipe.user_id}`);
       } else {
-        // РџРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ (РєРЅРѕРїРєР° "РџРѕРґРїРёСЃР°С‚СЊСЃСЏ")
+        // Подписываемся (кнопка "Подписаться")
         setFollowing(true);
         setJustFollowed(true);
         await followService.follow(recipe.user_id);
-        console.log(`РЈСЃРїРµС€РЅРѕ РїРѕРґРїРёСЃР°Р»РёСЃСЊ РЅР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ ${recipe.user_id}`);
+        console.log(`Успешно подписались на пользователя ${recipe.user_id}`);
       }
     } catch (error) {
-      console.error("РћС€РёР±РєР° РїСЂРё РѕР±СЂР°Р±РѕС‚РєРµ РїРѕРґРїРёСЃРєРё:", error);
-      // РћС‚РєР°С‚С‹РІР°РµРј РёР·РјРµРЅРµРЅРёСЏ РїСЂРё РѕС€РёР±РєРµ
+      console.error("Ошибка при обработке подписки:", error);
+      // Откатываем изменения при ошибке
       setFollowing(previousFollowing);
       setJustFollowed(previousJustFollowed);
-      toast("РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РїРѕРґРїРёСЃРєСѓ. РџРѕРїСЂРѕР±СѓР№С‚Рµ РµС‰Рµ СЂР°Р·.", "error");
+      toast("Не удалось обработать подписку. Попробуйте еще раз.", "error");
     }
   };
 
@@ -440,34 +440,34 @@ export default function FeedCard({
     e?.stopPropagation();
 
     if (!isAuthenticated) {
-      toast("РќРµРѕР±С…РѕРґРёРјРѕ Р°РІС‚РѕСЂРёР·РѕРІР°С‚СЊСЃСЏ", "error");
+      toast("Необходимо авторизоваться", "error");
       return;
     }
 
-    // РћРїС‚РёРјРёСЃС‚РёС‡РЅРѕРµ РѕР±РЅРѕРІР»РµРЅРёРµ UI
+    // Оптимистичное обновление UI
     const previousIsLiked = isLiked;
     const previousLikesCount = likesCount;
 
     try {
       if (isLiked) {
-        // РЎСЂР°Р·Сѓ РѕР±РЅРѕРІР»СЏРµРј UI
+        // Сразу обновляем UI
         setIsLiked(false);
         setLikesCount((prev) => Math.max(0, prev - 1));
-        // РЈР±РёСЂР°РµРј Р»Р°Р№Рє РЅР° СЃРµСЂРІРµСЂРµ
+        // Убираем лайк на сервере
         await likeService.delete(recipe.id);
       } else {
-        // РЎСЂР°Р·Сѓ РѕР±РЅРѕРІР»СЏРµРј UI
+        // Сразу обновляем UI
         setIsLiked(true);
         setLikesCount((prev) => prev + 1);
-        // РЎС‚Р°РІРёРј Р»Р°Р№Рє РЅР° СЃРµСЂРІРµСЂРµ
+        // Ставим лайк на сервере
         await likeService.create(recipe.id);
       }
     } catch (error) {
-      console.error("РћС€РёР±РєР° РїСЂРё РѕР±СЂР°Р±РѕС‚РєРµ Р»Р°Р№РєР°:", error);
-      // РћС‚РєР°С‚С‹РІР°РµРј РёР·РјРµРЅРµРЅРёСЏ РїСЂРё РѕС€РёР±РєРµ
+      console.error("Ошибка при обработке лайка:", error);
+      // Откатываем изменения при ошибке
       setIsLiked(previousIsLiked);
       setLikesCount(previousLikesCount);
-      toast("РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ Р»Р°Р№Рє. РџРѕРїСЂРѕР±СѓР№С‚Рµ РµС‰Рµ СЂР°Р·.", "error");
+      toast("Не удалось обработать лайк. Попробуйте еще раз.", "error");
     }
   };
 
@@ -476,7 +476,7 @@ export default function FeedCard({
     e.stopPropagation();
 
     if (!isAuthenticated) {
-      toast("РќРµРѕР±С…РѕРґРёРјРѕ Р°РІС‚РѕСЂРёР·РѕРІР°С‚СЊСЃСЏ", "error");
+      toast("Необходимо авторизоваться", "error");
       return;
     }
 
@@ -490,8 +490,8 @@ export default function FeedCard({
       }
     } catch (error) {
       setIsFavorite(prev);
-      console.error("РћС€РёР±РєР° РїСЂРё СЂР°Р±РѕС‚Рµ СЃ РёР·Р±СЂР°РЅРЅС‹Рј:", error);
-      toast("РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ РёР·Р±СЂР°РЅРЅРѕРµ. РџРѕРїСЂРѕР±СѓР№С‚Рµ РµС‰Рµ СЂР°Р·.", "error");
+      console.error("Ошибка при работе с избранным:", error);
+      toast("Не удалось обновить избранное. Попробуйте еще раз.", "error");
     }
   };
 
@@ -518,8 +518,8 @@ export default function FeedCard({
       setActionsOpen(false);
       setIsDeleted(true);
     } catch (error) {
-      console.error("РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ СЂРµС†РµРїС‚Р°:", error);
-      toast("РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ СЂРµС†РµРїС‚", "error");
+      console.error("Ошибка удаления рецепта:", error);
+      toast("Не удалось удалить рецепт", "error");
     } finally {
       setDeleteBusy(false);
     }
@@ -529,7 +529,7 @@ export default function FeedCard({
     e.preventDefault();
     e.stopPropagation();
     if (!isAuthenticated) {
-      toast("РќРµРѕР±С…РѕРґРёРјРѕ Р°РІС‚РѕСЂРёР·РѕРІР°С‚СЊСЃСЏ", "error");
+      toast("Необходимо авторизоваться", "error");
       return;
     }
     const reportPayload = await requestReport();
@@ -543,10 +543,10 @@ export default function FeedCard({
         reported_user_id: Number(recipe.user_id),
       });
       setActionsOpen(false);
-      toast("Р–Р°Р»РѕР±Р° РѕС‚РїСЂР°РІР»РµРЅР°", "success");
+      toast("Жалоба отправлена", "success");
     } catch (error) {
-      console.error("РћС€РёР±РєР° РѕС‚РїСЂР°РІРєРё Р¶Р°Р»РѕР±С‹:", error);
-      toast("РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РїСЂР°РІРёС‚СЊ Р¶Р°Р»РѕР±Сѓ", "error");
+      console.error("Ошибка отправки жалобы:", error);
+      toast("Не удалось отправить жалобу", "error");
     }
   };
 
@@ -585,7 +585,7 @@ export default function FeedCard({
           <div className="flex items-center">
             {isAuthenticated && !isOwnPost && (
               <>
-                {/* РџРѕРєР°Р·С‹РІР°РµРј "РџРѕРґРїРёСЃР°С‚СЊСЃСЏ" РµСЃР»Рё РЅРµ РїРѕРґРїРёСЃР°РЅ Рё РЅРµ РїРѕРґРїРёСЃР°Р»СЃСЏ С‚РѕР»СЊРєРѕ С‡С‚Рѕ */}
+                {/* Показываем "Подписаться" если не подписан и не подписался только что */}
                 {!following && !justFollowed && (
                   <button
                     onClick={handleFollow}
@@ -594,7 +594,7 @@ export default function FeedCard({
                     Подписаться
                   </button>
                 )}
-                {/* РџРѕРєР°Р·С‹РІР°РµРј "РџРѕРґРїРёСЃРєРё" РµСЃР»Рё С‚РѕР»СЊРєРѕ С‡С‚Рѕ РїРѕРґРїРёСЃР°Р»СЃСЏ РІ Р»РµРЅС‚Рµ */}
+                {/* Показываем "Подписки" если только что подписался в ленте */}
                 {justFollowed && (
                   <button
                     onClick={handleFollow}
@@ -603,7 +603,7 @@ export default function FeedCard({
                     Подписки
                   </button>
                 )}
-                {/* Р•СЃР»Рё Р±С‹Р» РїРѕРґРїРёСЃР°РЅ РёР·РЅР°С‡Р°Р»СЊРЅРѕ (following && !justFollowed) - РЅРёС‡РµРіРѕ РЅРµ РїРѕРєР°Р·С‹РІР°РµРј */}
+                {/* Если был подписан изначально (following && !justFollowed) - ничего не показываем */}
               </>
             )}
             {(canModerate || isAuthenticated) && (
@@ -730,7 +730,7 @@ export default function FeedCard({
         commentsHref={buildRecipeLink("comments")}
       />
 
-      {/* Р‘Р»РѕРє РїРѕСЃР»РµРґРЅРµРіРѕ РєРѕРјРјРµРЅС‚Р°СЂРёСЏ */}
+      {/* Блок последнего комментария */}
       {showComments && commentsCount > 0 && (
         <div className="border-t border-umami-light-gray/50 pt-2.5">
           {loadingComment ? (

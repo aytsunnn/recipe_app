@@ -127,7 +127,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   
-  // РСЃРїРѕР»СЊР·СѓРµРј ref РґР»СЏ РѕС‚СЃР»РµР¶РёРІР°РЅРёСЏ РїРµСЂРІРѕРіРѕ СЂРµРЅРґРµСЂР°
+  // Используем ref для отслеживания первого рендера
   const isMounted = useRef(true);
   const isFirstRender = useRef(true);
 
@@ -210,7 +210,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
       }
     } catch (err) {
       if (isMounted.current) {
-        setError(err instanceof Error ? err.message : 'РџСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР°');
+        setError(err instanceof Error ? err.message : 'Произошла ошибка');
       }
     } finally {
       if (isMounted.current) {
@@ -252,7 +252,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
     });
   }, [useRecommendations]);
 
-  // РћС‚РґРµР»СЊРЅС‹Р№ useEffect РґР»СЏ РЅР°С‡Р°Р»СЊРЅРѕР№ Р·Р°РіСЂСѓР·РєРё
+  // Отдельный useEffect для начальной загрузки
   useEffect(() => {
     isMounted.current = true;
     return () => {
@@ -260,7 +260,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
     };
   }, []);
 
-  // Р—Р°РіСЂСѓР·РєР° РїСЂРё РёР·РјРµРЅРµРЅРёРё РїР°СЂР°РјРµС‚СЂРѕРІ
+  // Загрузка при изменении параметров
   useEffect(() => {
     console.log("[useRecipes] fetch useEffect triggered:", { autoFetch, hasFetchRecipesPage: !!fetchRecipesPage });
     if (!autoFetch) return;

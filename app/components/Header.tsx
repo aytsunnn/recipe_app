@@ -105,7 +105,9 @@ function HeaderContent() {
               : "Новое уведомление",
             "info"
           );
-          newItems.forEach((item) => knownNotificationIdsRef.current.add(item.id));
+          newItems.forEach((item) =>
+            knownNotificationIdsRef.current.add(item.id)
+          );
         }
       } catch (error) {
         console.error("Ошибка загрузки уведомлений в шапке:", error);
@@ -191,7 +193,13 @@ function HeaderContent() {
     <>
       <header className="flex w-full flex-wrap items-center justify-between gap-2 md:gap-3 lg:flex-nowrap lg:gap-0">
         <a onClick={handleLogoClick} className="cursor-pointer">
-          <Image width={215} height={41} src="/logo.svg" alt="logo" className="h-8 w-auto md:h-9 lg:h-auto" />
+          <Image
+            width={215}
+            height={41}
+            src="/logo.svg"
+            alt="logo"
+            className="h-8 w-auto md:h-9 lg:h-auto"
+          />
         </a>
 
         <div className="order-3 flex w-full items-center gap-1.5 sm:order-2 sm:w-auto sm:flex-1 md:gap-2 lg:order-none lg:w-auto lg:flex-none lg:gap-2.5">
@@ -200,7 +208,7 @@ function HeaderContent() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="h-8.5 w-full rounded-3xl border border-umami-light-gray/50 px-1.25 py-1 pl-9 pr-9 font-nunito text-xs text-umami-dark-gray placeholder:font-nunito placeholder:text-xs placeholder:font-regular placeholder:text-umami-gray focus:border-umami-green focus:outline-none md:h-9 md:text-sm lg:h-9.25 lg:w-125 lg:text-base"
+              className="h-8.5 w-full rounded-3xl border border-umami-light-gray/50 px-1.25 py-1 pl-9 pr-9 font-nunito text-xs text-umami-dark-gray placeholder:font-nunito placeholder:text-base placeholder:font-regular placeholder:text-umami-gray focus:border-umami-green focus:outline-none md:h-9 md:text-sm lg:h-9.25 lg:w-125 lg:text-base"
               placeholder="Поиск"
             />
             <div className="absolute left-2.5 top-1/2 -translate-y-1/2">
@@ -274,7 +282,9 @@ function HeaderContent() {
               href="/profile"
               className="hidden h-10.25 w-auto items-center justify-center gap-3.5 rounded-full bg-umami-orange pl-5 pr-1.5 text-white hover:bg-[#dd8c45] transition-all duration-300 shadow-sm border border-transparent hover:scale-[1.02] lg:flex"
             >
-              <p className="font-nunito text-sm font-bold tracking-wide">{user.username}</p>
+              <p className="font-nunito text-sm font-bold tracking-wide">
+                {user.username}
+              </p>
               <Image
                 width={32}
                 height={32}
@@ -310,7 +320,9 @@ function HeaderContent() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">
-              <p className="font-nunito text-lg font-bold text-umami-dark-gray">Меню</p>
+              <p className="font-nunito text-lg font-bold text-umami-dark-gray">
+                Меню
+              </p>
               <button
                 type="button"
                 onClick={closeBurger}

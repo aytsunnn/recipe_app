@@ -223,7 +223,7 @@ class RecipeService {
       const recipes = await apiClient.get<Recipe[]>(`/recipes/recommendations?${queryParams.toString()}`);
       return recipes.map(recipe => this.fixRecipeImages(recipe));
     } catch (error) {
-      console.error('Ошибка загрузки рекомендаций, показываем общую ленту:', error);
+      console.error("Ошибка загрузки рекомендаций, показываем общую ленту:", error);
       return this.getAll({ page, limit });
     }
   }
@@ -235,7 +235,7 @@ class RecipeService {
     } catch {
       const recipes = await this.getAll({ page: 1, limit: 50 });
       if (!recipes.length) {
-        throw new Error('РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ СЃР»СѓС‡Р°Р№РЅС‹Р№ СЂРµС†РµРїС‚');
+        throw new Error("Не удалось получить случайный рецепт");
       }
       const randomIndex = Math.floor(Math.random() * recipes.length);
       return recipes[randomIndex];
@@ -244,6 +244,8 @@ class RecipeService {
 }
 
 export const recipeService = new RecipeService();
+
+
 
 
 

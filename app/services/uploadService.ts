@@ -1,4 +1,4 @@
-﻿import { apiClient } from "./api";
+import { apiClient } from "./api";
 import { normalizeImageUrl } from "../utils/imageUrl";
 
 
@@ -28,7 +28,7 @@ class UploadService {
       response?.file_name;
  
     if (!rawValue) {
-      throw new Error("РЎРµСЂРІРµСЂ РЅРµ РІРµСЂРЅСѓР» РїСѓС‚СЊ Рє Р·Р°РіСЂСѓР¶РµРЅРЅРѕРјСѓ РёР·РѕР±СЂР°Р¶РµРЅРёСЋ");
+      throw new Error("Сервер не вернул путь к загруженному изображению");
     }
  
     return normalizeImageUrl(rawValue, "");
