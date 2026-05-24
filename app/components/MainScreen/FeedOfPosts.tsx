@@ -179,7 +179,7 @@ export default function FeedOfPosts() {
 
   return (
     <div ref={feedColumnRef} className="w-full flex flex-col gap-2 pb-10">
-      {/* Р РµР·СѓР»СЊС‚Р°С‚С‹ РїРѕРёСЃРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ */}
+      {/* Результаты поиска пользователей */}
       {searchQuery && (foundUsers.length > 0 || isUsersLoading) && (
         <div className="bg-white rounded-[20px] border border-umami-light-gray/50 p-5 mb-2 flex flex-col gap-4">
           <h3 className="font-nunito font-bold text-lg text-umami-dark-gray flex items-center gap-2">
