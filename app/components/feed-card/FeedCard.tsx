@@ -132,7 +132,14 @@ export default function FeedCard({
     return "";
   };
 
-  const publishedAgo = formatPublishedAgo(recipe.createdAt);
+  const [publishedAgo, setPublishedAgo] = useState("");
+
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      setPublishedAgo(formatPublishedAgo(recipe.createdAt));
+    });
+  }, [recipe.createdAt]);
+
   const exactPublishedAt = (() => {
     const date = new Date(recipe.createdAt);
     if (Number.isNaN(date.getTime())) return "";
@@ -204,7 +211,9 @@ export default function FeedCard({
 
   // Синхронизируем состояние following с пропсом isFollowing
   useEffect(() => {
-    setFollowing(isFollowing);
+    Promise.resolve().then(() => {
+      setFollowing(isFollowing);
+    });
   }, [isFollowing]);
 
   // Обновляем состояние лайка при изменении currentUserId или данных рецепта
@@ -212,12 +221,16 @@ export default function FeedCard({
     const liked = currentUserId
       ? recipe.Likes?.some((like) => like.user_id === currentUserId)
       : false;
-    setIsLiked(liked);
+    Promise.resolve().then(() => {
+      setIsLiked(liked);
+    });
   }, [currentUserId, recipe.Likes]);
 
   useEffect(() => {
     const next = resolveCommentsCount();
-    setCommentsCountState(next);
+    Promise.resolve().then(() => {
+      setCommentsCountState(next);
+    });
   }, [
     recipe._count?.Comments,
     recipe.total_reviews,
@@ -232,7 +245,9 @@ export default function FeedCard({
       const map = JSON.parse(raw) as Record<string, number>;
       const override = map[recipe.id];
       if (Number.isFinite(override)) {
-        setCommentsCountState((prev) => Math.max(prev, Number(override)));
+        Promise.resolve().then(() => {
+          setCommentsCountState((prev) => Math.max(prev, Number(override)));
+        });
       }
     } catch {
       // ignore broken localStorage
@@ -382,7 +397,9 @@ export default function FeedCard({
   // Загружаем последний комментарий, если нужно показывать комментарии
   useEffect(() => {
     if (showComments && commentsCount > 0) {
-      setLoadingComment(true);
+      Promise.resolve().then(() => {
+        setLoadingComment(true);
+      });
       commentService
         .getByRecipe(recipe.id)
         .then((comments) => {

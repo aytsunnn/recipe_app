@@ -25,7 +25,9 @@ export default function ModerationAuditLogsPanel() {
   };
 
   useEffect(() => {
-    loadLogs();
+    Promise.resolve().then(() => {
+      void loadLogs();
+    });
   }, []);
 
   const getActionBadge = (action: string) => {

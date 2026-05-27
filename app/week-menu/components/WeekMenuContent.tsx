@@ -109,7 +109,9 @@ export default function WeekMenuContent({ editable }: WeekMenuContentProps) {
   };
 
   useEffect(() => {
-    void loadAll();
+    Promise.resolve().then(() => {
+      void loadAll();
+    });
   }, []);
 
   const handleAddRecipe = async (dayId: number, recipeId: string) => {

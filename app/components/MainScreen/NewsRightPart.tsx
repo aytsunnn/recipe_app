@@ -331,19 +331,23 @@ export default function RightPart() {
                 (message.role === "user" || message.role === "assistant")
             )
         );
-        setMessages(
-          normalized.length > 0 ? normalized : [DEFAULT_WELCOME_MESSAGE]
-        );
+        Promise.resolve().then(() => {
+          setMessages(
+            normalized.length > 0 ? normalized : [DEFAULT_WELCOME_MESSAGE]
+          );
+        });
       }
 
       if (Array.isArray(parsed.expandedDraftIds)) {
-        setExpandedDraftIds(
-          new Set(
-            parsed.expandedDraftIds.filter(
-              (id): id is string => typeof id === "string" && id.length > 0
+        Promise.resolve().then(() => {
+          setExpandedDraftIds(
+            new Set(
+              parsed.expandedDraftIds.filter(
+                (id): id is string => typeof id === "string" && id.length > 0
+              )
             )
-          )
-        );
+          );
+        });
       }
     } catch (error) {
       console.error("Ошибка чтения кэша чата микро-шефа:", error);

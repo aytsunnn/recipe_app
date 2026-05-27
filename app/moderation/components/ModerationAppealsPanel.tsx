@@ -27,7 +27,9 @@ export default function ModerationAppealsPanel() {
   };
 
   useEffect(() => {
-    loadAppeals();
+    Promise.resolve().then(() => {
+      void loadAppeals();
+    });
   }, []);
 
   const handleProcess = async (appealId: string, status: "reviewed" | "resolved") => {
@@ -49,8 +51,8 @@ export default function ModerationAppealsPanel() {
       });
       // Перезагружаем список
       await loadAppeals();
-    } catch (error: any) {
-      toast(error?.message || "Ошибка при обработке апелляции", "error");
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : "Ошибка при обработке апелляции", "error");
     } finally {
       setProcessingId(null);
     }

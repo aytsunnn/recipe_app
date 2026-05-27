@@ -37,7 +37,9 @@ export default function BlockedUserGuard({ children }: { children: React.ReactNo
   };
 
   useEffect(() => {
-    checkUserStatus();
+    Promise.resolve().then(() => {
+      checkUserStatus();
+    });
 
     window.addEventListener("auth-change", checkUserStatus);
     return () => {
@@ -71,8 +73,8 @@ export default function BlockedUserGuard({ children }: { children: React.ReactNo
       // Обновляем список апелляций
       const userAppeals = await appealService.getMyAppeals();
       setAppeals(userAppeals);
-    } catch (error: any) {
-      toast(error?.message || "Не удалось отправить апелляцию", "error");
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : "Не удалось отправить апелляцию", "error");
     } finally {
       setIsSubmitting(false);
     }

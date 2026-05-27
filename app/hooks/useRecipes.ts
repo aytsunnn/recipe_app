@@ -269,8 +269,10 @@ export function useRecipes(options: UseRecipesOptions = {}) {
       isFirstRender.current = false;
     }
     
-    setHasMore(true);
-    fetchRecipesPage(1, true);
+    Promise.resolve().then(() => {
+      setHasMore(true);
+      fetchRecipesPage(1, true);
+    });
   }, [autoFetch, fetchRecipesPage]);
 
   useEffect(() => {

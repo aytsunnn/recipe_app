@@ -108,8 +108,10 @@ export default function ModerationMetaPanel() {
   };
 
   useEffect(() => {
-    resetDraft();
-    void loadItems();
+    Promise.resolve().then(() => {
+      resetDraft();
+      void loadItems();
+    });
   }, [activeType]);
 
   const validate = (): boolean => {
@@ -268,9 +270,9 @@ export default function ModerationMetaPanel() {
                             const uploadedUrl = await uploadService.uploadImage(file, "recipes");
                             setDraft((prev) => ({ ...prev, [field.key]: uploadedUrl }));
                             toast("Изображение загружено", "success");
-                          } catch (err: any) {
+                          } catch (err: unknown) {
                             console.error(err);
-                            toast("Ошибка загрузки: " + (err.message || ""), "error");
+                            toast("Ошибка загрузки: " + (err instanceof Error ? err.message : ""), "error");
                           } finally {
                             setUploading(false);
                           }

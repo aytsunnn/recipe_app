@@ -47,7 +47,9 @@ function HeaderContent() {
   );
 
   useEffect(() => {
-    setSearchQuery(searchParams?.get("search") || "");
+    Promise.resolve().then(() => {
+      setSearchQuery(searchParams?.get("search") || "");
+    });
   }, [searchParams]);
 
   useEffect(() => {
@@ -71,7 +73,9 @@ function HeaderContent() {
 
   useEffect(() => {
     if (!user) {
-      setUnreadNotifications(0);
+      Promise.resolve().then(() => {
+        setUnreadNotifications(0);
+      });
       knownNotificationIdsRef.current = new Set();
       return;
     }
