@@ -40,6 +40,59 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
     confirmNewPassword?: string;
     general?: string;
   }>({});
+  const [formRenderKey, setFormRenderKey] = useState(0);
+
+  const setFormEmail = (email: string) => {
+    setFormData((prev) => ({ email, password: prev.password }));
+  };
+  const setFormPassword = (password: string) => {
+    setFormData((prev) => ({ email: prev.email, password }));
+  };
+  const setRecoveryEmail = (email: string) => {
+    setRecoveryData((prev) => ({
+      email,
+      code: prev.code,
+      verifiedCode: prev.verifiedCode,
+      newPassword: prev.newPassword,
+      confirmNewPassword: prev.confirmNewPassword,
+    }));
+  };
+  const setRecoveryCode = (code: string) => {
+    setRecoveryData((prev) => ({
+      email: prev.email,
+      code,
+      verifiedCode: prev.verifiedCode,
+      newPassword: prev.newPassword,
+      confirmNewPassword: prev.confirmNewPassword,
+    }));
+  };
+  const setRecoveryVerifiedCode = (verifiedCode: string) => {
+    setRecoveryData((prev) => ({
+      email: prev.email,
+      code: prev.code,
+      verifiedCode,
+      newPassword: prev.newPassword,
+      confirmNewPassword: prev.confirmNewPassword,
+    }));
+  };
+  const setRecoveryNewPassword = (newPassword: string) => {
+    setRecoveryData((prev) => ({
+      email: prev.email,
+      code: prev.code,
+      verifiedCode: prev.verifiedCode,
+      newPassword,
+      confirmNewPassword: prev.confirmNewPassword,
+    }));
+  };
+  const setRecoveryConfirmNewPassword = (confirmNewPassword: string) => {
+    setRecoveryData((prev) => ({
+      email: prev.email,
+      code: prev.code,
+      verifiedCode: prev.verifiedCode,
+      newPassword: prev.newPassword,
+      confirmNewPassword,
+    }));
+  };
 
   const resetForm = useCallback(() => {
     setMode("login");
@@ -53,6 +106,7 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
     });
     setFieldErrors({});
     setShowPassword(false);
+    setFormRenderKey((prev) => prev + 1);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -110,7 +164,13 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
     setIsLoading(true);
     try {
       await authService.requestPasswordRecoveryCode(normalizedEmail);
-      setRecoveryData((prev) => ({ ...prev, email: normalizedEmail, code: "" }));
+      setRecoveryData((prev) => ({
+        email: normalizedEmail,
+        code: "",
+        verifiedCode: prev.verifiedCode,
+        newPassword: prev.newPassword,
+        confirmNewPassword: prev.confirmNewPassword,
+      }));
       setMode("recovery-verify");
       setFieldErrors({ general: "Код отправлен на почту" });
     } catch (error) {
@@ -133,7 +193,7 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
 
     // Сохраняем введенный код и переходим к вводу нового пароля.
     // Код и новый пароль будут проверены атомарно при отправке на бэкенд /auth/reset-password.
-    setRecoveryData((prev) => ({ ...prev, verifiedCode: code }));
+    setRecoveryVerifiedCode(code);
     setMode("recovery-reset");
   };
 
@@ -230,11 +290,11 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
             {fieldErrors.general && <p className="mt-2 text-xs text-red-600">{fieldErrors.general}</p>}
 
             {mode === "login" ? (
-              <form onSubmit={handleLoginSubmit} className="mt-3 flex flex-col gap-2.5">
+              <form key={`auth-login-${formRenderKey}`} onSubmit={handleLoginSubmit} className="mt-3 flex flex-col gap-2.5">
                 <input
                   type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  defaultValue={formData.email}
+                  onChange={(e) => setFormEmail(e.target.value)}
                   className="rounded-full border border-umami-orange px-3 py-2 text-sm text-umami-orange"
                   placeholder="Email"
                 />
@@ -243,8 +303,8 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    defaultValue={formData.password}
+                    onChange={(e) => setFormPassword(e.target.value)}
                     className="w-full rounded-full border border-umami-orange px-3 py-2 pr-20 text-sm text-umami-orange"
                     placeholder="Пароль"
                     autoComplete="current-password"
@@ -259,7 +319,7 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
                   type="button"
                   onClick={() => {
                     setFieldErrors({});
-                    setRecoveryData((prev) => ({ ...prev, email: formData.email.trim().toLowerCase() }));
+                    setRecoveryEmail(formData.email.trim().toLowerCase());
                     setMode("recovery-request");
                   }}
                   className="w-fit text-left font-nunito text-sm text-umami-orange underline"
@@ -274,11 +334,11 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
             ) : null}
 
             {mode === "recovery-request" ? (
-              <form onSubmit={handleRecoveryRequest} className="mt-3 flex flex-col gap-2.5">
+              <form key={`auth-request-${formRenderKey}`} onSubmit={handleRecoveryRequest} className="mt-3 flex flex-col gap-2.5">
                 <input
                   type="email"
-                  value={recoveryData.email}
-                  onChange={(e) => setRecoveryData((prev) => ({ ...prev, email: e.target.value }))}
+                  defaultValue={recoveryData.email}
+                  onChange={(e) => setRecoveryEmail(e.target.value)}
                   className="rounded-full border border-umami-orange px-3 py-2 text-sm text-umami-orange"
                   placeholder="Email"
                 />
@@ -301,17 +361,17 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
             ) : null}
 
             {mode === "recovery-verify" ? (
-              <form onSubmit={handleRecoveryVerifyCode} className="mt-3 flex flex-col gap-2.5">
+              <form key={`auth-verify-${formRenderKey}`} onSubmit={handleRecoveryVerifyCode} className="mt-3 flex flex-col gap-2.5">
                 <input
                   type="email"
-                  value={recoveryData.email}
-                  onChange={(e) => setRecoveryData((prev) => ({ ...prev, email: e.target.value }))}
+                  defaultValue={recoveryData.email}
+                  onChange={(e) => setRecoveryEmail(e.target.value)}
                   className="rounded-full border border-umami-orange px-3 py-2 text-sm text-umami-orange"
                   placeholder="Email"
                 />
                 <OtpCodeInput
                   value={recoveryData.code}
-                  onChange={(code) => setRecoveryData((prev) => ({ ...prev, code }))}
+                  onChange={setRecoveryCode}
                   disabled={isLoading}
                 />
                 {fieldErrors.code && <span className="text-left text-xs text-red-600">{fieldErrors.code}</span>}
@@ -331,11 +391,11 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
             ) : null}
 
             {mode === "recovery-reset" ? (
-              <form onSubmit={handleRecoveryReset} className="mt-3 flex flex-col gap-2.5">
+              <form key={`auth-reset-${formRenderKey}`} onSubmit={handleRecoveryReset} className="mt-3 flex flex-col gap-2.5">
                 <input
                   type="password"
-                  value={recoveryData.newPassword}
-                  onChange={(e) => setRecoveryData((prev) => ({ ...prev, newPassword: e.target.value }))}
+                  defaultValue={recoveryData.newPassword}
+                  onChange={(e) => setRecoveryNewPassword(e.target.value)}
                   className="rounded-full border border-umami-orange px-3 py-2 text-sm text-umami-orange"
                   placeholder="Новый пароль"
                   autoComplete="new-password"
@@ -344,8 +404,8 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
 
                 <input
                   type="password"
-                  value={recoveryData.confirmNewPassword}
-                  onChange={(e) => setRecoveryData((prev) => ({ ...prev, confirmNewPassword: e.target.value }))}
+                  defaultValue={recoveryData.confirmNewPassword}
+                  onChange={(e) => setRecoveryConfirmNewPassword(e.target.value)}
                   className="rounded-full border border-umami-orange px-3 py-2 text-sm text-umami-orange"
                   placeholder="Повторите новый пароль"
                   autoComplete="new-password"
