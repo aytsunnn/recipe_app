@@ -258,7 +258,7 @@ export default function PublicUserPage() {
 
         {!loading && !error && profile && (
           <div className="flex flex-col gap-4">
-            <div className="relative rounded-[20px] border border-[#eaeaea] bg-white p-3 sm:p-4 lg:h-[190px] lg:p-5">
+            <div className="relative rounded-[20px] border border-[#eaeaea] bg-white p-3 sm:p-4 lg:min-h-[190px] lg:p-5">
               {!isOwnProfile && isAdmin ? (
                 <div ref={adminMenuRef} className="absolute right-3 top-3 z-20 sm:right-4 sm:top-4 lg:right-5 lg:top-5">
                   <button
@@ -318,7 +318,7 @@ export default function PublicUserPage() {
                     </p>
                   ) : null}
                   {profile.bio ? (
-                    <p className="mt-1 line-clamp-2 max-w-[560px] font-inter text-xs text-umami-gray sm:text-sm">
+                    <p className="mt-1 max-w-[560px] break-words font-inter text-xs text-umami-gray sm:text-sm">
                       О себе: {profile.bio}
                     </p>
                   ) : null}

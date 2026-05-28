@@ -51,7 +51,7 @@ export default function ProfileHeaderCard({
   }, [actionsOpen]);
 
   return (
-    <div className="relative flex min-h-[190px] flex-col rounded-[20px] border border-[#eaeaea] bg-white p-4 sm:p-5 md:min-h-[210px] lg:h-[190px] lg:min-h-0 lg:flex-row lg:items-center">
+    <div className="relative flex min-h-[190px] flex-col rounded-[20px] border border-[#eaeaea] bg-white p-4 sm:p-5 md:min-h-[210px] lg:min-h-[190px] lg:flex-row lg:items-start">
       <div ref={actionsRef} className="absolute right-4 top-4 z-20 flex items-center gap-2 sm:right-5 sm:top-5">
         <button
           type="button"
@@ -127,7 +127,7 @@ export default function ProfileHeaderCard({
           </h1>
           <p className="font-inter text-sm text-umami-gray">@{user.username}</p>
           {user.bio ? (
-            <p className="line-clamp-2 max-w-full font-inter text-sm text-umami-gray lg:max-w-[520px]">
+            <p className="max-w-full break-words font-inter text-sm text-umami-gray lg:max-w-[520px]">
               О себе: {user.bio}
             </p>
           ) : null}
