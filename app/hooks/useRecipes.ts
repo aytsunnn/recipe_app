@@ -116,6 +116,18 @@ const applyCommentOverridesFromStorage = (list: Recipe[]): Recipe[] => {
 const hasActiveParams = (params: GetRecipesParams) =>
   Object.values(params).some((value) => value !== undefined && value !== null && value !== '');
 
+const areParamValuesEqual = (
+  a: GetRecipesParams[keyof GetRecipesParams],
+  b: GetRecipesParams[keyof GetRecipesParams]
+) => {
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    return a.every((value, index) => value === b[index]);
+  }
+  return a === b;
+};
+
 export function useRecipes(options: UseRecipesOptions = {}) {
   const { initialParams = {}, autoFetch = true, useRecommendations = false, pageSize = 20 } = options;
   
@@ -237,7 +249,7 @@ export function useRecipes(options: UseRecipesOptions = {}) {
 
       const changed = Object.keys(merged).some((key) => {
         const typedKey = key as keyof GetRecipesParams;
-        return merged[typedKey] !== prev[typedKey];
+        return !areParamValuesEqual(merged[typedKey], prev[typedKey]);
       });
 
       console.log("[useRecipes] updateParams changed check:", { changed, prev, merged });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import FeedCard from "../feed-card/FeedCard";
 import { useRecipes } from "../../hooks/useRecipes";
@@ -16,32 +16,40 @@ import Image from "next/image";
 
 const firstFromCsv = (csvValue: string | null) =>
   csvValue ? csvValue.split(",").filter(Boolean)[0] : undefined;
+const allFromCsv = (csvValue: string | null) =>
+  csvValue ? csvValue.split(",").map((v) => v.trim()).filter(Boolean) : [];
 
 export default function FeedOfPosts() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams?.get("search") || "";
-  const firstKitchenId = firstFromCsv(searchParams?.get("kitchen_id") || null);
-  const firstCategoryId = firstFromCsv(
-    searchParams?.get("category_id") || null
-  );
-  const firstCelebrationId = firstFromCsv(
-    searchParams?.get("celebration_id") || null
-  );
-  const firstCookingId = firstFromCsv(searchParams?.get("cooking_id") || null);
-  const firstDifficulty = firstFromCsv(searchParams?.get("difficulty") || null);
+  const kitchenRaw = searchParams?.get("kitchen_id") || null;
+  const categoryRaw = searchParams?.get("category_id") || null;
+  const celebrationRaw = searchParams?.get("celebration_id") || null;
+  const cookingRaw = searchParams?.get("cooking_id") || null;
+  const difficultyRaw = searchParams?.get("difficulty") || null;
 
-  const kitchenId = firstKitchenId ? parseInt(firstKitchenId) : undefined;
-  const categoryId = firstCategoryId ? parseInt(firstCategoryId) : undefined;
+  const firstKitchenId = firstFromCsv(kitchenRaw);
+  const firstCelebrationId = firstFromCsv(celebrationRaw);
+  const firstCookingId = firstFromCsv(cookingRaw);
+  const firstDifficulty = firstFromCsv(difficultyRaw);
+
+  const kitchenId = firstKitchenId ? parseInt(firstKitchenId, 10) : undefined;
   const celebrationId = firstCelebrationId
-    ? parseInt(firstCelebrationId)
+    ? parseInt(firstCelebrationId, 10)
     : undefined;
-  const cookingId = firstCookingId ? parseInt(firstCookingId) : undefined;
+  const cookingId = firstCookingId ? parseInt(firstCookingId, 10) : undefined;
   const difficulty = firstDifficulty || undefined;
+  const categoryId = useMemo(() => {
+    const ids = allFromCsv(categoryRaw)
+      .map((id) => parseInt(id, 10))
+      .filter((id) => Number.isFinite(id));
+    return ids.length > 0 ? ids : undefined;
+  }, [categoryRaw]);
 
   const useRecommendations =
     !searchQuery &&
     !kitchenId &&
-    !categoryId &&
+    !(Array.isArray(categoryId) ? categoryId.length > 0 : categoryId) &&
     !celebrationId &&
     !cookingId &&
     !difficulty;
@@ -70,6 +78,8 @@ export default function FeedOfPosts() {
   const [foundUsers, setFoundUsers] = useState<User[]>([]);
   const [isUsersLoading, setIsUsersLoading] = useState(false);
 
+  const categoryDep = categoryRaw || "";
+
   useEffect(() => {
     Promise.resolve().then(() => {
       updateParams({
@@ -96,7 +106,7 @@ export default function FeedOfPosts() {
     updateParams,
     searchQuery,
     kitchenId,
-    categoryId,
+    categoryDep,
     celebrationId,
     cookingId,
     difficulty,

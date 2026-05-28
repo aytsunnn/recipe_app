@@ -90,7 +90,7 @@ export interface GetRecipesParams {
   kitchen_id?: number;
   celebration_id?: number;
   cooking_id?: number;
-  category_id?: number;
+  category_id?: number | number[];
   difficulty?: string;
   is_private?: boolean;
   page?: number;
@@ -178,7 +178,15 @@ class RecipeService {
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          queryParams.append(key, String(value));
+          if (Array.isArray(value)) {
+            value.forEach((item) => {
+              if (item !== undefined && item !== null && item !== "") {
+                queryParams.append(key, String(item));
+              }
+            });
+          } else {
+            queryParams.append(key, String(value));
+          }
         }
       });
     }
