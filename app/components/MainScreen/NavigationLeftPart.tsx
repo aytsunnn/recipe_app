@@ -21,6 +21,8 @@ const navItems = [
   { href: "/recipes/random", label: "Случайный рецепт", icon: "/DiceFive.svg" },
 ];
 
+const publicNavItems = navItems.filter((item) => item.href !== "/profile");
+
 export default function LeftPart({
   compact = false,
   onNavigate,
@@ -138,9 +140,8 @@ export default function LeftPart({
   return (
     <div className="w-full self-start lg:sticky lg:top-[150px]">
       <div className="flex flex-col gap-1.25">
-        {isAuthenticated && (
-          <div className="mb-5 flex flex-col gap-1">
-            {resolvedNavItems.map((item) => (
+        <div className="mb-5 flex flex-col gap-1">
+            {(isAuthenticated ? resolvedNavItems : publicNavItems).map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
@@ -156,7 +157,6 @@ export default function LeftPart({
               </Link>
             ))}
           </div>
-        )}
 
         {showCategories ? (
           <>
