@@ -59,7 +59,8 @@ function MobileCategories() {
       params.delete("category_id");
       params.delete("filters");
     }
-    router.push(`/?${params.toString()}`, { scroll: false });
+    const query = params.toString();
+    router.push(query ? `/?${query}` : "/", { scroll: false });
   };
 
   if (!categories.length || showFilters) return null;

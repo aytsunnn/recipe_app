@@ -119,7 +119,8 @@ export default function LeftPart({
       params.delete("filters");
     }
 
-    router.push(`/?${params.toString()}`);
+    const query = params.toString();
+    router.push(query ? `/?${query}` : "/", { scroll: false });
   };
 
   const getCategoryImageUrl = (imageUrl?: string | null) => {

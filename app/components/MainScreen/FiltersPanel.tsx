@@ -36,6 +36,14 @@ type FilterKey =
   | "cooking_id"
   | "difficulty";
 
+const FILTER_KEYS: FilterKey[] = [
+  "category_id",
+  "celebration_id",
+  "kitchen_id",
+  "cooking_id",
+  "difficulty",
+];
+
 const parseMultiParam = (value: string | null): string[] =>
   value ? value.split(",").filter(Boolean) : [];
 
@@ -157,6 +165,14 @@ export default function FiltersPanel({
       params.delete(key);
     }
 
+    const hasAnyActiveFilter = FILTER_KEYS.some((filterKey) => {
+      const rawValue = params.get(filterKey);
+      return Boolean(rawValue && rawValue.trim().length > 0);
+    });
+    if (!hasAnyActiveFilter) {
+      params.delete("filters");
+    }
+
     const updatedFilters: FilterValues = {
       ...filters,
       [key]:
@@ -168,7 +184,8 @@ export default function FiltersPanel({
     };
 
     setFilters(updatedFilters);
-    router.push(`/?${params.toString()}`, { scroll: false });
+    const query = params.toString();
+    router.push(query ? `/?${query}` : "/", { scroll: false });
     onApplyFilters(updatedFilters);
   };
 
@@ -326,14 +343,14 @@ export default function FiltersPanel({
                 activeOptions.map((item) => item.value)
               )
             }
-            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#9CC199] bg-[#EDF8EC] px-3 font-nunito text-[12px] font-bold text-[#426F3F] md:h-9 md:gap-2 md:px-4 md:text-sm"
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#9CC199] bg-[#EDF8EC] px-3 font-nunito text-[12px] font-bold text-[#426F3F] md:h-9 md:gap-2 md:px-4 md:text-sm"
           >
             <Image src="/DoneCircle.svg" alt="select-all" width={14} height={14} />
             Выбрать все
           </button>
           <button
             onClick={() => setSelected(openFilter, [])}
-            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#D7C7AB] bg-[#FFF6E9] px-3 font-nunito text-[12px] font-bold text-[#7B6140] md:h-9 md:gap-2 md:px-4 md:text-sm"
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#D7C7AB] bg-[#FFF6E9] px-3 font-nunito text-[12px] font-bold text-[#7B6140] md:h-9 md:gap-2 md:px-4 md:text-sm"
           >
             <Image src="/X.svg" alt="clear-all" width={14} height={14} />
             Сбросить все
