@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useUiFeedback } from "../../components/UiFeedbackProvider";
 import { Appeal, appealService } from "../../services/appealService";
+import { getUserFriendlyErrorMessage } from "../../utils/errorUtils";
 import { normalizeImageUrl } from "../../utils/imageUrl";
 
 export default function ModerationAppealsPanel() {
@@ -52,7 +53,7 @@ export default function ModerationAppealsPanel() {
       // Перезагружаем список
       await loadAppeals();
     } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : "Ошибка при обработке апелляции", "error");
+      toast(getUserFriendlyErrorMessage(error, "Ошибка при обработке апелляции"), "error");
     } finally {
       setProcessingId(null);
     }

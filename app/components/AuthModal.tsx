@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { authService, LoginData } from "../services/authService";
 import { validateEmail, validatePassword } from "../utils/validation";
+import { getUserFriendlyErrorMessage } from "../utils/errorUtils";
 import OtpCodeInput from "./OtpCodeInput";
 
 interface AuthModalProps {
@@ -147,7 +148,9 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
       authService.dispatchAuthChange();
       handleClose();
     } catch (error) {
-      setFieldErrors({ general: error instanceof Error ? error.message : "Ошибка авторизации" });
+      setFieldErrors({
+        general: getUserFriendlyErrorMessage(error, "Ошибка авторизации"),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -174,7 +177,9 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
       setMode("recovery-verify");
       setFieldErrors({ general: "Код отправлен на почту" });
     } catch (error) {
-      setFieldErrors({ general: error instanceof Error ? error.message : "Не удалось отправить код" });
+      setFieldErrors({
+        general: getUserFriendlyErrorMessage(error, "Не удалось отправить код"),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -236,7 +241,9 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
       });
       setFieldErrors({ general: "Пароль обновлен. Войдите с новым паролем" });
     } catch (error) {
-      setFieldErrors({ general: error instanceof Error ? error.message : "Не удалось обновить пароль" });
+      setFieldErrors({
+        general: getUserFriendlyErrorMessage(error, "Не удалось обновить пароль"),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -254,7 +261,9 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
       await authService.requestPasswordRecoveryCode(normalizedEmail);
       setFieldErrors({ general: "Код отправлен повторно" });
     } catch (error) {
-      setFieldErrors({ general: error instanceof Error ? error.message : "Не удалось отправить код" });
+      setFieldErrors({
+        general: getUserFriendlyErrorMessage(error, "Не удалось отправить код"),
+      });
     } finally {
       setIsLoading(false);
     }

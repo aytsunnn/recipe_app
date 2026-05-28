@@ -24,6 +24,7 @@ import {
   Unit,
 } from "../services/metaService";
 import { normalizeImageUrl } from "../utils/imageUrl";
+import { getUserFriendlyErrorMessage } from "../utils/errorUtils";
 import { toolsService } from "../services/toolsService";
 import { useUiFeedback } from "../components/UiFeedbackProvider";
 import CustomSelect from "../components/ui/CustomSelect";
@@ -381,7 +382,7 @@ function ProfilePageContent() {
       !editFormData.username.trim() ||
       !normalizedEmail
     ) {
-      alert("Заполните имя, имя пользователя и email");
+      toast("Заполните имя, имя пользователя и email", "error");
       return;
     }
 
@@ -389,12 +390,12 @@ function ProfilePageContent() {
       hasPasswordChange &&
       editFormData.newPassword !== editFormData.confirmNewPassword
     ) {
-      alert("Новый пароль и подтверждение не совпадают");
+      toast("Новый пароль и подтверждение не совпадают", "error");
       return;
     }
 
     if (hasPasswordChange && editFormData.newPassword.length < 8) {
-      alert("Новый пароль должен содержать минимум 8 символов");
+      toast("Новый пароль должен содержать минимум 8 символов", "error");
       return;
     }
 
@@ -404,9 +405,15 @@ function ProfilePageContent() {
         await authService.resendVerificationCode(normalizedEmail);
         setIsEditVerificationStep(true);
         setEditProfileMessage("Код подтверждения отправлен на email");
+        if (hasPasswordChange) {
+          toast("Код подтверждения для смены пароля отправлен", "info");
+        }
       } catch (error) {
         console.error("Ошибка отправки кода подтверждения:", error);
         setEditProfileMessage("Не удалось отправить код подтверждения");
+        if (hasPasswordChange) {
+          toast("Не удалось отправить код для смены пароля", "error");
+        }
       } finally {
         setIsEditProfileLoading(false);
       }
@@ -414,7 +421,11 @@ function ProfilePageContent() {
     }
 
     if (needsVerification && !editFormData.verifyCode.trim()) {
-      alert("Введите код подтверждения");
+      if (hasPasswordChange) {
+        toast("Введите код подтверждения", "error");
+      } else {
+        toast("Введите код подтверждения", "error");
+      }
       return;
     }
 
@@ -452,13 +463,28 @@ function ProfilePageContent() {
       setIsEditVerificationStep(false);
       setEditProfileMessage(null);
       authService.dispatchAuthChange();
+      if (hasPasswordChange) {
+        toast("Пароль успешно изменен", "success");
+      }
     } catch (error) {
       console.error("Ошибка при обновлении профиля:", error);
-      alert(
-        error instanceof Error
-          ? `Не удалось обновить профиль: ${error.message}`
-          : "Не удалось обновить профиль"
-      );
+      if (hasPasswordChange) {
+        toast(
+          `Не удалось изменить пароль: ${getUserFriendlyErrorMessage(
+            error,
+            "Попробуйте еще раз"
+          )}`,
+          "error"
+        );
+      } else {
+        toast(
+          `Не удалось обновить профиль: ${getUserFriendlyErrorMessage(
+            error,
+            "Попробуйте еще раз"
+          )}`,
+          "error"
+        );
+      }
     } finally {
       setIsEditProfileLoading(false);
     }
@@ -467,7 +493,7 @@ function ProfilePageContent() {
   const handleResendEditVerificationCode = async () => {
     const normalizedEmail = editFormData.email.trim().toLowerCase();
     if (!normalizedEmail) {
-      alert("Введите email");
+      toast("Введите email", "error");
       return;
     }
 
@@ -475,9 +501,15 @@ function ProfilePageContent() {
       setIsEditProfileLoading(true);
       await authService.resendVerificationCode(normalizedEmail);
       setEditProfileMessage("Код отправлен повторно");
+      if (editFormData.newPassword.trim().length > 0) {
+        toast("Код для смены пароля отправлен повторно", "info");
+      }
     } catch (error) {
       console.error("Ошибка повторной отправки кода:", error);
       setEditProfileMessage("Не удалось отправить код повторно");
+      if (editFormData.newPassword.trim().length > 0) {
+        toast("Не удалось отправить код для смены пароля", "error");
+      }
     } finally {
       setIsEditProfileLoading(false);
     }
@@ -916,7 +948,7 @@ function ProfilePageContent() {
   const handleParseRecipeByUrl = async () => {
     const sourceUrl = recipeForm.source_url.trim();
     if (!sourceUrl) {
-      alert("Добавьте ссылку на рецепт");
+      toast("Добавьте ссылку на рецепт", "error");
       return;
     }
 
@@ -1158,7 +1190,7 @@ function ProfilePageContent() {
       }));
     } catch (error) {
       console.error("Ошибка парсинга рецепта:", error);
-      alert("Не удалось распарсить рецепт по ссылке");
+      toast("Не удалось распарсить рецепт по ссылке", "error");
     } finally {
       setParseLoading(false);
     }
@@ -1176,7 +1208,7 @@ function ProfilePageContent() {
   const handleSaveRecipe = async () => {
     if (!user) return;
     if (!recipeForm.title.trim() || !recipeForm.description.trim()) {
-      alert("Заполните название и описание рецепта");
+      toast("Заполните название и описание рецепта", "error");
       return;
     }
 
@@ -1301,10 +1333,12 @@ function ProfilePageContent() {
       setRecipeForm(emptyRecipeForm);
     } catch (error) {
       console.error("Ошибка при сохранении рецепта:", error);
-      alert(
-        error instanceof Error
-          ? `Не удалось сохранить рецепт: ${error.message}`
-          : "Не удалось сохранить рецепт"
+      toast(
+        `Не удалось сохранить рецепт: ${getUserFriendlyErrorMessage(
+          error,
+          "Попробуйте еще раз"
+        )}`,
+        "error"
       );
     } finally {
       setRecipeActionLoading(false);
@@ -1321,7 +1355,7 @@ function ProfilePageContent() {
       await loadProfile(user);
     } catch (error) {
       console.error("Ошибка при удалении рецепта:", error);
-      alert("Не удалось удалить рецепт");
+      toast("Не удалось удалить рецепт", "error");
     } finally {
       setRecipeActionLoading(false);
     }
@@ -1383,7 +1417,7 @@ function ProfilePageContent() {
       setEditFormData((prev) => ({ ...prev, avatar_url: avatarUrl }));
     } catch (error) {
       console.error("Ошибка обновления аватарки:", error);
-      alert("Не удалось обновить аватарку");
+      toast("Не удалось обновить аватарку", "error");
     } finally {
       setAvatarLoading(false);
       if (event.target) event.target.value = "";
@@ -1415,10 +1449,12 @@ function ProfilePageContent() {
       router.push("/");
     } catch (error) {
       console.error("Ошибка удаления профиля:", error);
-      alert(
-        error instanceof Error
-          ? `Не удалось удалить профиль: ${error.message}`
-          : "Не удалось удалить профиль"
+      toast(
+        `Не удалось удалить профиль: ${getUserFriendlyErrorMessage(
+          error,
+          "Попробуйте еще раз"
+        )}`,
+        "error"
       );
     } finally {
       setRecipeActionLoading(false);

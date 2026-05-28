@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { authService, RegisterData } from "../services/authService";
 import { validatePassword, validateEmail, validateUsername } from "../utils/validation";
+import { getUserFriendlyErrorMessage } from "../utils/errorUtils";
 import OtpCodeInput from "./OtpCodeInput";
 
 interface RegisterModalProps {
@@ -159,7 +160,7 @@ export default function RegisterModal({
       setFieldErrors({ general: "Код отправлен на email" });
     } catch (error) {
       setFieldErrors({
-        general: error instanceof Error ? error.message : "Ошибка регистрации",
+        general: getUserFriendlyErrorMessage(error, "Ошибка регистрации"),
       });
     } finally {
       setIsLoading(false);
@@ -188,7 +189,7 @@ export default function RegisterModal({
       handleClose();
     } catch (error) {
       setFieldErrors({
-        general: error instanceof Error ? error.message : "Неверный код",
+        general: getUserFriendlyErrorMessage(error, "Неверный код"),
       });
     } finally {
       setIsLoading(false);
@@ -208,7 +209,7 @@ export default function RegisterModal({
       setFieldErrors({ general: "Код отправлен повторно" });
     } catch (error) {
       setFieldErrors({
-        general: error instanceof Error ? error.message : "Не удалось отправить код",
+        general: getUserFriendlyErrorMessage(error, "Не удалось отправить код"),
       });
     } finally {
       setIsLoading(false);

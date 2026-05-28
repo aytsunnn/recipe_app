@@ -155,7 +155,11 @@ export default function FiltersPanel({
     return ((filters[key] as number[] | undefined) || []).map(String);
   };
 
-  const setSelected = (key: FilterKey, values: string[]) => {
+  const setSelected = (
+    key: FilterKey,
+    values: string[],
+    options?: { keepPanelOpen?: boolean }
+  ) => {
     const params = new URLSearchParams(searchParams?.toString() || "");
 
     if (values.length > 0) {
@@ -170,7 +174,11 @@ export default function FiltersPanel({
       return Boolean(rawValue && rawValue.trim().length > 0);
     });
     if (!hasAnyActiveFilter) {
-      params.delete("filters");
+      if (options?.keepPanelOpen) {
+        params.set("filters", "true");
+      } else {
+        params.delete("filters");
+      }
     }
 
     const updatedFilters: FilterValues = {
@@ -349,7 +357,10 @@ export default function FiltersPanel({
             Выбрать все
           </button>
           <button
-            onClick={() => setSelected(openFilter, [])}
+            onClick={() => {
+              setSelected(openFilter, [], { keepPanelOpen: true });
+              setOpenFilter(null);
+            }}
               className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#D7C7AB] bg-[#FFF6E9] px-3 font-nunito text-[12px] font-bold text-[#7B6140] md:h-9 md:gap-2 md:px-4 md:text-sm"
           >
             <Image src="/X.svg" alt="clear-all" width={14} height={14} />

@@ -124,6 +124,14 @@ export default function RecipeDetailsPage() {
   >(null);
   const recipeActionsRef = useRef<HTMLDivElement | null>(null);
   const commentActionsRef = useRef<HTMLDivElement | null>(null);
+  const personalNoteRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    const textarea = personalNoteRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [personalNote]);
 
   const categories = useMemo(() => {
     if (!recipe?.Categories) return [];
@@ -827,10 +835,11 @@ export default function RecipeDetailsPage() {
       await loadComments();
     } catch (submitError) {
       console.error("Ошибка отправки комментария:", submitError);
-      alert(
+      toast(
         submitError instanceof Error
           ? `Не удалось отправить комментарий: ${submitError.message}`
-          : "Не удалось отправить комментарий"
+          : "Не удалось отправить комментарий",
+        "error"
       );
     } finally {
       setCommentSending(false);
@@ -1122,10 +1131,11 @@ export default function RecipeDetailsPage() {
               Личная заметка
             </p>
             <textarea
+              ref={personalNoteRef}
               value={personalNote}
               onChange={(e) => setPersonalNote(e.target.value)}
               placeholder="Заметка видна только вам"
-              className="mt-2 h-20 w-full rounded-2xl border border-umami-light-gray px-3 py-2 font-inter text-sm"
+              className="mt-2 min-h-[80px] w-full resize-none overflow-hidden rounded-2xl border border-umami-light-gray px-3 py-2 font-inter text-sm"
             />
             <button
               type="button"

@@ -8,6 +8,8 @@ import { favoriteService } from "../../services/favoriteService";
 import { followService } from "../../services/followService";
 import { Recipe, recipeService } from "../../services/recipeService";
 import { aiService } from "../../services/aiService";
+import { useUiFeedback } from "../UiFeedbackProvider";
+import { getUserFriendlyErrorMessage } from "../../utils/errorUtils";
 import MicrochefLauncherCard from "./MicrochefLauncherCard";
 import PopularAuthorsCard from "./PopularAuthorsCard";
 import MicrochefChatModal from "./MicrochefChatModal";
@@ -292,6 +294,7 @@ const summarizeAiResponse = (value: unknown): string => {
 };
 
 export default function RightPart() {
+  const { toast } = useUiFeedback();
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -525,16 +528,17 @@ export default function RightPart() {
       const recipes = await recipeService.getAll({ search: title, limit: 1 });
       const first = recipes[0];
       if (!first) {
-        alert(
-          "Рецепт не найден в базе. Сначала сохраните его как обычный рецепт."
+        toast(
+          "Рецепт не найден в базе. Сначала сохраните его как обычный рецепт.",
+          "error"
         );
         return;
       }
       await favoriteService.addToFavorites(first.id);
-      alert("Рецепт добавлен в избранное");
+      toast("Рецепт добавлен в избранное", "success");
     } catch (error) {
       console.error("Ошибка при добавлении ИИ-рецепта в избранное:", error);
-      alert("Не удалось добавить в избранное");
+      toast("Не удалось добавить в избранное", "error");
     }
   };
 
@@ -572,7 +576,7 @@ export default function RightPart() {
       router.push("/profile?create=1&source=microchef");
     } catch (error) {
       console.error("Ошибка подготовки рецепта из микро-шефа:", error);
-      alert("Не удалось открыть форму создания рецепта");
+      toast("Не удалось открыть форму создания рецепта", "error");
     } finally {
       setSavingDraftId(null);
     }
@@ -620,8 +624,7 @@ export default function RightPart() {
       ]);
     } catch (error) {
       console.error("Ошибка чата микро-шефа:", error);
-      const rawErrorText =
-        error instanceof Error && error.message ? error.message : "";
+      const rawErrorText = getUserFriendlyErrorMessage(error, "");
       const normalizedErrorText = rawErrorText.toLowerCase();
       const isChefBusyError =
         normalizedErrorText.includes("api error (500)") ||

@@ -11,6 +11,7 @@ import {
 } from "../services/moderationService";
 import { uploadService } from "../services/uploadService";
 import { normalizeImageUrl } from "../utils/imageUrl";
+import { getUserFriendlyErrorMessage } from "../utils/errorUtils";
 import { canAccessModeration, isAdminRole } from "../utils/role";
 import { useUiFeedback } from "../components/UiFeedbackProvider";
 import ModerationTabs from "./components/ModerationTabs";
@@ -31,7 +32,7 @@ const toIdList = (value: string): number[] =>
     .filter((item) => Number.isFinite(item) && item > 0);
 
 export default function ModerationPage() {
-  const { toast } = useUiFeedback();
+  const { toast, confirm } = useUiFeedback();
   const USERS_LIMIT = 20;
   const [isAllowed, setIsAllowed] = useState<boolean | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -91,7 +92,7 @@ export default function ModerationPage() {
       setUsersTotal(0);
       setUsersTotalPages(1);
       setUsersError(
-        error instanceof Error ? error.message : "Не удалось загрузить пользователей"
+        getUserFriendlyErrorMessage(error, "Не удалось загрузить пользователей")
       );
     } finally {
       setUsersLoading(false);
@@ -417,7 +418,7 @@ export default function ModerationPage() {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    const confirmed = window.confirm("Удалить пользователя? Это действие нельзя отменить.");
+    const confirmed = await confirm("Удалить пользователя? Это действие нельзя отменить.");
     if (!confirmed) return;
     await runAction(`user-${userId}-delete`, async () => {
       await moderationService.deleteUser(userId);
@@ -525,7 +526,7 @@ export default function ModerationPage() {
       setEditAvatarUrl(url);
     } catch (error) {
       toast(
-        error instanceof Error ? error.message : "Не удалось загрузить аватар",
+        getUserFriendlyErrorMessage(error, "Не удалось загрузить аватар"),
         "error"
       );
     } finally {

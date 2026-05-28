@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { User, authService } from "../services/authService";
 import { Appeal, appealService } from "../services/appealService";
 import { useUiFeedback } from "./UiFeedbackProvider";
+import { getUserFriendlyErrorMessage } from "../utils/errorUtils";
 
 export default function BlockedUserGuard({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -74,7 +75,7 @@ export default function BlockedUserGuard({ children }: { children: React.ReactNo
       const userAppeals = await appealService.getMyAppeals();
       setAppeals(userAppeals);
     } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : "Не удалось отправить апелляцию", "error");
+      toast(getUserFriendlyErrorMessage(error, "Не удалось отправить апелляцию"), "error");
     } finally {
       setIsSubmitting(false);
     }
