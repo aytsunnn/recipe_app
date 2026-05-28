@@ -1002,12 +1002,39 @@ function ProfilePageContent() {
                 toStringValue(row.unit) ||
                 toStringValue(row.unit_of_measurement) ||
                 toStringValue(row.measure);
+              const matchedIngredient = ingredientsCatalog.find(
+                (entry) =>
+                  (entry.name || "").trim().toLowerCase() ===
+                  name.trim().toLowerCase()
+              );
+              const matchedIngredientAny = matchedIngredient as
+                | (Ingredient & { unit_id?: string | number | null })
+                | null;
+              const linkedUnitIdRaw =
+                matchedIngredientAny?.unit_id ??
+                (matchedIngredientAny as unknown as Record<string, unknown>)?.[
+                  "unitId"
+                ] ??
+                null;
+              const linkedUnitId =
+                typeof linkedUnitIdRaw === "number"
+                  ? linkedUnitIdRaw
+                  : typeof linkedUnitIdRaw === "string" && linkedUnitIdRaw.trim()
+                  ? Number(linkedUnitIdRaw)
+                  : null;
+              const linkedUnit =
+                Number.isFinite(Number(linkedUnitId))
+                  ? units.find((item) => Number(item.id) === Number(linkedUnitId))
+                  : null;
+              const resolvedUnit =
+                unit.trim() ||
+                (linkedUnit?.short_name || linkedUnit?.name || "").trim();
               if (!name) return null;
               return {
-                ingredient_id: null,
+                ingredient_id: matchedIngredient ? Number(matchedIngredient.id) : null,
                 ingredient_name: name,
                 quantity,
-                unit_of_measurement: unit,
+                unit_of_measurement: resolvedUnit,
                 note: "",
               } as IngredientRow;
             })

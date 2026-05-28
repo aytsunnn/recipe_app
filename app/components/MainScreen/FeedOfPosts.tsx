@@ -47,6 +47,7 @@ export default function FeedOfPosts() {
   }, [categoryRaw]);
 
   const useRecommendations =
+    authService.isAuthenticated() &&
     !searchQuery &&
     !kitchenId &&
     !(Array.isArray(categoryId) ? categoryId.length > 0 : categoryId) &&

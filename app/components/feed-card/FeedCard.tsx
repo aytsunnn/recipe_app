@@ -685,19 +685,21 @@ export default function FeedCard({
             alt="recipe"
             quality={95}
           />
-          <div className="absolute top-2.5 right-2.5">
-            <button
-              onClick={handleFavorite}
-              className="bg-white w-9 h-9 rounded-full flex items-center justify-center"
-            >
-              <Image
-                width={20}
-                height={20}
-                src={isFavorite ? "/FavoritesCurrent.svg" : "/Favorites.svg"}
-                alt="favorites"
-              />
-            </button>
-          </div>
+          {isAuthenticated ? (
+            <div className="absolute top-2.5 right-2.5">
+              <button
+                onClick={handleFavorite}
+                className="bg-white w-9 h-9 rounded-full flex items-center justify-center"
+              >
+                <Image
+                  width={20}
+                  height={20}
+                  src={isFavorite ? "/FavoritesCurrent.svg" : "/Favorites.svg"}
+                  alt="favorites"
+                />
+              </button>
+            </div>
+          ) : null}
           <div className="absolute bottom-2.5 right-2.5">
             <div className="bg-white p-2 rounded-full flex items-center justify-center gap-4">
               <div className="flex gap-1 items-center">

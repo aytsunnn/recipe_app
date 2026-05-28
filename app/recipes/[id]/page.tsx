@@ -118,7 +118,7 @@ export default function RecipeDetailsPage() {
   const [deleteCommentBusy, setDeleteCommentBusy] = useState<
     Record<string, boolean>
   >({});
-  const [desiredPortions, setDesiredPortions] = useState(1);
+  const [desiredPortions, setDesiredPortions] = useState<number | "">(1);
   const [highlightedCommentId, setHighlightedCommentId] = useState<
     string | null
   >(null);
@@ -1297,11 +1297,21 @@ export default function RecipeDetailsPage() {
                     type="number"
                     min={1}
                     value={desiredPortions}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const nextValue = e.target.value;
+                      if (nextValue === "") {
+                        setDesiredPortions("");
+                        return;
+                      }
+                      const parsed = Number(nextValue);
                       setDesiredPortions(
-                        Math.max(1, Number(e.target.value) || 1)
-                      )
-                    }
+                        Number.isFinite(parsed) ? Math.max(1, parsed) : 1
+                      );
+                    }}
+                    onBlur={() => {
+                      const parsed = parseLeadingNumber(desiredPortions);
+                      setDesiredPortions(parsed && parsed > 0 ? parsed : 1);
+                    }}
                     className="w-24 rounded-full border border-umami-light-gray px-3 py-1 text-sm text-umami-dark-gray"
                   />
                   <span className="font-inter text-xs text-umami-light-gray">

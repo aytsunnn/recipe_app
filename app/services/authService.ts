@@ -110,19 +110,22 @@ class AuthService {
 
   saveToken(token: string): void {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', token);
+      const normalizedToken = token.trim();
+      window.__AUTH_TOKEN__ = normalizedToken;
+      localStorage.setItem('auth_token', normalizedToken);
     }
   }
 
   getToken(): string | null {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
+      return window.__AUTH_TOKEN__ || localStorage.getItem('auth_token');
     }
     return null;
   }
 
   removeToken(): void {
     if (typeof window !== 'undefined') {
+      window.__AUTH_TOKEN__ = '';
       localStorage.removeItem('auth_token');
     }
   }

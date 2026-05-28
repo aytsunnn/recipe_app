@@ -114,7 +114,29 @@ const applyCommentOverridesFromStorage = (list: Recipe[]): Recipe[] => {
 };
 
 const hasActiveParams = (params: GetRecipesParams) =>
-  Object.values(params).some((value) => value !== undefined && value !== null && value !== '');
+  Object.values(params).some((value) => {
+    if (Array.isArray(value)) return value.length > 0;
+    return value !== undefined && value !== null && value !== '';
+  });
+
+const normalizeParams = (params: GetRecipesParams): GetRecipesParams => {
+  const normalized: GetRecipesParams = {};
+
+  (Object.keys(params) as Array<keyof GetRecipesParams>).forEach((key) => {
+    const value = params[key];
+    if (Array.isArray(value)) {
+      if (value.length > 0) {
+        (normalized as Record<string, unknown>)[key] = value;
+      }
+      return;
+    }
+    if (value !== undefined && value !== null && value !== '') {
+      (normalized as Record<string, unknown>)[key] = value;
+    }
+  });
+
+  return normalized;
+};
 
 const areParamValuesEqual = (
   a: GetRecipesParams[keyof GetRecipesParams],
@@ -245,24 +267,27 @@ export function useRecipes(options: UseRecipesOptions = {}) {
   const updateParams = useCallback((newParams: Partial<GetRecipesParams>) => {
     console.log("[useRecipes] updateParams called with:", newParams);
     setParams((prev) => {
-      const merged = { ...prev, ...newParams };
+      const merged = normalizeParams({ ...prev, ...newParams });
 
       const changed = Object.keys(merged).some((key) => {
         const typedKey = key as keyof GetRecipesParams;
         return !areParamValuesEqual(merged[typedKey], prev[typedKey]);
       });
+      const removed = (Object.keys(prev) as Array<keyof GetRecipesParams>).some(
+        (key) => !(key in merged)
+      );
 
-      console.log("[useRecipes] updateParams changed check:", { changed, prev, merged });
+      console.log("[useRecipes] updateParams changed check:", { changed, removed, prev, merged });
 
-      if (!changed) return prev;
+      if (!changed && !removed) return prev;
 
-      if (useRecommendations && hasActiveParams(merged)) {
+      if (hasActiveParams(merged)) {
         recommendationsCache = null;
       }
 
       return merged;
     });
-  }, [useRecommendations]);
+  }, []);
 
   // Отдельный useEffect для начальной загрузки
   useEffect(() => {

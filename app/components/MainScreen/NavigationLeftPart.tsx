@@ -21,7 +21,9 @@ const navItems = [
   { href: "/recipes/random", label: "Случайный рецепт", icon: "/DiceFive.svg" },
 ];
 
-const publicNavItems = navItems.filter((item) => item.href !== "/profile");
+const publicNavItems = navItems.filter(
+  (item) => item.href !== "/profile" && item.href !== "/favorites"
+);
 
 export default function LeftPart({
   compact = false,

@@ -1,6 +1,12 @@
 ﻿// app/services/api.ts
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
+declare global {
+  interface Window {
+    __AUTH_TOKEN__?: string;
+  }
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -24,8 +30,10 @@ class ApiClient {
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
-    // Получаем токен из localStorage
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    const token =
+      typeof window !== 'undefined'
+        ? window.__AUTH_TOKEN__ || localStorage.getItem('auth_token')
+        : null;
 
     console.log(`[API] Запрос: ${options?.method || 'GET'} ${url}`);
 
