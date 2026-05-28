@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
+import CustomSelect from "./ui/CustomSelect";
 
 type ToastType = "info" | "success" | "error";
 
@@ -147,17 +148,14 @@ export function UiFeedbackProvider({ children }: { children: React.ReactNode }) 
             <p className="font-nunito text-base font-bold text-umami-dark-gray sm:text-lg">Отправить жалобу</p>
             <label className="mt-3 block">
               <span className="mb-1 block font-inter text-sm text-umami-gray">Тип жалобы</span>
-              <select
+              <CustomSelect
                 value={reportReason}
-                onChange={(e) => setReportReason(e.target.value)}
-                className="w-full rounded-full border border-umami-light-gray px-4 py-2 text-sm"
-              >
-                {REPORT_REASONS.map((reason) => (
-                  <option key={reason} value={reason}>
-                    {reason}
-                  </option>
-                ))}
-              </select>
+                onChange={setReportReason}
+                options={REPORT_REASONS.map((reason) => ({
+                  value: reason,
+                  label: reason,
+                }))}
+              />
             </label>
             <label className="mt-3 block">
               <span className="mb-1 block font-inter text-sm text-umami-gray">Сообщение</span>

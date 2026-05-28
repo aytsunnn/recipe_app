@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +26,7 @@ import {
 import { normalizeImageUrl } from "../utils/imageUrl";
 import { toolsService } from "../services/toolsService";
 import { useUiFeedback } from "../components/UiFeedbackProvider";
+import CustomSelect from "../components/ui/CustomSelect";
 
 interface UserStats {
   followingCount: number;
@@ -125,9 +126,9 @@ interface MicrochefPrefill {
 }
 
 const DIFFICULTY_TO_API: Record<string, "1" | "2" | "3" | "4" | "5"> = {
-  Легко: "1",
-  Средне: "3",
-  Сложно: "5",
+  "Легко": "1",
+  "Средне": "3",
+  "Сложно": "5",
   easy: "1",
   medium: "3",
   hard: "5",
@@ -1647,20 +1648,20 @@ function ProfilePageContent() {
                       <span className="mb-1 block font-inter text-sm text-umami-gray">
                         Сложность
                       </span>
-                      <select
+                      <CustomSelect
                         value={recipeForm.difficulty}
-                        onChange={(e) =>
+                        onChange={(nextValue) =>
                           setRecipeForm({
                             ...recipeForm,
-                            difficulty: e.target.value,
+                            difficulty: nextValue,
                           })
                         }
-                        className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                      >
-                        <option value="1">Легко</option>
-                        <option value="3">Средне</option>
-                        <option value="5">Сложно</option>
-                      </select>
+                        options={[
+                          { value: "1", label: "Легко" },
+                          { value: "3", label: "Средне" },
+                          { value: "5", label: "Сложно" },
+                        ]}
+                      />
                     </label>
 
                     <label className="block">
@@ -1831,107 +1832,102 @@ function ProfilePageContent() {
                     <span className="mb-1 block font-inter text-sm text-umami-gray">
                       Кухня
                     </span>
-                    <select
-                      value={recipeForm.kitchen_id ?? ""}
-                      onChange={(e) =>
+                    <CustomSelect
+                      value={recipeForm.kitchen_id ? String(recipeForm.kitchen_id) : ""}
+                      onChange={(nextValue) =>
                         setRecipeForm({
                           ...recipeForm,
-                          kitchen_id: e.target.value
-                            ? Number(e.target.value)
-                            : null,
+                          kitchen_id: nextValue ? Number(nextValue) : null,
                         })
                       }
-                      className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                    >
-                      <option value="">Не выбрано</option>
-                      {kitchens.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
+                      options={[
+                        { value: "", label: "Не выбрано", muted: true },
+                        ...kitchens.map((item) => ({
+                          value: String(item.id),
+                          label: item.name,
+                        })),
+                      ]}
+                    />
                   </label>
 
                   <label className="block">
                     <span className="mb-1 block font-inter text-sm text-umami-gray">
                       Праздник
                     </span>
-                    <select
-                      value={recipeForm.celebration_id ?? ""}
-                      onChange={(e) =>
+                    <CustomSelect
+                      value={
+                        recipeForm.celebration_id
+                          ? String(recipeForm.celebration_id)
+                          : ""
+                      }
+                      onChange={(nextValue) =>
                         setRecipeForm({
                           ...recipeForm,
-                          celebration_id: e.target.value
-                            ? Number(e.target.value)
-                            : null,
+                          celebration_id: nextValue ? Number(nextValue) : null,
                         })
                       }
-                      className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                    >
-                      <option value="">Не выбрано</option>
-                      {celebrations.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
+                      options={[
+                        { value: "", label: "Не выбрано", muted: true },
+                        ...celebrations.map((item) => ({
+                          value: String(item.id),
+                          label: item.name,
+                        })),
+                      ]}
+                    />
                   </label>
 
                   <label className="block">
                     <span className="mb-1 block font-inter text-sm text-umami-gray">
                       Способ приготовления
                     </span>
-                    <select
-                      value={recipeForm.cooking_id ?? ""}
-                      onChange={(e) =>
+                    <CustomSelect
+                      value={recipeForm.cooking_id ? String(recipeForm.cooking_id) : ""}
+                      onChange={(nextValue) =>
                         setRecipeForm({
                           ...recipeForm,
-                          cooking_id: e.target.value
-                            ? Number(e.target.value)
-                            : null,
+                          cooking_id: nextValue ? Number(nextValue) : null,
                         })
                       }
-                      className="w-full rounded-full border border-umami-light-gray bg-[#fcfcfc] px-4 py-2 font-nunito text-sm outline-none focus:border-umami-orange/60"
-                    >
-                      <option value="">Не выбрано</option>
-                      {cookings.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
+                      options={[
+                        { value: "", label: "Не выбрано", muted: true },
+                        ...cookings.map((item) => ({
+                          value: String(item.id),
+                          label: item.name,
+                        })),
+                      ]}
+                    />
                   </label>
                 </div>
 
-                  <div className="col-span-2">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="font-inter text-sm text-umami-gray">
-                        Ингредиенты
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setRecipeForm((prev) => ({
-                            ...prev,
-                            ingredients: [
-                              ...prev.ingredients,
-                              {
-                                ingredient_id: null,
-                                ingredient_name: "",
-                                quantity: 1,
-                                unit_of_measurement: "",
-                                note: "",
-                              },
-                            ],
-                          }))
-                        }
-                        className="rounded-full bg-gray-100 px-3 py-1 text-xs font-nunito"
-                      >
-                        + ингредиент
-                      </button>
-                    </div>
-                    <div className="space-y-3">
-                      {recipeForm.ingredients.map((item, index) => (
+                <div className="col-span-2">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="font-inter text-sm text-umami-gray">
+                      Ингредиенты
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRecipeForm((prev) => ({
+                          ...prev,
+                          ingredients: [
+                            ...prev.ingredients,
+                            {
+                              ingredient_id: null,
+                              ingredient_name: "",
+                              quantity: 1,
+                              unit_of_measurement: "",
+                              note: "",
+                            },
+                          ],
+                        }))
+                      }
+                      className="rounded-full bg-gray-100 px-3 py-1 text-xs font-nunito"
+                    >
+                      + ингредиент
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {recipeForm.ingredients.map((item, index) => (
                         <div
                           key={index}
                           className="grid grid-cols-1 gap-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-3 sm:grid-cols-2 lg:grid-cols-4"
@@ -2001,35 +1997,34 @@ function ProfilePageContent() {
                             placeholder="Кол-во"
                             className="rounded-full border border-umami-light-gray px-4 py-2 text-sm outline-none focus:border-umami-orange/60"
                           />
-                          <select
+                          <CustomSelect
                             value={item.unit_of_measurement}
-                            onChange={(e) =>
+                            onChange={(nextValue) =>
                               setIngredient(index, {
-                                unit_of_measurement: e.target.value,
+                                unit_of_measurement: nextValue,
                               })
                             }
-                            className="rounded-full border border-umami-light-gray px-4 py-2 text-sm text-umami-gray"
-                          >
-                            <option value="">Ед. изм.</option>
-                            {units.map((unit) => (
-                              <option
-                                key={`${index}-${unit.id}`}
-                                value={unit.short_name || unit.name}
-                              >
-                                {unit.name} ({unit.short_name || unit.name})
-                              </option>
-                            ))}
-                            {item.unit_of_measurement &&
+                            options={[
+                              { value: "", label: "Ед. изм.", muted: true },
+                              ...units.map((unit) => ({
+                                value: unit.short_name || unit.name,
+                                label: `${unit.name} (${unit.short_name || unit.name})`,
+                              })),
+                              ...(item.unit_of_measurement &&
                               !units.some(
                                 (unit) =>
                                   (unit.short_name || unit.name) ===
                                   item.unit_of_measurement
-                              ) && (
-                                <option value={item.unit_of_measurement}>
-                                  {item.unit_of_measurement}
-                                </option>
-                              )}
-                          </select>
+                              )
+                                ? [
+                                    {
+                                      value: item.unit_of_measurement,
+                                      label: item.unit_of_measurement,
+                                    },
+                                  ]
+                                : []),
+                            ]}
+                          />
                           <input
                             type="text"
                             value={item.note}
@@ -2041,8 +2036,8 @@ function ProfilePageContent() {
                           />
                         </div>
                       ))}
-                    </div>
                   </div>
+                </div>
 
                   <div className="col-span-2 rounded-2xl border border-[#efefef] bg-[#faf9f6] p-4">
                     <div className="mb-2 flex items-center justify-between">
@@ -2095,15 +2090,6 @@ function ProfilePageContent() {
                               )
                             }
                             className="rounded-2xl border border-umami-light-gray px-4 py-2 text-sm"
-                          />
-                          <input
-                            type="text"
-                            value={item.image_url}
-                            onChange={(e) =>
-                              setStep(index, { image_url: e.target.value })
-                            }
-                            placeholder="или ссылка на фото шага"
-                            className="rounded-full border border-umami-light-gray px-4 py-2 text-sm"
                           />
                           {item.image_preview && (
                             <div className="relative w-full overflow-hidden rounded-2xl border border-umami-light-gray">
@@ -2211,6 +2197,7 @@ export default function ProfilePage() {
     </Suspense>
   );
 }
+
 
 
 
