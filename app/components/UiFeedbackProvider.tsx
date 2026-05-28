@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -77,22 +76,6 @@ export function UiFeedbackProvider({ children }: { children: React.ReactNode }) 
     () => ({ toast, confirm, requestReport }),
     [toast, confirm, requestReport]
   );
-
-  useEffect(() => {
-    const nativeAlert = window.alert;
-    window.alert = (message?: unknown) => {
-      const text =
-        typeof message === "string"
-          ? message
-          : message === null || message === undefined
-          ? ""
-          : String(message);
-      toast(text || "Уведомление");
-    };
-    return () => {
-      window.alert = nativeAlert;
-    };
-  }, [toast]);
 
   return (
     <UiFeedbackContext.Provider value={value}>
