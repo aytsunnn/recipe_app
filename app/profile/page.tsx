@@ -239,6 +239,7 @@ function ProfilePageContent() {
   const [parseLoading, setParseLoading] = useState(false);
   const [parseWarnings, setParseWarnings] = useState<string[]>([]);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const createProcessedRef = useRef(false);
 
   useEffect(() => {
     const handleOutsideClick = () => {
@@ -492,13 +493,21 @@ function ProfilePageContent() {
   useEffect(() => {
     if (isLoading) return;
     const shouldOpenCreate = searchParams?.get("create") === "1";
-    if (!shouldOpenCreate || typeof window === "undefined") return;
+    if (!shouldOpenCreate) {
+      createProcessedRef.current = false;
+      return;
+    }
+    if (typeof window === "undefined") return;
+
+    if (createProcessedRef.current) return;
+    createProcessedRef.current = true;
 
     const raw = window.sessionStorage.getItem("microchef_recipe_prefill");
     if (!raw) {
       Promise.resolve().then(() => {
         void openCreateRecipeEditor();
       });
+      router.replace("/profile");
       return;
     }
 
