@@ -57,15 +57,17 @@ const normalizeEntry = (item: unknown): WeekMenuEntry | null => {
 };
 
 class WeekMenuService {
-  async getWeekMenu(): Promise<WeekMenuEntry[]> {
-    const endpoints = ["/admin/menu-of-week", "/menu-of-week"];
+  async getWeekMenu(options?: { editable?: boolean }): Promise<WeekMenuEntry[]> {
+    const endpoints = options?.editable
+      ? ["/admin/menu-of-week", "/menu-of-week"]
+      : ["/menu-of-week", "/admin/menu-of-week"];
     let lastError: unknown = null;
 
     for (const endpoint of endpoints) {
       try {
         const response = await apiClient.get<unknown>(endpoint);
         const parsed = toArray(response).map(normalizeEntry).filter((i): i is WeekMenuEntry => Boolean(i));
-        if (parsed.length || endpoint === "/admin/menu-of-week") {
+        if (parsed.length || endpoint === endpoints[0]) {
           return parsed;
         }
       } catch (error) {

@@ -94,7 +94,7 @@ export default function WeekMenuContent({ editable }: WeekMenuContentProps) {
       setCurrentUserId(me?.id);
 
       const [menuResult, recipesResult] = await Promise.all([
-        weekMenuService.getWeekMenu(),
+        weekMenuService.getWeekMenu({ editable }),
         recipeService.getAll({ page: 1, limit: 200 }),
       ]);
 
