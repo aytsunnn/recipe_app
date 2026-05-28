@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { authService, LoginData } from "../services/authService";
 import { validateEmail, validatePassword } from "../utils/validation";
 import OtpCodeInput from "./OtpCodeInput";
@@ -41,6 +41,25 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
     general?: string;
   }>({});
 
+  const resetForm = useCallback(() => {
+    setMode("login");
+    setFormData({ email: "", password: "" });
+    setRecoveryData({
+      email: "",
+      code: "",
+      verifiedCode: "",
+      newPassword: "",
+      confirmNewPassword: "",
+    });
+    setFieldErrors({});
+    setShowPassword(false);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    resetForm();
+    onClose();
+  }, [resetForm, onClose]);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") handleClose();
@@ -55,26 +74,7 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister }: AuthM
       document.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = "unset";
     };
-  }, [isOpen]);
-
-  const resetForm = () => {
-    setMode("login");
-    setFormData({ email: "", password: "" });
-    setRecoveryData({
-      email: "",
-      code: "",
-      verifiedCode: "",
-      newPassword: "",
-      confirmNewPassword: "",
-    });
-    setFieldErrors({});
-    setShowPassword(false);
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
+  }, [isOpen, handleClose]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -126,7 +126,9 @@ export default function ModerationPage() {
 
   useEffect(() => {
     if (isAllowed && activeTab === "users") {
-      void loadUsers(1);
+      Promise.resolve().then(() => {
+        void loadUsers(1);
+      });
     }
   }, [activeTab, isAllowed]);
 
@@ -173,7 +175,9 @@ export default function ModerationPage() {
         return status === "resolved" || status === "dismissed";
       });
       if (hasResolved) {
-        setReportsFilter("resolved_group");
+        Promise.resolve().then(() => {
+          setReportsFilter("resolved_group");
+        });
       }
     }
   }, [reports, filteredReports.length, reportsFilter]);

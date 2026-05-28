@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -114,7 +114,9 @@ export default function FiltersPanel({
     if (celebrationIds.length > 0) nextFilters.celebration_id = celebrationIds;
     if (cookingIds.length > 0) nextFilters.cooking_id = cookingIds;
 
-    setFilters(nextFilters);
+    Promise.resolve().then(() => {
+      setFilters(nextFilters);
+    });
   }, [searchParams]);
 
   const optionMap = useMemo<Record<FilterKey, Option[]>>(

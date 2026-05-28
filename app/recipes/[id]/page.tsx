@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -130,7 +130,7 @@ export default function RecipeDetailsPage() {
     return recipe.Categories.map(normalizeCategoryName).filter(
       (name): name is string => Boolean(name)
     );
-  }, [recipe?.Categories]);
+  }, [recipe]);
 
   const descriptionItems = useMemo(
     () => [
@@ -317,19 +317,28 @@ export default function RecipeDetailsPage() {
   useEffect(() => {
     const tab = searchParams?.get("tab");
     if (tab === "comments") {
-      setActiveTab("comments");
-      if (comments.length === 0) {
-        void loadComments();
-      }
+      Promise.resolve().then(() => {
+        setActiveTab("comments");
+        if (comments.length === 0) {
+          void loadComments();
+        }
+      });
     }
   }, [searchParams, comments.length]);
 
   useEffect(() => {
     const commentIdFromQuery = searchParams?.get("commentId");
     if (!commentIdFromQuery) return;
-    setActiveTab("comments");
+    
+    Promise.resolve().then(() => {
+      setActiveTab("comments");
+    });
+    
     if (comments.length === 0) return;
-    setHighlightedCommentId(commentIdFromQuery);
+    
+    Promise.resolve().then(() => {
+      setHighlightedCommentId(commentIdFromQuery);
+    });
 
     const scrollToComment = () => {
       const target = document.getElementById(`comment-${commentIdFromQuery}`);
@@ -339,9 +348,11 @@ export default function RecipeDetailsPage() {
 
     const timer = window.setTimeout(scrollToComment, 120);
     const clearHighlightTimer = window.setTimeout(() => {
-      setHighlightedCommentId((prev) =>
-        prev === commentIdFromQuery ? null : prev
-      );
+      Promise.resolve().then(() => {
+        setHighlightedCommentId((prev) =>
+          prev === commentIdFromQuery ? null : prev
+        );
+      });
     }, 3500);
     return () => {
       window.clearTimeout(timer);
@@ -351,16 +362,20 @@ export default function RecipeDetailsPage() {
 
   useEffect(() => {
     if (!recipe) return;
-    setLikesCountState(recipe._count?.Likes ?? recipe.Likes?.length ?? 0);
-    setCommentsCountState(recipe._count?.Comments ?? comments.length ?? 0);
-    setPersonalNote(recipe.personal_note ?? "");
     const basePortions = parseLeadingNumber(recipe.portion);
-    setDesiredPortions(basePortions && basePortions > 0 ? basePortions : 1);
+    Promise.resolve().then(() => {
+      setLikesCountState(recipe._count?.Likes ?? recipe.Likes?.length ?? 0);
+      setCommentsCountState(recipe._count?.Comments ?? comments.length ?? 0);
+      setPersonalNote(recipe.personal_note ?? "");
+      setDesiredPortions(basePortions && basePortions > 0 ? basePortions : 1);
+    });
   }, [recipe]);
 
   useEffect(() => {
     if (!recipeId) return;
-    void loadComments();
+    Promise.resolve().then(() => {
+      void loadComments();
+    });
   }, [recipeId]);
 
   useEffect(() => {
@@ -368,7 +383,9 @@ export default function RecipeDetailsPage() {
     const liked = currentUserId
       ? recipe.Likes?.some((like) => like.user_id === currentUserId)
       : false;
-    setIsLiked(Boolean(liked));
+    Promise.resolve().then(() => {
+      setIsLiked(Boolean(liked));
+    });
   }, [recipe, currentUserId]);
 
   useEffect(() => {

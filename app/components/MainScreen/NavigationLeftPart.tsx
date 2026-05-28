@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -60,12 +60,14 @@ export default function LeftPart({
 
   useEffect(() => {
     const categoryIds = searchParams.get("category_id");
-    if (categoryIds) {
-      const ids = categoryIds.split(",").filter(Boolean);
-      setSelectedCategories(new Set(ids));
-    } else {
-      setSelectedCategories(new Set());
-    }
+    Promise.resolve().then(() => {
+      if (categoryIds) {
+        const ids = categoryIds.split(",").filter(Boolean);
+        setSelectedCategories(new Set(ids));
+      } else {
+        setSelectedCategories(new Set());
+      }
+    });
   }, [searchParams]);
 
   useEffect(() => {

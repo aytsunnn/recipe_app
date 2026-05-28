@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChangeEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LeftPart from "../components/MainScreen/NavigationLeftPart";
 import FollowUsersModal from "./components/FollowUsersModal";
 import ProfileHeaderCard from "./components/ProfileHeaderCard";
@@ -262,7 +262,7 @@ function ProfilePageContent() {
     return normalizeImageUrl(url, "/avatar.jpg");
   };
 
-  const loadMeta = async () => {
+  const loadMeta = useCallback(async () => {
     try {
       const data = await metaService.getAll();
       setKitchens(data.kitchens);
@@ -274,7 +274,7 @@ function ProfilePageContent() {
     } catch (error) {
       console.error("Ошибка загрузки метаданных рецепта:", error);
     }
-  };
+  }, []);
 
   const loadProfile = async (currentUser: User) => {
     const [following, followers, ownRecipesRaw] =
@@ -481,13 +481,13 @@ function ProfilePageContent() {
     }
   };
 
-  const openCreateRecipeEditor = async () => {
+  const openCreateRecipeEditor = useCallback(async () => {
     setEditingRecipeId(null);
     setRecipeForm(emptyRecipeForm);
     setParseWarnings([]);
     setIsRecipeEditorOpen(true);
     await loadMeta();
-  };
+  }, [loadMeta]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -496,7 +496,9 @@ function ProfilePageContent() {
 
     const raw = window.sessionStorage.getItem("microchef_recipe_prefill");
     if (!raw) {
-      openCreateRecipeEditor();
+      Promise.resolve().then(() => {
+        void openCreateRecipeEditor();
+      });
       return;
     }
 
@@ -564,45 +566,49 @@ function ProfilePageContent() {
             }))
         : [];
 
-      setEditingRecipeId(null);
-      setParseWarnings([]);
-      setRecipeForm({
-        ...emptyRecipeForm,
-        title: (prefill.title || "").trim(),
-        description: (prefill.description || "").trim(),
-        difficulty: normalizeDifficulty(prefill.difficulty),
-        portion: Math.max(1, Math.round(toNum(prefill.portion, 1))),
-        cooking_time: Math.max(1, Math.round(toNum(prefill.cooking_time, 30))),
-        calorific: Math.max(0, Math.round(toNum(prefill.calorific, 0))),
-        proteins: Math.max(0, Math.round(toNum(prefill.proteins, 0))),
-        fats: Math.max(0, Math.round(toNum(prefill.fats, 0))),
-        carbohydrates: Math.max(0, Math.round(toNum(prefill.carbohydrates, 0))),
-        is_private: true,
-        parsed_from_url: true,
-        kitchen_id: matchByName(kitchens, prefill.kitchen),
-        celebration_id: matchByName(celebrations, prefill.celebration),
-        cooking_id: matchByName(cookings, prefill.cookingType),
-        ingredients:
-          ingredients.length > 0
-            ? ingredients
-            : [
-                {
-                  ingredient_id: null,
-                  ingredient_name: "",
-                  quantity: 1,
-                  unit_of_measurement: "",
-                  note: "",
-                },
-              ],
-        steps:
-          steps.length > 0
-            ? steps
-            : [{ description: "", image_url: "", image_file: null, image_preview: "" }],
+      Promise.resolve().then(() => {
+        setEditingRecipeId(null);
+        setParseWarnings([]);
+        setRecipeForm({
+          ...emptyRecipeForm,
+          title: (prefill.title || "").trim(),
+          description: (prefill.description || "").trim(),
+          difficulty: normalizeDifficulty(prefill.difficulty),
+          portion: Math.max(1, Math.round(toNum(prefill.portion, 1))),
+          cooking_time: Math.max(1, Math.round(toNum(prefill.cooking_time, 30))),
+          calorific: Math.max(0, Math.round(toNum(prefill.calorific, 0))),
+          proteins: Math.max(0, Math.round(toNum(prefill.proteins, 0))),
+          fats: Math.max(0, Math.round(toNum(prefill.fats, 0))),
+          carbohydrates: Math.max(0, Math.round(toNum(prefill.carbohydrates, 0))),
+          is_private: true,
+          parsed_from_url: true,
+          kitchen_id: matchByName(kitchens, prefill.kitchen),
+          celebration_id: matchByName(celebrations, prefill.celebration),
+          cooking_id: matchByName(cookings, prefill.cookingType),
+          ingredients:
+            ingredients.length > 0
+              ? ingredients
+              : [
+                  {
+                    ingredient_id: null,
+                    ingredient_name: "",
+                    quantity: 1,
+                    unit_of_measurement: "",
+                    note: "",
+                  },
+                ],
+          steps:
+            steps.length > 0
+              ? steps
+              : [{ description: "", image_url: "", image_file: null, image_preview: "" }],
+        });
+        setIsRecipeEditorOpen(true);
       });
-      setIsRecipeEditorOpen(true);
     } catch (error) {
       console.error("Ошибка автозаполнения рецепта из микро-шефа:", error);
-      openCreateRecipeEditor();
+      Promise.resolve().then(() => {
+        void openCreateRecipeEditor();
+      });
     } finally {
       window.sessionStorage.removeItem("microchef_recipe_prefill");
       router.replace("/profile");
@@ -615,6 +621,7 @@ function ProfilePageContent() {
     cookings,
     ingredientsCatalog,
     router,
+    openCreateRecipeEditor,
   ]);
 
   const openEditRecipeEditor = async (recipe: Recipe) => {
@@ -1952,7 +1959,7 @@ function ProfilePageContent() {
                             onChange={(e) => {
                               const val = e.target.value.replace(",", ".").replace(/[^\d.]/g, "");
                               setIngredient(index, {
-                                quantity: val === "" ? "" : val as any,
+                                quantity: val === "" ? "" : (val as unknown as number),
                               });
                             }}
                             placeholder="Кол-во"

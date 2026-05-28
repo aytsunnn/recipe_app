@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -71,25 +71,27 @@ export default function FeedOfPosts() {
   const [isUsersLoading, setIsUsersLoading] = useState(false);
 
   useEffect(() => {
-    updateParams({
-      search: searchQuery || undefined,
-      kitchen_id: kitchenId,
-      category_id: categoryId,
-      celebration_id: celebrationId,
-      cooking_id: cookingId,
-      difficulty,
-    });
+    Promise.resolve().then(() => {
+      updateParams({
+        search: searchQuery || undefined,
+        kitchen_id: kitchenId,
+        category_id: categoryId,
+        celebration_id: celebrationId,
+        cooking_id: cookingId,
+        difficulty,
+      });
 
-    if (searchQuery) {
-      setIsUsersLoading(true);
-      userService
-        .search(searchQuery)
-        .then(setFoundUsers)
-        .catch(console.error)
-        .finally(() => setIsUsersLoading(false));
-    } else {
-      setFoundUsers([]);
-    }
+      if (searchQuery) {
+        setIsUsersLoading(true);
+        userService
+          .search(searchQuery)
+          .then(setFoundUsers)
+          .catch(console.error)
+          .finally(() => setIsUsersLoading(false));
+      } else {
+        setFoundUsers([]);
+      }
+    });
   }, [
     updateParams,
     searchQuery,

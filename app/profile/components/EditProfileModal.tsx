@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { ChangeEvent, RefObject, useState } from "react";
@@ -51,8 +51,9 @@ export default function EditProfileModal({
   onAvatarFileChange,
   onAvatarDeleteClick,
 }: EditProfileModalProps) {
-  if (!isOpen) return null;
   const [showPasswordFields, setShowPasswordFields] = useState(false);
+
+  if (!isOpen) return null;
 
   return (
     <div className="rounded-[20px] border border-[#eaeaea] bg-white p-6">

@@ -706,9 +706,9 @@ export default function ModerationAnalyticsPanel() {
     ];
 
     // Read direct totals if available or estimate from arrays
-    const registrationsArray = data.registrations as any[];
-    const recipesArray = data.recipeStats as any[];
-    const reportsArray = data.reportsByStatus as any[];
+    const registrationsArray = data.registrations as Record<string, unknown>[];
+    const recipesArray = data.recipeStats as Record<string, unknown>[];
+    const reportsArray = data.reportsByStatus as Record<string, unknown>[];
 
     const computedStats = [
       {
@@ -735,7 +735,7 @@ export default function ModerationAnalyticsPanel() {
       {
         key: "popularCategories",
         label: "Активных категорий",
-        value: (data.popularCategories as any[])?.length || 0,
+        value: (data.popularCategories as Record<string, unknown>[])?.length || 0,
         delta: "Полнота охвата",
         colorClass: "text-purple-500"
       }
