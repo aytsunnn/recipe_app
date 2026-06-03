@@ -17,6 +17,34 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body className="font-sans">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var iframe = document.createElement('iframe');
+                  iframe.style.display = 'none';
+                  document.documentElement.appendChild(iframe);
+                  var nativeGet = iframe.contentWindow.Object.getOwnPropertyDescriptor;
+                  document.documentElement.removeChild(iframe);
+                  if (nativeGet) {
+                    try {
+                      Object.defineProperty(Object, 'getOwnPropertyDescriptor', {
+                        value: nativeGet,
+                        writable: false,
+                        configurable: false
+                      });
+                      console.log("Locked Object.getOwnPropertyDescriptor to native.");
+                    } catch (err) {
+                      // Fallback if already defined as non-configurable
+                      Object.getOwnPropertyDescriptor = nativeGet;
+                    }
+                  }
+                } catch (e) {}
+              })();
+            `
+          }}
+        />
         <UiFeedbackProvider>
           <BlockedUserGuard>
             <div className="fixed inset-x-0 top-0 z-50 bg-umami-light-yellow">

@@ -250,7 +250,7 @@ export default function RegisterModal({
             <form key={`register-${formRenderKey}`} onSubmit={handleSubmit} className="flex flex-col gap-2.5">
               <input
                 type="text"
-                defaultValue={formData.name}
+                value={formData.name}
                 onChange={(e) => setFormName(e.target.value)}
                 className="rounded-full border border-umami-green px-3 py-2 text-sm text-umami-green"
                 placeholder="Имя"
@@ -262,7 +262,7 @@ export default function RegisterModal({
 
               <input
                 type="text"
-                defaultValue={formData.username}
+                value={formData.username}
                 onChange={(e) => setFormUsername(e.target.value)}
                 className="rounded-full border border-umami-green px-3 py-2 text-sm text-umami-green"
                 placeholder="Логин"
@@ -274,7 +274,7 @@ export default function RegisterModal({
 
               <input
                 type="email"
-                defaultValue={formData.email}
+                value={formData.email}
                 onChange={(e) => setFormEmail(e.target.value)}
                 className="rounded-full border border-umami-green px-3 py-2 text-sm text-umami-green"
                 placeholder="Email"
@@ -288,7 +288,7 @@ export default function RegisterModal({
                 <>
                   <input
                     type="password"
-                    defaultValue={formData.password}
+                    value={formData.password}
                     onChange={(e) => setFormPassword(e.target.value)}
                     className="rounded-full border border-umami-green px-3 py-2 text-sm text-umami-green"
                     placeholder="Пароль"
@@ -300,7 +300,7 @@ export default function RegisterModal({
 
                   <input
                     type="password"
-                    defaultValue={formData.confirmPassword}
+                    value={formData.confirmPassword}
                     onChange={(e) => setFormConfirmPassword(e.target.value)}
                     className="rounded-full border border-umami-green px-3 py-2 text-sm text-umami-green"
                     placeholder="Повторите пароль"
